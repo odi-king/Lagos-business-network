@@ -43,3 +43,22 @@ button {
     border-radius: 6px;
     cursor: pointer;
 }
+
+#businesses {
+    padding: 50px 20px;
+    text-align: center;
+}
+
+.business-card {
+    background: white;
+    margin: 20px auto;
+    padding: 20px;
+    max-width: 500px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.business-card h3 {
+    color: #123c69;
+}
+
