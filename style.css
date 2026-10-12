@@ -61,4 +61,17 @@ button {
 .business-card h3 {
     color: #123c69;
 }
+.contact-btn {
+    display: inline-block;
+    background-color: #123c69;
+    color: white;
+    padding: 12px 20px;
+    text-decoration: none;
+    border-radius: 6px;
+    margin-top: 10px;
+}
+
+.contact-btn:hover {
+    background-color: #0b2745;
+}
 
