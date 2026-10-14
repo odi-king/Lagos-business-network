@@ -30,4 +30,32 @@ function filterBusinesses() {
 searchInput.addEventListener("input", filterBusinesses);
 categoryFilter.addEventListener("change", filterBusinesses);
 
+const businessForm = document.getElementById("businessForm");
+
+businessForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const business = {
+        name: document.getElementById("businessName").value.trim(),
+        category: document.getElementById("businessCategory").value.trim(),
+        location: document.getElementById("businessLocation").value.trim(),
+        phone: document.getElementById("businessPhone").value.trim(),
+        email: document.getElementById("businessEmail").value.trim()
+    };
+
+    const businesses = JSON.parse(
+        localStorage.getItem("registeredBusinesses") || "[]"
+    );
+
+    businesses.push(business);
+
+    localStorage.setItem(
+        "registeredBusinesses",
+        JSON.stringify(businesses)
+    );
+
+    alert("Business registered successfully!");
+    businessForm.reset();
+});
+
 

@@ -75,3 +75,47 @@ button {
     background-color: #0b2745;
 }
 
+#register-business {
+    max-width: 700px;
+    margin: 50px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+#register-business h2 {
+    text-align: center;
+    color: #123c69;
+}
+
+#businessForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+#businessForm input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+#businessForm button {
+    padding: 14px;
+    background: #123c69;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#businessForm button:hover {
+    background: #0b2745;
+}
+
