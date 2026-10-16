@@ -7,20 +7,28 @@ exploreBtn.addEventListener("click", function() {
 
 const searchInput = document.getElementById("searchInput");
 const categoryFilter = document.getElementById("categoryFilter");
-const businessCards = document.querySelectorAll(".business-card");
+
 
 function filterBusinesses() {
+    const businessCards = document.querySelectorAll(".business-card");
     const searchText = searchInput.value.toLowerCase();
     const selectedCategory = categoryFilter.value;
 
     businessCards.forEach(function (card) {
         const businessName = card.querySelector("h3").textContent.toLowerCase();
-        const categoryText = card.querySelector("p").textContent.toLowerCase();
 
-        const matchesSearch = businessName.includes(searchText);
-        const matchesCategory =
-            selectedCategory === "all" ||
-            categoryText.includes(selectedCategory);
+const categoryParagraph = Array.from(card.querySelectorAll("p"))
+    .find(p => p.textContent.toLowerCase().startsWith("category:"));
+
+const categoryText = categoryParagraph
+    ? categoryParagraph.textContent.replace("category:", "").trim().toLowerCase()
+    : "";
+
+const matchesSearch = businessName.includes(searchText);
+
+const matchesCategory =
+    selectedCategory.toLowerCase() === "all" ||
+    categoryText === selectedCategory.toLowerCase();
 
         card.style.display =
             matchesSearch && matchesCategory ? "block" : "none";
@@ -57,5 +65,34 @@ businessForm.addEventListener("submit", function (event) {
     alert("Business registered successfully!");
     businessForm.reset();
 });
+function displayRegisteredBusinesses() {
+    const businessList = document.getElementById("registeredBusinessList");
+
+    const businesses = JSON.parse(
+        localStorage.getItem("registeredBusinesses") || "[]"
+    );
+
+    businessList.innerHTML = "";
+
+    businesses.forEach(function (business) {
+        const card = document.createElement("div");
+        card.className = "business-card";
+
+        card.innerHTML = `
+            <h3>${business.name}</h3>
+            <p>Category: ${business.category}</p>
+            <p>Location: ${business.location}</p>
+            <p>Phone: ${business.phone}</p>
+            <p>Contact: ${business.email}</p>
+            <a href="mailto:${business.email}" class="contact-btn">
+                Contact Business
+            </a>
+        `;
+
+        businessList.appendChild(card);
+    });
+}
+
+displayRegisteredBusinesses();
 
 
