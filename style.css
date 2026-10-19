@@ -118,4 +118,36 @@ button {
 #businessForm button:hover {
     background: #0b2745;
 }
+/* Recently Registered Businesses */
+#registered-businesses {
+    padding: 40px 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
 
+#registered-businesses h2 {
+    text-align: center;
+    color: #1e3a5f;
+    margin-bottom: 10px;
+}
+
+#registered-businesses > p {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+#registeredBusinessList {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+#registeredBusinessList .business-card {
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+    text-align: left;
+}

@@ -62,6 +62,8 @@ businessForm.addEventListener("submit", function (event) {
         JSON.stringify(businesses)
     );
 
+    displayRegisteredBusinesses();
+
     alert("Business registered successfully!");
     businessForm.reset();
 });
