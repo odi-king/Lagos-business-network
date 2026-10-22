@@ -34,6 +34,11 @@ async function init() {
 
     currentUser = data.session.user;
 
+    if (!(await hasActiveMembership(currentUser.id))) {
+        window.location.href = "pay.html";
+        return;
+    }
+
     const result = await db
         .from("profiles")
         .select("full_name, role, approved")

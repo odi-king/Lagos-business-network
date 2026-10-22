@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Membership - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">L</span> Lagos Business Network</a>
+        <div class="nav-links">
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container auth-wrap">
+    <section class="panel plan">
+        <h2>Yearly membership</h2>
+        <div class="stat">&#8358;20,000 <span class="meta">per year</span></div>
+        <ul>
+            <li>Classes and lectures</li>
+            <li>Handouts and books</li>
+            <li>Marketplace access</li>
+        </ul>
+        <button type="button" id="payBtn" class="contact-btn">Pay &#8358;20,000</button>
+        <p id="payMessage" class="msg"></p>
+        <p class="meta">Pay by card, bank transfer or USSD. Payments are handled securely by Paystack.</p>
+    </section>
+</main>
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="membership.js"></script>
+<script src="pay.js"></script>
+</body>
+</html>

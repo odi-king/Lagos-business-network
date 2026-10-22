@@ -33,6 +33,11 @@ async function init() {
 
     currentUser = data.session.user;
 
+    if (!(await hasActiveMembership(currentUser.id))) {
+        window.location.href = "pay.html";
+        return;
+    }
+
     const welcome = document.getElementById("welcomeText");
     if (welcome) {
         const name = currentUser.user_metadata.full_name || currentUser.email;
@@ -114,7 +119,6 @@ businessForm.addEventListener("submit", async function (event) {
     submitButton.disabled = true;
 
     const business = {
-        owner_id: currentUser.id,
         name: document.getElementById("businessName").value.trim(),
         category: document.getElementById("businessCategory").value.trim(),
         location: document.getElementById("businessLocation").value.trim(),
@@ -122,7 +126,10 @@ businessForm.addEventListener("submit", async function (event) {
         email: document.getElementById("businessEmail").value.trim()
     };
 
-    const { error } = await db.from("businesses").insert(business);
+    const { error } = await db.from("businesses").insert({
+    ...business,
+    owner_id: currentUser.id
+});
 
     submitButton.disabled = false;
 
@@ -162,16 +169,3 @@ businessList.addEventListener("click", async function (event) {
     alert("Business deleted successfully!");
 });
 
-// ---------- Log out ----------
-
-const logoutBtn = document.getElementById("logoutBtn");
-
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", async function (event) {
-        event.preventDefault();
-        await db.auth.signOut();
-        window.location.href = "auth.html";
-    });
-}
-
-init();
