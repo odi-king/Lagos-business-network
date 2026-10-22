@@ -87,8 +87,12 @@ function displayRegisteredBusinesses() {
             <p>Phone: ${business.phone}</p>
             <p>Contact: ${business.email}</p>
             <a href="mailto:${business.email}" class="contact-btn">
-                Contact Business
-            </a>
+        Email Business
+           </a>
+
+          <a href="tel:${business.phone}" class="contact-btn">
+        Call Business
+         </a>
         `;
 
         businessList.appendChild(card);
