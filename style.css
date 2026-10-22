@@ -174,3 +174,45 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .msg.ok { color: var(--accent); }
 .toggle { margin: 16px 0 0; color: var(--muted); font-size: 14px; }
 .toggle a { color: var(--accent); font-weight: 600; }
+
+/* Roles and dashboard */
+.badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #14203f;
+    color: var(--blue);
+    border: 1px solid #243a6b;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+.badge.lecturer { background: #0f2b2a; color: var(--accent); border-color: #14503f; }
+
+.notice {
+    background: #2a2110;
+    border: 1px solid #5c4513;
+    color: #f2c14e;
+    border-radius: 10px;
+    padding: 14px;
+    margin: 16px 0;
+}
+
+.meta { font-size: 14px; color: var(--muted); }
+
+textarea {
+    width: 100%;
+    padding: 11px 12px;
+    font-size: 16px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    resize: vertical;
+    min-height: 80px;
+}
+textarea::placeholder { color: var(--muted); }
+textarea:focus { outline: none; border-color: var(--accent); }
+form textarea { grid-column: 1 / -1; }

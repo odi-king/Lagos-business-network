@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">L</span> Lagos Business Network</a>
+        <div class="nav-links">
+            <a href="dashboard.html" class="active">Dashboard</a>
+            <a href="marketplace.html">Marketplace</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>Dashboard <span id="roleBadge" class="badge"></span></h1>
+        <p id="welcomeText">Loading...</p>
+    </div>
+
+    <div id="pendingNotice" class="notice" style="display:none;">
+        Your lecturer account is waiting for approval. You will be able to upload handouts and books once it is approved.
+    </div>
+
+    <section id="studentPanel" class="panel" style="display:none;">
+        <h2>Your classes</h2>
+        <p class="meta">Your one-year classes are coming soon. Meanwhile, browse handouts and books below or visit the marketplace.</p>
+        <a href="marketplace.html" class="btn btn-outline" style="margin-top:10px;">Go to the marketplace</a>
+    </section>
+
+    <section id="lecturerPanel" class="panel" style="display:none;">
+        <h2>Add a handout or book</h2>
+        <form id="handoutForm">
+            <input type="text" id="handoutTitle" placeholder="Title" required>
+            <select id="handoutKind" required>
+                <option value="handout">Handout</option>
+                <option value="book">Book</option>
+            </select>
+            <input type="number" id="handoutPrice" placeholder="Price in naira (0 for free)" min="0" required>
+            <textarea id="handoutDesc" placeholder="Short description"></textarea>
+            <button type="submit" class="contact-btn">Add to the library</button>
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2>Handouts and books</h2>
+        <div id="handoutList"></div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>

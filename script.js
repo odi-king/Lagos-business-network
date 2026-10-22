@@ -19,6 +19,11 @@ function escapeHTML(text) {
 // ---------- Start: only logged-in people can see this page ----------
 
 async function init() {
+    if (!db) {
+        businessList.innerHTML = "<p>Supabase is not connected yet. Paste your Project URL and anon key into supabase-config.js, then refresh.</p>";
+        return;
+    }
+
     const { data } = await db.auth.getSession();
 
     if (!data.session) {
@@ -109,6 +114,7 @@ businessForm.addEventListener("submit", async function (event) {
     submitButton.disabled = true;
 
     const business = {
+        owner_id: currentUser.id,
         name: document.getElementById("businessName").value.trim(),
         category: document.getElementById("businessCategory").value.trim(),
         location: document.getElementById("businessLocation").value.trim(),
