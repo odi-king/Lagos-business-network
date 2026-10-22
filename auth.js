@@ -17,14 +17,28 @@ function showMessage(text, type) {
     authMessage.className = "msg " + (type || "");
 }
 
+window.addEventListener("error", function (event) {
+    showMessage("Error: " + event.message, "error");
+});
+
+window.addEventListener("unhandledrejection", function (event) {
+    const reason = event.reason && event.reason.message
+        ? event.reason.message
+        : String(event.reason || "Unknown error");
+
+    showMessage("Error: " + reason, "error");
+});
+
 function supabaseReady() {
-    if (!db) {
-        showMessage(
-            "Supabase is not connected yet. Paste your Project URL and anon key into supabase-config.js, make sure you are online, then refresh.",
-            "error"
-        );
+    if (typeof db === "undefined" || !db) {
+        const reason = typeof dbError !== "undefined" && dbError
+            ? dbError
+            : "Check supabase-config.js and refresh the page.";
+
+        showMessage("Supabase is not connected: " + reason, "error");
         return false;
     }
+
     return true;
 }
 
@@ -34,14 +48,17 @@ function setMode(newMode) {
 
     authTitle.textContent = signup ? "Create your account" : "Log in";
     submitBtn.textContent = signup ? "Create account" : "Log in";
-    toggleText.textContent = signup ? "Already have an account?" : "New here?";
+    toggleText.textContent = signup
+        ? "Already have an account?"
+        : "New here?";
     toggleLink.textContent = signup ? "Log in" : "Create an account";
+
     signupFields.style.display = signup ? "flex" : "none";
     fullName.required = signup;
+
     showMessage("");
 }
 
-// The switch between Log in and Create account works even before Supabase is set up
 toggleLink.addEventListener("click", function (event) {
     event.preventDefault();
     setMode(mode === "login" ? "signup" : "login");
@@ -54,6 +71,7 @@ authForm.addEventListener("submit", async function (event) {
     if (!supabaseReady()) return;
 
     submitBtn.disabled = true;
+    showMessage("Please wait...", "ok");
 
     const email = emailInput.value.trim();
     const password = passwordInput.value;
@@ -77,7 +95,10 @@ authForm.addEventListener("submit", async function (event) {
                 window.location.href = "dashboard.html";
             } else {
                 setMode("login");
-                showMessage("Account created. Check your email to confirm it, then log in.", "ok");
+                showMessage(
+                    "Account created. Check your email to confirm it, then log in.",
+                    "ok"
+                );
             }
         } else {
             const { error } = await db.auth.signInWithPassword({
@@ -86,20 +107,37 @@ authForm.addEventListener("submit", async function (event) {
             });
 
             if (error) throw error;
+
             window.location.href = "dashboard.html";
         }
     } catch (error) {
-        showMessage(error.message, "error");
+        showMessage(
+            error.message || "Something went wrong. Please try again.",
+            "error"
+        );
     } finally {
         submitBtn.disabled = false;
     }
 });
 
-// Already logged in? Go straight to the marketplace
-if (db) {
-    db.auth.getSession().then(function (result) {
-        if (result.data.session) {
+async function checkExistingSession() {
+    if (!supabaseReady()) return;
+
+    try {
+        const { data, error } = await db.auth.getSession();
+
+        if (error) throw error;
+
+        if (data.session) {
             window.location.href = "dashboard.html";
         }
-    });
+    } catch (error) {
+        showMessage(
+            "Could not check your login: " + error.message,
+            "error"
+        );
+    }
 }
+
+setMode("login");
+checkExistingSession();
