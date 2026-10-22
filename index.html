@@ -8,53 +8,75 @@
 </head>
 <body>
 
-    <header class="hero">
-        <h1>Lagos Business Network</h1>
-        <p>Discover, register and connect with businesses across Lagos.</p>
-        <button type="button" id="exploreBtn" class="contact-btn">Explore</button>
-    </header>
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">L</span> Lagos Business Network</a>
+        <div class="nav-links">
+            <a href="index.html" class="active">Home</a>
+            <a href="marketplace.html">Marketplace</a>
+        </div>
+    </div>
+</nav>
 
-    <main>
-        <section class="panel">
-            <h2>Register Your Business</h2>
-            <form id="businessForm">
-                <input type="text" id="businessName" placeholder="Business name" required>
+<header class="hero">
+    <div class="container">
+        <span class="pill">Learn. Graduate. Earn.</span>
+        <h1>Turn what you studied into income</h1>
+        <p>A one-year program that teaches you how to make money in your field, then a marketplace where you meet people and do business.</p>
+        <div class="hero-buttons">
+            <a href="#membership" class="btn btn-primary">Join the program</a>
+            <a href="#journey" class="btn btn-outline">How it works</a>
+        </div>
+    </div>
+</header>
 
-                <select id="businessCategory" required>
-                    <option value="" disabled selected>Select category</option>
-                    <option value="Food">Food</option>
-                    <option value="Fashion">Fashion</option>
-                    <option value="Tech">Tech</option>
-                    <option value="Services">Services</option>
-                    <option value="Other">Other</option>
-                </select>
+<section class="section">
+    <div class="container grid cols-2">
+        <div class="card"><div class="stat">12 months</div><p>Practical classes in your field</p></div>
+        <div class="card"><div class="stat blue">1 platform</div><p>Learn first, then trade</p></div>
+    </div>
+</section>
 
-                <input type="text" id="businessLocation" placeholder="Location (e.g. Ikeja)" required>
-                <input type="tel" id="businessPhone" placeholder="Phone number" required>
-                <input type="email" id="businessEmail" placeholder="Email address" required>
+<section class="section" id="journey">
+    <div class="container">
+        <h2>Your journey</h2>
+        <p class="sub">Three steps from graduate to earning.</p>
+        <div class="grid cols-3">
+            <div class="card"><div class="icon">1</div><h3>Learn</h3><p>Take a one-year class on making money from what you studied.</p></div>
+            <div class="card"><div class="icon blue">2</div><h3>Graduate</h3><p>Finish the program and get ready for the marketplace.</p></div>
+            <div class="card"><div class="icon">3</div><h3>Trade</h3><p>Meet people, offer your services and earn a living.</p></div>
+        </div>
+    </div>
+</section>
 
-                <button type="submit" class="contact-btn">Register Business</button>
-            </form>
-        </section>
+<section class="section">
+    <div class="container">
+        <h2>For lecturers</h2>
+        <p class="sub">Teach from your school and earn from the handouts and books you sell to students.</p>
+        <div class="grid cols-2">
+            <div class="card"><div class="icon blue">H</div><h3>Handouts and books</h3><p>Upload your materials and sell them directly to students.</p></div>
+            <div class="card"><div class="icon">C</div><h3>Classes and lectures</h3><p>Reach students from different schools in one place.</p></div>
+        </div>
+    </div>
+</section>
 
-        <section class="panel">
-            <h2>Find a Business</h2>
-            <div class="filters">
-                <input type="text" id="searchInput" placeholder="Search by name...">
-                <select id="categoryFilter">
-                    <option value="all">All</option>
-                    <option value="Food">Food</option>
-                    <option value="Fashion">Fashion</option>
-                    <option value="Tech">Tech</option>
-                    <option value="Services">Services</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
+<section class="section" id="membership">
+    <div class="container">
+        <div class="card plan">
+            <h2>Yearly membership</h2>
+            <ul>
+                <li>Classes and lectures</li>
+                <li>Handouts and books</li>
+                <li>Marketplace access</li>
+            </ul>
+            <a href="marketplace.html" class="btn btn-primary">Explore the marketplace</a>
+        </div>
+    </div>
+</section>
 
-            <div id="registeredBusinessList"></div>
-        </section>
-    </main>
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network</div>
+</footer>
 
-    <script src="script.js"></script>
 </body>
 </html>
