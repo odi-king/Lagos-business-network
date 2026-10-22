@@ -164,3 +164,13 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     form button { grid-column: span 2; }
     .filters { flex-direction: row; }
 }
+
+/* Login and sign up page */
+.auth-wrap { max-width: 440px; padding-top: 40px; }
+.auth-wrap form { display: flex; flex-direction: column; gap: 10px; }
+.auth-wrap form button { grid-column: auto; }
+.msg { min-height: 20px; margin: 12px 0 0; font-size: 14px; }
+.msg.error { color: var(--danger); }
+.msg.ok { color: var(--accent); }
+.toggle { margin: 16px 0 0; color: var(--muted); font-size: 14px; }
+.toggle a { color: var(--accent); font-weight: 600; }

@@ -1,19 +1,10 @@
-const STORAGE_KEY = "registeredBusinesses";
+let currentUser = null;
+let allBusinesses = [];
 
-// ---------- Helpers ----------
-
-function getBusinesses() {
-    try {
-        const list = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-        return Array.isArray(list) ? list : [];
-    } catch (e) {
-        return [];
-    }
-}
-
-function saveBusinesses(list) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-}
+const searchInput = document.getElementById("searchInput");
+const categoryFilter = document.getElementById("categoryFilter");
+const businessForm = document.getElementById("businessForm");
+const businessList = document.getElementById("registeredBusinessList");
 
 // Stops user-typed text from being treated as HTML
 function escapeHTML(text) {
@@ -25,83 +16,71 @@ function escapeHTML(text) {
         .replace(/'/g, "&#39;");
 }
 
-// Give old saved businesses (made before this update) a unique id
-function ensureIds() {
-    const list = getBusinesses();
-    let changed = false;
+// ---------- Start: only logged-in people can see this page ----------
 
-    list.forEach(function (business, index) {
-        if (!business.id) {
-            business.id = Date.now() + "-" + index;
-            changed = true;
-        }
-    });
+async function init() {
+    const { data } = await db.auth.getSession();
 
-    if (changed) {
-        saveBusinesses(list);
-    }
-}
-
-// ---------- Explore button ----------
-
-const exploreBtn = document.getElementById("exploreBtn");
-
-if (exploreBtn) {
-    exploreBtn.addEventListener("click", function () {
-        alert("Welcome to Lagos Business Network! Let's discover businesses together.");
-    });
-}
-
-// ---------- Search and filter ----------
-
-const searchInput = document.getElementById("searchInput");
-const categoryFilter = document.getElementById("categoryFilter");
-
-function filterBusinesses() {
-    const businessCards = document.querySelectorAll(".business-card");
-    const searchText = searchInput ? searchInput.value.toLowerCase() : "";
-    const selectedCategory = categoryFilter ? categoryFilter.value.toLowerCase() : "all";
-
-    businessCards.forEach(function (card) {
-        const nameEl = card.querySelector("h3");
-        const businessName = nameEl ? nameEl.textContent.toLowerCase() : "";
-
-        const categoryParagraph = Array.from(card.querySelectorAll("p")).find(function (p) {
-            return p.textContent.toLowerCase().startsWith("category:");
-        });
-
-        const categoryText = categoryParagraph
-            ? categoryParagraph.textContent.replace(/category:/i, "").trim().toLowerCase()
-            : "";
-
-        const matchesSearch = businessName.includes(searchText);
-        const matchesCategory =
-            selectedCategory === "all" || categoryText === selectedCategory;
-
-        card.style.display = matchesSearch && matchesCategory ? "block" : "none";
-    });
-}
-
-if (searchInput) searchInput.addEventListener("input", filterBusinesses);
-if (categoryFilter) categoryFilter.addEventListener("change", filterBusinesses);
-
-// ---------- Show registered businesses ----------
-
-function displayRegisteredBusinesses() {
-    const businessList = document.getElementById("registeredBusinessList");
-    if (!businessList) return;
-
-    const businesses = getBusinesses();
-    businessList.innerHTML = "";
-
-    if (businesses.length === 0) {
-        businessList.innerHTML = "<p>No businesses registered yet.</p>";
+    if (!data.session) {
+        window.location.href = "auth.html";
         return;
     }
 
-    businesses.forEach(function (business) {
+    currentUser = data.session.user;
+
+    const welcome = document.getElementById("welcomeText");
+    if (welcome) {
+        const name = currentUser.user_metadata.full_name || currentUser.email;
+        welcome.textContent = "Welcome, " + name + ". Register your business and find others to work with.";
+    }
+
+    await loadBusinesses();
+}
+
+// ---------- Load and show businesses ----------
+
+async function loadBusinesses() {
+    const { data, error } = await db
+        .from("businesses")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        businessList.innerHTML = "<p>Could not load businesses. " + escapeHTML(error.message) + "</p>";
+        return;
+    }
+
+    allBusinesses = data;
+    renderBusinesses();
+}
+
+function renderBusinesses() {
+    const searchText = searchInput.value.toLowerCase();
+    const selectedCategory = categoryFilter.value.toLowerCase();
+
+    const visible = allBusinesses.filter(function (business) {
+        const matchesSearch = business.name.toLowerCase().includes(searchText);
+        const matchesCategory =
+            selectedCategory === "all" ||
+            business.category.toLowerCase() === selectedCategory;
+        return matchesSearch && matchesCategory;
+    });
+
+    if (visible.length === 0) {
+        businessList.innerHTML = "<p>No businesses found.</p>";
+        return;
+    }
+
+    businessList.innerHTML = "";
+
+    visible.forEach(function (business) {
         const card = document.createElement("div");
         card.className = "business-card";
+
+        // Only the owner sees the delete button
+        const deleteButton = business.owner_id === currentUser.id
+            ? '<button type="button" class="delete-btn" data-id="' + escapeHTML(business.id) + '">Delete Business</button>'
+            : "";
 
         card.innerHTML = `
             <h3>${escapeHTML(business.name)}</h3>
@@ -111,72 +90,82 @@ function displayRegisteredBusinesses() {
             <p>Contact: ${escapeHTML(business.email)}</p>
             <a href="mailto:${escapeHTML(business.email)}" class="contact-btn">Email Business</a>
             <a href="tel:${escapeHTML(business.phone)}" class="contact-btn">Call Business</a>
-            <button type="button" class="delete-btn" data-id="${escapeHTML(business.id)}">
-                Delete Business
-            </button>
+            ${deleteButton}
         `;
 
         businessList.appendChild(card);
     });
-
-    // Keep the current search/filter applied after re-rendering
-    filterBusinesses();
 }
 
-// ---------- Delete a business ----------
-
-function deleteBusiness(id) {
-    if (!confirm("Are you sure you want to delete this business?")) return;
-
-    const updated = getBusinesses().filter(function (business) {
-        return String(business.id) !== String(id);
-    });
-
-    saveBusinesses(updated);
-    displayRegisteredBusinesses();
-    alert("Business deleted successfully!");
-}
-
-// One listener handles every delete button, even ones added later
-const registeredBusinessList = document.getElementById("registeredBusinessList");
-
-if (registeredBusinessList) {
-    registeredBusinessList.addEventListener("click", function (event) {
-        const button = event.target.closest(".delete-btn");
-        if (button) {
-            deleteBusiness(button.dataset.id);
-        }
-    });
-}
+searchInput.addEventListener("input", renderBusinesses);
+categoryFilter.addEventListener("change", renderBusinesses);
 
 // ---------- Register a business ----------
 
-const businessForm = document.getElementById("businessForm");
+businessForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
 
-if (businessForm) {
-    businessForm.addEventListener("submit", function (event) {
+    const submitButton = businessForm.querySelector("button[type='submit']");
+    submitButton.disabled = true;
+
+    const business = {
+        name: document.getElementById("businessName").value.trim(),
+        category: document.getElementById("businessCategory").value.trim(),
+        location: document.getElementById("businessLocation").value.trim(),
+        phone: document.getElementById("businessPhone").value.trim(),
+        email: document.getElementById("businessEmail").value.trim()
+    };
+
+    const { error } = await db.from("businesses").insert(business);
+
+    submitButton.disabled = false;
+
+    if (error) {
+        alert("Could not register business: " + error.message);
+        return;
+    }
+
+    businessForm.reset();
+    await loadBusinesses();
+    alert("Business registered successfully!");
+});
+
+// ---------- Delete a business ----------
+
+businessList.addEventListener("click", async function (event) {
+    const button = event.target.closest(".delete-btn");
+    if (!button) return;
+
+    if (!confirm("Are you sure you want to delete this business?")) return;
+
+    const { data, error } = await db
+        .from("businesses")
+        .delete()
+        .eq("id", button.dataset.id)
+        .select();
+
+    if (error || !data || data.length === 0) {
+        alert("Could not delete this business.");
+        return;
+    }
+
+    allBusinesses = allBusinesses.filter(function (business) {
+        return business.id !== button.dataset.id;
+    });
+    renderBusinesses();
+    alert("Business deleted successfully!");
+});
+
+// ---------- Log out ----------
+
+const logoutBtn = document.getElementById("logoutBtn");
+
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", async function (event) {
         event.preventDefault();
-
-        const business = {
-            id: Date.now().toString(),
-            name: document.getElementById("businessName").value.trim(),
-            category: document.getElementById("businessCategory").value.trim(),
-            location: document.getElementById("businessLocation").value.trim(),
-            phone: document.getElementById("businessPhone").value.trim(),
-            email: document.getElementById("businessEmail").value.trim()
-        };
-
-        const businesses = getBusinesses();
-        businesses.push(business);
-        saveBusinesses(businesses);
-
-        displayRegisteredBusinesses();
-        alert("Business registered successfully!");
-        businessForm.reset();
+        await db.auth.signOut();
+        window.location.href = "auth.html";
     });
 }
 
-// ---------- Start ----------
-
-ensureIds();
-displayRegisteredBusinesses();
+init();
