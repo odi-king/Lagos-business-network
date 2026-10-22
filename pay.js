@@ -1,4 +1,5 @@
-
+// Paystack PUBLIC test key
+// Never put your Paystack secret key in website JavaScript.
 const PAYSTACK_PUBLIC_KEY = "pk_test_e40b34f200a74d585aacfe9826480ec8f096722c";
 const PRICE_NAIRA = 20000;
 
@@ -13,7 +14,10 @@ function showMessage(text, type) {
 
 async function init() {
     if (!db) {
-        showMessage("Supabase is not connected yet. Check supabase-config.js.", "error");
+        showMessage(
+            "Supabase is not connected. Check supabase-config.js.",
+            "error"
+        );
         payBtn.disabled = true;
         return;
     }
@@ -21,8 +25,7 @@ async function init() {
     const { data, error } = await db.auth.getSession();
 
     if (error) {
-        showMessage("Unable to check your login. Please refresh and try again.", "error");
-        payBtn.disabled = true;
+        showMessage("Could not check your login: " + error.message, "error");
         return;
     }
 
@@ -33,15 +36,24 @@ async function init() {
 
     currentUser = data.session.user;
 
-    if (await hasActiveMembership(currentUser.id)) {
+    const active = await hasActiveMembership(currentUser.id);
+
+    if (active) {
         window.location.href = "dashboard.html";
         return;
+    }
+
+    if (membershipError) {
+        showMessage(
+            "Membership check: " + membershipError,
+            "error"
+        );
     }
 }
 
 async function waitForActivation() {
     payBtn.disabled = true;
-    showMessage("Payment submitted. Checking membership activation...", "ok");
+    showMessage("Payment received. Checking membership activation...", "ok");
 
     for (let i = 0; i < 20; i++) {
         if (await hasActiveMembership(currentUser.id)) {
@@ -49,51 +61,44 @@ async function waitForActivation() {
             return;
         }
 
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(function (resolve) {
+            setTimeout(resolve, 2000);
+        });
     }
 
     payBtn.disabled = false;
     showMessage(
-        "Payment status is still being checked. Please do not pay again yet. Contact support if membership is not activated.",
+        "Payment was submitted, but membership is not active yet. Check your Paystack transaction and webhook configuration before paying again.",
         "error"
     );
 }
 
 payBtn.addEventListener("click", function () {
     if (!currentUser) {
-        showMessage("Please log in and try again.", "error");
+        showMessage("Please log in first.", "error");
         return;
     }
 
     if (typeof PaystackPop === "undefined") {
-        showMessage("Paystack could not load. Check your internet connection and refresh.", "error");
+        showMessage("Paystack did not load. Refresh and try again.", "error");
         return;
     }
-
-    payBtn.disabled = true;
 
     const handler = PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: currentUser.email,
         amount: PRICE_NAIRA * 100,
         currency: "NGN",
-        ref: "LBN-" + Date.now() + "-" + Math.floor(Math.random() * 1000000),
+        ref: "LBN-" + Date.now() + "-" +
+            Math.floor(Math.random() * 1000000),
         metadata: {
             user_id: currentUser.id
         },
-        callback: function (response) {
-            // A server must verify response.reference with Paystack
-            // before activating membership.
-            showMessage(
-                "Payment reference received: " + response.reference +
-                ". Waiting for secure payment verification.",
-                "ok"
-            );
+        callback: function () {
             waitForActivation();
         },
         onClose: function () {
-            payBtn.disabled = false;
-            showMessage("Payment window closed. If you completed payment, check its status before trying again.");
+            showMessage("Payment window closed.");
         }
     });
 

@@ -1,3 +1,5 @@
+// Shared helper: does this user have a paid, unexpired membership?
+var membershipError = "";
 
 async function hasActiveMembership(userId) {
     const { data, error } = await db
@@ -7,13 +9,12 @@ async function hasActiveMembership(userId) {
         .maybeSingle();
 
     if (error) {
+        membershipError = error.message;
         console.error("Could not check membership:", error.message);
         return false;
     }
 
-    return Boolean(
-        data &&
-        data.paid_until &&
-        new Date(data.paid_until) > new Date()
-    );
+    membershipError = "";
+
+    return !!data && new Date(data.paid_until) > new Date();
 }
