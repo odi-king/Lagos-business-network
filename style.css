@@ -1,153 +1,78 @@
+* { box-sizing: border-box; }
+
 body {
-    font-family: Arial, sans-serif;
     margin: 0;
-    background: #f5f7fa;
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
     color: #222;
 }
 
-nav {
-    background: #123c69;
-    color: white;
+.hero {
+    background: #0b6e4f;
+    color: #fff;
+    text-align: center;
+    padding: 40px 16px;
+}
+
+.hero h1 { margin: 0 0 8px; }
+
+main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.panel {
+    background: #fff;
+    border-radius: 10px;
     padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
-nav h2 {
-    display: inline-block;
-    margin-right: 30px;
-}
+.panel h2 { margin-top: 0; }
 
-nav a {
-    color: white;
-    text-decoration: none;
-    margin: 10px;
-}
-
-#home {
-    text-align: center;
-    padding: 100px 20px;
-}
-
-#home h1 {
-    font-size: 42px;
-}
-
-#home p {
-    font-size: 20px;
-}
-
-button {
-    background: #123c69;
-    color: white;
-    padding: 14px 24px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-#businesses {
-    padding: 50px 20px;
-    text-align: center;
-}
-
-.business-card {
-    background: white;
-    margin: 20px auto;
-    padding: 20px;
-    max-width: 500px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.business-card h3 {
-    color: #123c69;
-}
-.contact-btn {
-    display: inline-block;
-    background-color: #123c69;
-    color: white;
-    padding: 12px 20px;
-    text-decoration: none;
-    border-radius: 6px;
-    margin-top: 10px;
-}
-
-.contact-btn:hover {
-    background-color: #0b2745;
-}
-
-#register-business {
-    max-width: 700px;
-    margin: 50px auto;
-    padding: 30px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-#register-business h2 {
-    text-align: center;
-    color: #123c69;
-}
-
-#businessForm {
+form, .filters {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-top: 20px;
+    gap: 10px;
 }
 
-#businessForm input {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px;
+input, select {
+    padding: 10px;
+    font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 6px;
-    font-size: 16px;
+    width: 100%;
 }
 
-#businessForm button {
-    padding: 14px;
-    background: #123c69;
-    color: white;
+.contact-btn, .delete-btn {
+    display: inline-block;
+    padding: 10px 14px;
+    font-size: 15px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 16px;
+    text-decoration: none;
+    color: #fff;
+    background: #0b6e4f;
 }
 
-#businessForm button:hover {
-    background: #0b2745;
-}
-/* Recently Registered Businesses */
-#registered-businesses {
-    padding: 40px 20px;
-    max-width: 1100px;
-    margin: 0 auto;
+.hero .contact-btn { background: #fff; color: #0b6e4f; margin-top: 10px; }
+
+.delete-btn { background: #c62828; }
+
+.business-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 12px;
 }
 
-#registered-businesses h2 {
-    text-align: center;
-    color: #1e3a5f;
-    margin-bottom: 10px;
-}
+.business-card h3 { margin: 0 0 8px; }
+.business-card p { margin: 4px 0; }
 
-#registered-businesses > p {
-    text-align: center;
-    color: #666;
-    margin-bottom: 30px;
-}
-
-#registeredBusinessList {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
-}
-
-#registeredBusinessList .business-card {
-    background: #ffffff;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    border: 1px solid #e5e7eb;
-    text-align: left;
+.business-card .contact-btn,
+.business-card .delete-btn {
+    margin: 10px 8px 0 0;
 }
