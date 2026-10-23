@@ -216,3 +216,81 @@ textarea {
 textarea::placeholder { color: var(--muted); }
 textarea:focus { outline: none; border-color: var(--accent); }
 form textarea { grid-column: 1 / -1; }
+
+/* Membership price */
+.price { font-size: 34px; font-weight: 700; color: var(--accent); margin: 6px 0 0; }
+.price span { font-size: 15px; font-weight: 400; color: var(--muted); }
+
+/* ---------- Phones and the installed app ---------- */
+html { -webkit-text-size-adjust: 100%; }
+body { overflow-x: hidden; padding-bottom: env(safe-area-inset-bottom); }
+img, video { max-width: 100%; height: auto; }
+
+.nav { padding-top: env(safe-area-inset-top); }
+.container {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+}
+
+/* Easy-to-tap buttons and fields */
+.btn, .contact-btn, .delete-btn, input, select { min-height: 44px; }
+.nav-links a { padding: 10px 2px; }
+
+@media (max-width: 520px) {
+    .nav .container {
+        height: auto;
+        min-height: 56px;
+        flex-wrap: wrap;
+        gap: 4px 12px;
+        padding-top: 6px;
+        padding-bottom: 6px;
+    }
+    .logo { font-size: 14px; }
+    .nav-links { gap: 14px; font-size: 14px; }
+
+    .hero { padding: 40px 0 24px; }
+    .hero h1 { font-size: 30px; }
+    .hero p { font-size: 16px; }
+    .hero-buttons .btn { width: 100%; text-align: center; }
+
+    .panel { padding: 16px; }
+    .page-head h1 { font-size: 26px; }
+
+    .business-card .contact-btn,
+    .business-card .delete-btn {
+        display: block;
+        width: 100%;
+        text-align: center;
+        margin: 10px 0 0;
+    }
+}
+
+/* Install prompt */
+.install-bar {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--card);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    font-size: 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+.install-bar span { flex: 1; }
+.install-bar .contact-btn { padding: 8px 14px; }
+.install-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    min-height: 0;
+    padding: 0 4px;
+}
