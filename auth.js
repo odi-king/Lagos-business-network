@@ -1,3 +1,6 @@
+// The live address of your site. Confirmation emails send people back here.
+const SITE_URL = "https://odi-king.github.io/Lagos-business-network/";
+
 let mode = "login";
 
 const authTitle = document.getElementById("authTitle");
@@ -17,28 +20,30 @@ function showMessage(text, type) {
     authMessage.className = "msg " + (type || "");
 }
 
-window.addEventListener("error", function (event) {
-    showMessage("Error: " + event.message, "error");
+// If anything breaks, show the reason on the page instead of failing silently
+window.addEventListener("error", function (e) {
+    showMessage("Error: " + e.message, "error");
 });
-
-window.addEventListener("unhandledrejection", function (event) {
-    const reason = event.reason && event.reason.message
-        ? event.reason.message
-        : String(event.reason || "Unknown error");
-
+window.addEventListener("unhandledrejection", function (e) {
+    const reason = e.reason && e.reason.message ? e.reason.message : e.reason;
     showMessage("Error: " + reason, "error");
 });
 
 function supabaseReady() {
-    if (typeof db === "undefined" || !db) {
-        const reason = typeof dbError !== "undefined" && dbError
-            ? dbError
-            : "Check supabase-config.js and refresh the page.";
-
-        showMessage("Supabase is not connected: " + reason, "error");
-        return false;
+    let ready = false;
+    try {
+        ready = !!db;
+    } catch (e) {
+        ready = false;
     }
 
+    if (!ready) {
+        showMessage(
+            "Supabase is not connected: " + (typeof dbError !== "undefined" && dbError ? dbError : "check supabase-config.js, then refresh."),
+            "error"
+        );
+        return false;
+    }
     return true;
 }
 
@@ -48,17 +53,14 @@ function setMode(newMode) {
 
     authTitle.textContent = signup ? "Create your account" : "Log in";
     submitBtn.textContent = signup ? "Create account" : "Log in";
-    toggleText.textContent = signup
-        ? "Already have an account?"
-        : "New here?";
+    toggleText.textContent = signup ? "Already have an account?" : "New here?";
     toggleLink.textContent = signup ? "Log in" : "Create an account";
-
     signupFields.style.display = signup ? "flex" : "none";
     fullName.required = signup;
-
     showMessage("");
 }
 
+// The switch between Log in and Create account works even before Supabase is set up
 toggleLink.addEventListener("click", function (event) {
     event.preventDefault();
     setMode(mode === "login" ? "signup" : "login");
@@ -82,6 +84,7 @@ authForm.addEventListener("submit", async function (event) {
                 email: email,
                 password: password,
                 options: {
+                    emailRedirectTo: SITE_URL + "auth.html",
                     data: {
                         full_name: fullName.value.trim(),
                         role: roleSelect.value
@@ -95,10 +98,7 @@ authForm.addEventListener("submit", async function (event) {
                 window.location.href = "dashboard.html";
             } else {
                 setMode("login");
-                showMessage(
-                    "Account created. Check your email to confirm it, then log in.",
-                    "ok"
-                );
+                showMessage("Account created. Check your email to confirm it, then log in.", "ok");
             }
         } else {
             const { error } = await db.auth.signInWithPassword({
@@ -107,37 +107,20 @@ authForm.addEventListener("submit", async function (event) {
             });
 
             if (error) throw error;
-
             window.location.href = "dashboard.html";
         }
     } catch (error) {
-        showMessage(
-            error.message || "Something went wrong. Please try again.",
-            "error"
-        );
+        showMessage(error.message, "error");
     } finally {
         submitBtn.disabled = false;
     }
 });
 
-async function checkExistingSession() {
-    if (!supabaseReady()) return;
-
-    try {
-        const { data, error } = await db.auth.getSession();
-
-        if (error) throw error;
-
-        if (data.session) {
+// Already logged in? Go straight to the marketplace
+if (typeof db !== "undefined" && db) {
+    db.auth.getSession().then(function (result) {
+        if (result.data.session) {
             window.location.href = "dashboard.html";
         }
-    } catch (error) {
-        showMessage(
-            "Could not check your login: " + error.message,
-            "error"
-        );
-    }
+    });
 }
-
-setMode("login");
-checkExistingSession();
