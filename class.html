@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Class - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">L</span> Lagos Business Network</a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="classes.html" class="active">Classes</a>
+            <a href="marketplace.html">Marketplace</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1 id="classTitle">Loading...</h1>
+        <p id="classMeta"></p>
+        <p id="classDesc"></p>
+    </div>
+
+    <section class="panel">
+        <h2>Live classes</h2>
+        <div id="liveList"></div>
+    </section>
+
+    <section class="panel">
+        <h2>Video lessons</h2>
+        <div id="lessonList"></div>
+    </section>
+
+    <div id="ownerPanel" style="display:none;">
+        <section class="panel">
+            <h2>Add a video lesson</h2>
+            <p class="meta">Upload your video to YouTube (set to Unlisted), Vimeo or Google Drive, then paste the link here.</p>
+            <form id="lessonForm">
+                <input type="text" id="lessonTitle" placeholder="Lesson title" required>
+                <input type="url" id="lessonUrl" placeholder="Video link (https://...)" required>
+                <button type="submit" class="contact-btn">Add lesson</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2>Schedule a live class</h2>
+            <p class="meta">Paste your Zoom, Google Meet or Teams invite link. Free Zoom accounts end group meetings after 40 minutes.</p>
+            <form id="liveForm">
+                <input type="text" id="liveTitle" placeholder="Topic (e.g. How to price your products)" required>
+                <input type="datetime-local" id="liveStart" required>
+                <input type="url" id="liveUrl" placeholder="Meeting link (https://...)" required>
+                <button type="submit" class="contact-btn">Schedule live class</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <button type="button" id="deleteClassBtn" class="delete-btn">Delete this class</button>
+        </section>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="membership.js"></script>
+<script src="class.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>

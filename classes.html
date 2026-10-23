@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Classes - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">L</span> Lagos Business Network</a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="classes.html" class="active">Classes</a>
+            <a href="marketplace.html">Marketplace</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>Classes</h1>
+        <p id="pageNote">Choose a lecturer and learn from their teaching.</p>
+    </div>
+
+    <section id="createPanel" class="panel" style="display:none;">
+        <h2>Create a class</h2>
+        <form id="classForm">
+            <input type="text" id="className" placeholder="Class title" required>
+            <input type="text" id="classField" list="fieldOptions" placeholder="The part you teach (e.g. Fashion business)" required>
+            <datalist id="fieldOptions">
+                <option value="Fashion"></option>
+                <option value="Food and catering"></option>
+                <option value="Technology"></option>
+                <option value="Agriculture"></option>
+                <option value="Beauty"></option>
+                <option value="Writing and media"></option>
+                <option value="Languages"></option>
+                <option value="Business and sales"></option>
+            </datalist>
+            <textarea id="classDesc" placeholder="What will students learn and how will it help them earn?"></textarea>
+            <button type="submit" class="contact-btn">Create class</button>
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2>Find a class</h2>
+        <div class="filters">
+            <input type="text" id="classSearch" placeholder="Search by class or lecturer">
+            <select id="fieldFilter"><option value="all">All fields</option></select>
+        </div>
+        <div id="classList"></div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="membership.js"></script>
+<script src="classes.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>
