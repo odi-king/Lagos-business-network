@@ -38,13 +38,39 @@ async function init() {
         return;
     }
 
+    const profileResult = await db
+        .from("profiles")
+        .select("role, approved, graduated")
+        .eq("id", currentUser.id)
+        .single();
+
+    const me = profileResult.data;
+    const allowed = me && (
+        (me.role === "lecturer" && me.approved) ||
+        (me.role === "student" && me.graduated)
+    );
+
+    if (!allowed) {
+        const waiting = me && me.role === "lecturer";
+        document.querySelector("main").innerHTML = `
+            <div class="page-head"><h1>Marketplace</h1></div>
+            <section class="panel">
+                <h2>The marketplace is not open to you yet</h2>
+                <p class="meta">${waiting
+                    ? "Your lecturer account is still being verified. The marketplace opens as soon as it is approved."
+                    : "Students unlock the marketplace after finishing the one-year program."}</p>
+                <a href="classes.html" class="btn btn-primary" style="margin-top:10px;">Go to classes</a>
+            </section>`;
+        return;
+    }
+
     const welcome = document.getElementById("welcomeText");
     if (welcome) {
         const name = currentUser.user_metadata.full_name || currentUser.email;
         welcome.textContent = "Welcome, " + name + ". Register your business and find others to work with.";
     }
 
-    await loadBusinesses();
+    await Promise.all([loadBusinesses(), loadVideos()]);
 }
 
 // ---------- Load and show businesses ----------
@@ -126,10 +152,7 @@ businessForm.addEventListener("submit", async function (event) {
         email: document.getElementById("businessEmail").value.trim()
     };
 
-    const { error } = await db.from("businesses").insert({
-    ...business,
-    owner_id: currentUser.id
-});
+    const { error } = await db.from("businesses").insert(business);
 
     submitButton.disabled = false;
 
@@ -169,3 +192,144 @@ businessList.addEventListener("click", async function (event) {
     alert("Business deleted successfully!");
 });
 
+// ---------- Log out ----------
+
+const logoutBtn = document.getElementById("logoutBtn");
+
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", async function (event) {
+        event.preventDefault();
+        await db.auth.signOut();
+        window.location.href = "auth.html";
+    });
+}
+
+// ---------- Business videos ----------
+
+const videoList = document.getElementById("videoList");
+const videoForm = document.getElementById("videoForm");
+
+async function loadVideos() {
+    const { data, error } = await db
+        .from("business_videos")
+        .select("*, profiles(full_name)")
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        videoList.innerHTML = "<p>Could not load videos. " + escapeHTML(error.message) + "</p>";
+        return;
+    }
+
+    if (data.length === 0) {
+        videoList.innerHTML = "<p class='meta'>No business videos yet.</p>";
+        return;
+    }
+
+    videoList.innerHTML = "";
+
+    data.forEach(function (item) {
+        const embed = toEmbedUrl(item.video_url);
+        const owner = item.profiles && item.profiles.full_name ? item.profiles.full_name : "Member";
+        const card = document.createElement("div");
+        card.className = "business-card";
+
+        const watch = embed
+            ? '<button type="button" class="contact-btn watch-btn" data-embed="' + escapeHTML(embed) + '">Watch</button>'
+            : '<a class="contact-btn" target="_blank" rel="noopener" href="' + escapeHTML(item.video_url) + '">Open video</a>';
+
+        const remove = item.owner_id === currentUser.id
+            ? '<button type="button" class="delete-btn" data-video-id="' + escapeHTML(item.id) + '">Delete</button>'
+            : "";
+
+        card.innerHTML = `
+            <h3>${escapeHTML(item.title)}</h3>
+            <p><span class="badge lecturer" style="margin-left:0;">${escapeHTML(item.category)}</span></p>
+            <p class="meta">By ${escapeHTML(owner)}</p>
+            <p>${escapeHTML(item.description)}</p>
+            <div class="video-slot"></div>
+            ${watch}
+            ${remove}
+        `;
+
+        videoList.appendChild(card);
+    });
+}
+
+videoList.addEventListener("click", async function (event) {
+    const watchButton = event.target.closest(".watch-btn");
+
+    if (watchButton) {
+        const slot = watchButton.parentElement.querySelector(".video-slot");
+
+        if (slot.firstChild) {
+            slot.innerHTML = "";
+            watchButton.textContent = "Watch";
+            return;
+        }
+
+        const wrap = document.createElement("div");
+        wrap.className = "video-wrap";
+
+        const frame = document.createElement("iframe");
+        frame.src = watchButton.dataset.embed;
+        frame.loading = "lazy";
+        frame.allowFullscreen = true;
+        frame.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
+
+        wrap.appendChild(frame);
+        slot.appendChild(wrap);
+        watchButton.textContent = "Close video";
+        return;
+    }
+
+    const deleteButton = event.target.closest(".delete-btn");
+    if (!deleteButton || !deleteButton.dataset.videoId) return;
+
+    if (!confirm("Delete this video?")) return;
+
+    const { data, error } = await db
+        .from("business_videos")
+        .delete()
+        .eq("id", deleteButton.dataset.videoId)
+        .select();
+
+    if (error || !data || data.length === 0) {
+        alert("Could not delete this video.");
+        return;
+    }
+
+    await loadVideos();
+});
+
+videoForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const link = document.getElementById("videoUrl").value.trim();
+
+    if (!toEmbedUrl(link)) {
+        alert("Please use a YouTube, Vimeo or Google Drive link.");
+        return;
+    }
+
+    const button = videoForm.querySelector("button[type='submit']");
+    button.disabled = true;
+
+    const { error } = await db.from("business_videos").insert({
+        title: document.getElementById("videoTitle").value.trim(),
+        category: document.getElementById("videoCategory").value,
+        video_url: link,
+        description: document.getElementById("videoDesc").value.trim()
+    });
+
+    button.disabled = false;
+
+    if (error) {
+        alert("Could not add the video: " + error.message);
+        return;
+    }
+
+    videoForm.reset();
+    await loadVideos();
+});
+
+init();

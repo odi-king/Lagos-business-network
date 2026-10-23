@@ -41,7 +41,7 @@ async function init() {
 
     const result = await db
         .from("profiles")
-        .select("full_name, role, approved")
+        .select("full_name, role, approved, graduated")
         .eq("id", currentUser.id)
         .single();
 
@@ -67,7 +67,7 @@ function showRole() {
         document.getElementById("pendingNotice").style.display = profile.approved ? "none" : "block";
         document.getElementById("lecturerPanel").style.display = profile.approved ? "block" : "none";
     } else {
-        roleBadge.textContent = "Student";
+        roleBadge.textContent = profile.graduated ? "Graduate" : "Student";
         roleBadge.className = "badge";
         document.getElementById("studentPanel").style.display = "block";
     }

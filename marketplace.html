@@ -21,6 +21,7 @@
         <div class="nav-links">
             <a href="index.html">Home</a>
             <a href="dashboard.html">Dashboard</a>
+            <a href="classes.html">Classes</a>
             <a href="marketplace.html" class="active">Marketplace</a>
             <a href="#" id="logoutBtn">Log out</a>
         </div>
@@ -67,6 +68,26 @@
         </div>
         <div id="registeredBusinessList"></div>
     </section>
+
+    <section class="panel">
+        <h2>Business videos</h2>
+        <p class="meta">Show the business you run so people can find you and trade with you. Upload your video to YouTube (Unlisted), Vimeo or Google Drive and paste the link.</p>
+        <form id="videoForm">
+            <input type="text" id="videoTitle" placeholder="Video title" required>
+            <select id="videoCategory" required>
+                <option value="" disabled selected>Select category</option>
+                <option value="Food">Food</option>
+                <option value="Fashion">Fashion</option>
+                <option value="Tech">Tech</option>
+                <option value="Services">Services</option>
+                <option value="Other">Other</option>
+            </select>
+            <input type="url" id="videoUrl" placeholder="Video link (https://...)" required>
+            <textarea id="videoDesc" placeholder="What does your business do?"></textarea>
+            <button type="submit" class="contact-btn">Add video</button>
+        </form>
+        <div id="videoList"></div>
+    </section>
 </main>
 
 <footer class="footer">
@@ -76,6 +97,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="membership.js"></script>
+<script src="video-utils.js"></script>
 <script src="script.js"></script>
 <script src="pwa.js"></script>
 </body>
