@@ -57,6 +57,7 @@ function setMode(newMode) {
     toggleLink.textContent = signup ? "Log in" : "Create an account";
     signupFields.style.display = signup ? "flex" : "none";
     fullName.required = signup;
+    passwordInput.autocomplete = signup ? "new-password" : "current-password";
     showMessage("");
 }
 
