@@ -85,7 +85,7 @@ async function init() {
 
     const result = await db
         .from("classes")
-        .select("*, profiles(full_name)")
+        .select("*, profiles(full_name, institution)")
         .eq("id", classId)
         .maybeSingle();
 
@@ -103,8 +103,14 @@ async function init() {
 
     document.title = currentClass.title + " - Lagos Business Network";
     document.getElementById("classTitle").textContent = currentClass.title;
-    document.getElementById("classMeta").textContent =
-        currentClass.field + " \u2022 Taught by " + lecturer;
+    const institution = currentClass.profiles && currentClass.profiles.institution
+        ? currentClass.profiles.institution
+        : "";
+
+    document.getElementById("classMeta").innerHTML =
+        escapeHTML(currentClass.field) + " &bull; Taught by " + escapeHTML(lecturer) +
+        ' <span class="badge lecturer">Verified lecturer</span>' +
+        (institution ? "<br>" + escapeHTML(institution) : "");
     document.getElementById("classDesc").textContent = currentClass.description || "";
 
     if (isOwner) {
@@ -112,6 +118,12 @@ async function init() {
     }
 
     await Promise.all([loadLessons(), loadLive()]);
+
+    // Links from the dashboard jump straight to the lesson or live class form
+    if (isOwner && (location.hash === "#addLesson" || location.hash === "#addLive")) {
+        const target = document.querySelector(location.hash);
+        if (target) target.scrollIntoView();
+    }
 }
 
 // ---------- Video lessons ----------

@@ -61,6 +61,48 @@ async function init() {
         logout.parentNode.insertBefore(link, logout);
     }
     await loadHandouts();
+
+    if (profile.role === "lecturer" && profile.approved) {
+        await loadMyClasses();
+    }
+}
+
+async function loadMyClasses() {
+    const box = document.getElementById("myClasses");
+
+    const { data, error } = await db
+        .from("classes")
+        .select("id, title, field")
+        .eq("lecturer_id", currentUser.id)
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        box.innerHTML = "<p>Could not load your classes. " + escapeHTML(error.message) + "</p>";
+        return;
+    }
+
+    if (data.length === 0) {
+        box.innerHTML = "<p class='meta'>You have not created a class yet. Tap Create a new class to start.</p>";
+        return;
+    }
+
+    box.innerHTML = "";
+
+    data.forEach(function (item) {
+        const id = encodeURIComponent(item.id);
+        const card = document.createElement("div");
+        card.className = "business-card";
+
+        card.innerHTML = `
+            <h3>${escapeHTML(item.title)}</h3>
+            <p class="meta">${escapeHTML(item.field)}</p>
+            <a class="contact-btn" href="class.html?id=${id}#addLesson">Add video lesson</a>
+            <a class="contact-btn" href="class.html?id=${id}#addLive">Schedule live class</a>
+            <a class="btn btn-outline" style="margin:10px 8px 0 0;" href="class.html?id=${id}">Open class</a>
+        `;
+
+        box.appendChild(card);
+    });
 }
 
 function showRole() {
@@ -74,6 +116,7 @@ function showRole() {
         roleBadge.className = "badge lecturer";
         document.getElementById("pendingNotice").style.display = profile.approved ? "none" : "block";
         document.getElementById("lecturerPanel").style.display = profile.approved ? "block" : "none";
+        document.getElementById("teachPanel").style.display = profile.approved ? "block" : "none";
     } else {
         roleBadge.textContent = profile.graduated ? "Graduate" : "Student";
         roleBadge.className = "badge";
