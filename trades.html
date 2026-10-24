@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My trades - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="classes.html">Classes</a>
+            <a href="marketplace.html">Marketplace</a>
+            <a href="trades.html" class="active">My trades</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>My trades</h1>
+        <p>Your chats with buyers and sellers. Start one from a listing in the marketplace.</p>
+    </div>
+
+    <section class="panel">
+        <div class="filters">
+            <select id="tradeFilter">
+                <option value="active">Active trades</option>
+                <option value="closed">Completed or cancelled</option>
+                <option value="all">All trades</option>
+            </select>
+        </div>
+        <div id="tradeList"></div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="membership.js"></script>
+<script src="trades.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>
