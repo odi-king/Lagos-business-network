@@ -107,9 +107,18 @@ function renderPeople() {
         card.className = "business-card";
 
         const isLecturer = p.role === "lecturer";
-        const statusBadge = isLecturer
-            ? (p.approved ? "Verified lecturer" : "Waiting for approval")
-            : (p.graduated ? "Graduate" : "Student");
+        const statusBadge = p.is_admin
+            ? "\u2605 Administrator"
+            : isLecturer
+                ? (p.approved ? "\u2713 Verified lecturer" : "Waiting for approval")
+                : (p.verified ? "\u2713 Verified trader" : (p.graduated ? "Graduate" : "Student"));
+        const badgeClass = p.is_admin ? "admin" : isLecturer ? "lecturer" : p.verified ? "trader" : "";
+
+        const verifyButton = (!isLecturer && !p.is_admin)
+            ? (p.verified
+                ? '<button type="button" class="delete-btn" data-action="unverify" data-id="' + escapeHTML(p.id) + '">Remove verified</button>'
+                : '<button type="button" class="btn btn-outline" data-action="verify" data-id="' + escapeHTML(p.id) + '">Make verified trader</button>')
+            : "";
 
         const roleButton = isLecturer
             ? (p.approved
@@ -125,12 +134,13 @@ function renderPeople() {
 
         card.innerHTML = `
             <h3>${escapeHTML(p.full_name || "No name")}
-                <span class="badge ${isLecturer ? "lecturer" : ""}">${statusBadge}</span>
+                <span class="badge ${badgeClass}">${statusBadge}</span>
             </h3>
             <p class="meta">${escapeHTML(p.email)}</p>
             ${p.institution ? '<p class="meta">School: ' + escapeHTML(p.institution) + "</p>" : ""}
             <p class="meta">Joined ${new Date(p.created_at).toLocaleDateString()} &bull; ${paidText}</p>
             ${roleButton}
+            ${verifyButton}
             <button type="button" class="btn btn-outline" data-action="grant" data-id="${escapeHTML(p.id)}">Give 1 year access</button>
         `;
 
@@ -152,6 +162,8 @@ peopleList.addEventListener("click", async function (event) {
         unapprove: "Remove " + name + "'s lecturer approval?",
         graduate: "Graduate " + name + " and open the marketplace for them?",
         ungraduate: "Undo graduation for " + name + "?",
+        verify: "Make " + name + " a verified trader (blue tick)?",
+        unverify: "Remove " + name + "'s verified trader badge?",
         grant: "Give " + name + " one year of free membership?"
     };
 
@@ -164,6 +176,8 @@ peopleList.addEventListener("click", async function (event) {
     if (action === "unapprove") result = await db.rpc("admin_set_flags", { target: id, set_approved: false });
     if (action === "graduate") result = await db.rpc("admin_set_flags", { target: id, set_graduated: true });
     if (action === "ungraduate") result = await db.rpc("admin_set_flags", { target: id, set_graduated: false });
+    if (action === "verify") result = await db.rpc("admin_set_flags", { target: id, set_verified: true });
+    if (action === "unverify") result = await db.rpc("admin_set_flags", { target: id, set_verified: false });
     if (action === "grant") result = await db.rpc("admin_grant_membership", { target: id, add_days: 365 });
 
     if (result && result.error) {

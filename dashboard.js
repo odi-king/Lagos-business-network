@@ -41,7 +41,7 @@ async function init() {
 
     const result = await db
         .from("profiles")
-        .select("full_name, role, approved, graduated, is_admin")
+        .select("full_name, role, approved, graduated, verified, is_admin")
         .eq("id", currentUser.id)
         .single();
 
@@ -112,15 +112,20 @@ function showRole() {
     welcomeText.textContent = "Welcome, " + name + ".";
 
     if (isLecturer) {
-        roleBadge.textContent = profile.approved ? "Lecturer" : "Lecturer (pending)";
+        roleBadge.textContent = profile.approved ? "\u2713 Verified lecturer" : "Lecturer (pending)";
         roleBadge.className = "badge lecturer";
         document.getElementById("pendingNotice").style.display = profile.approved ? "none" : "block";
         document.getElementById("lecturerPanel").style.display = profile.approved ? "block" : "none";
         document.getElementById("teachPanel").style.display = profile.approved ? "block" : "none";
     } else {
-        roleBadge.textContent = profile.graduated ? "Graduate" : "Student";
-        roleBadge.className = "badge";
+        roleBadge.textContent = profile.verified ? "\u2713 Verified trader" : profile.graduated ? "Graduate" : "Student";
+        roleBadge.className = profile.verified ? "badge trader" : "badge";
         document.getElementById("studentPanel").style.display = "block";
+    }
+
+    if (profile.is_admin) {
+        roleBadge.textContent = "\u2605 Administrator";
+        roleBadge.className = "badge admin";
     }
 }
 

@@ -327,3 +327,28 @@ img, video { max-width: 100%; height: auto; }
     .logo-name { display: none; }
     .logo-mark { height: 30px; font-size: 14px; }
 }
+
+/* Verification badges */
+.vbadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 999px;
+    border: 1px solid;
+    vertical-align: middle;
+    white-space: nowrap;
+    margin-left: 6px;
+}
+.vbadge.lecturer { color: #22d3a0; background: #0f2b2a; border-color: #14503f; }
+.vbadge.trader   { color: #5b8cff; background: #14203f; border-color: #243a6b; }
+.vbadge.admin    { color: #f2c14e; background: #2a2110; border-color: #5c4513; }
+
+.badge.admin  { background: #2a2110; color: #f2c14e; border-color: #5c4513; }
+.badge.trader { background: #14203f; color: #5b8cff; border-color: #243a6b; }
+
+.benefits { list-style: none; padding: 0; margin: 8px 0; color: var(--muted); }
+.benefits li { padding: 4px 0; }
+.benefits li::before { content: "\2713"; color: var(--accent); margin-right: 8px; font-weight: 700; }

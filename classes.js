@@ -58,7 +58,7 @@ async function init() {
 async function loadClasses() {
     const { data, error } = await db
         .from("classes")
-        .select("*, profiles(full_name)")
+        .select("*, profiles(full_name, institution, role, approved, verified, is_admin)")
         .order("created_at", { ascending: false });
 
     if (error) {
@@ -115,13 +115,15 @@ function renderClasses() {
 
     visible.forEach(function (item) {
         const lecturer = item.profiles && item.profiles.full_name ? item.profiles.full_name : "Lecturer";
+        const institution = item.profiles && item.profiles.institution ? item.profiles.institution : "";
         const card = document.createElement("div");
         card.className = "business-card";
 
         card.innerHTML = `
             <h3>${escapeHTML(item.title)}</h3>
             <p><span class="badge lecturer" style="margin-left:0;">${escapeHTML(item.field)}</span></p>
-            <p class="meta">Taught by ${escapeHTML(lecturer)}</p>
+            <p class="meta">Taught by ${escapeHTML(lecturer)} ${badgeHTML(item.profiles)}</p>
+            ${institution ? `<p class="meta">${escapeHTML(institution)}</p>` : ""}
             <p>${escapeHTML(item.description)}</p>
             <a href="class.html?id=${encodeURIComponent(item.id)}" class="contact-btn">Open class</a>
         `;
@@ -143,7 +145,6 @@ classForm.addEventListener("submit", async function (event) {
         title: document.getElementById("className").value.trim(),
         field: document.getElementById("classField").value.trim(),
         description: document.getElementById("classDesc").value.trim()
-         
     });
 
     button.disabled = false;

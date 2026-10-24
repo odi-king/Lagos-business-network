@@ -85,7 +85,7 @@ async function init() {
 
     const result = await db
         .from("classes")
-        .select("*, profiles(full_name, institution)")
+        .select("*, profiles(full_name, institution, role, approved, verified, is_admin)")
         .eq("id", classId)
         .maybeSingle();
 
@@ -109,7 +109,7 @@ async function init() {
 
     document.getElementById("classMeta").innerHTML =
         escapeHTML(currentClass.field) + " &bull; Taught by " + escapeHTML(lecturer) +
-        ' <span class="badge lecturer">Verified lecturer</span>' +
+        badgeHTML(currentClass.profiles) +
         (institution ? "<br>" + escapeHTML(institution) : "");
     document.getElementById("classDesc").textContent = currentClass.description || "";
 

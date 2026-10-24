@@ -40,12 +40,13 @@ async function init() {
 
     const profileResult = await db
         .from("profiles")
-        .select("role, approved, graduated")
+        .select("role, approved, graduated, is_admin")
         .eq("id", currentUser.id)
         .single();
 
     const me = profileResult.data;
     const allowed = me && (
+        me.is_admin ||
         (me.role === "lecturer" && me.approved) ||
         (me.role === "student" && me.graduated)
     );
@@ -212,7 +213,7 @@ const videoForm = document.getElementById("videoForm");
 async function loadVideos() {
     const { data, error } = await db
         .from("business_videos")
-        .select("*, profiles(full_name)")
+        .select("*, profiles(full_name, role, approved, verified, is_admin)")
         .order("created_at", { ascending: false });
 
     if (error) {
@@ -244,7 +245,7 @@ async function loadVideos() {
         card.innerHTML = `
             <h3>${escapeHTML(item.title)}</h3>
             <p><span class="badge lecturer" style="margin-left:0;">${escapeHTML(item.category)}</span></p>
-            <p class="meta">By ${escapeHTML(owner)}</p>
+            <p class="meta">By ${escapeHTML(owner)}${badgeHTML(item.profiles)}</p>
             <p>${escapeHTML(item.description)}</p>
             <div class="video-slot"></div>
             ${watch}
