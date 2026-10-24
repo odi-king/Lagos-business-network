@@ -1,6 +1,6 @@
 // Service worker: lets the app open fast and show its pages when the signal is weak.
 // Bump CACHE_NAME whenever you push changes, so phones pick up the new files.
-const CACHE_NAME = "lbn-v4";
+const CACHE_NAME = "lbn-v7";
 
 const APP_FILES = [
     "./",
@@ -9,6 +9,7 @@ const APP_FILES = [
     "dashboard.html",
     "marketplace.html",
     "pay.html",
+    "admin.html",
     "classes.html",
     "class.html",
     "style.css",
@@ -16,6 +17,7 @@ const APP_FILES = [
     "dashboard.js",
     "script.js",
     "pay.js",
+    "admin.js",
     "classes.js",
     "class.js",
     "membership.js",

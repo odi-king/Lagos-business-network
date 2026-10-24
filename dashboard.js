@@ -41,7 +41,7 @@ async function init() {
 
     const result = await db
         .from("profiles")
-        .select("full_name, role, approved, graduated")
+        .select("full_name, role, approved, graduated, is_admin")
         .eq("id", currentUser.id)
         .single();
 
@@ -52,6 +52,14 @@ async function init() {
 
     profile = result.data;
     showRole();
+
+    if (profile.is_admin) {
+        const link = document.createElement("a");
+        link.href = "admin.html";
+        link.textContent = "Admin";
+        const logout = document.getElementById("logoutBtn");
+        logout.parentNode.insertBefore(link, logout);
+    }
     await loadHandouts();
 }
 

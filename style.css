@@ -311,3 +311,19 @@ img, video { max-width: 100%; height: auto; }
     height: 100%;
     border: 0;
 }
+
+/* LBN logo */
+.logo { gap: 10px; }
+.logo-mark {
+    width: auto;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+@media (max-width: 420px) {
+    .logo-name { display: none; }
+    .logo-mark { height: 30px; font-size: 14px; }
+}

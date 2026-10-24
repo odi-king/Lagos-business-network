@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="admin.html" class="active">Admin</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>Admin</h1>
+        <p id="adminNote">Approve lecturers, graduate students and manage access.</p>
+    </div>
+
+    <div id="adminStats" class="grid cols-2" style="margin-bottom:16px;"></div>
+
+    <section class="panel">
+        <h2>People</h2>
+        <p class="meta">Before approving a lecturer, check that their school email or staff page matches their name and school.</p>
+        <div class="filters">
+            <input type="text" id="adminSearch" placeholder="Search by name, email or school">
+            <select id="adminFilter">
+                <option value="waiting">Lecturers waiting for approval</option>
+                <option value="all">Everyone</option>
+                <option value="lecturers">Lecturers</option>
+                <option value="students">Students</option>
+                <option value="graduates">Graduates</option>
+                <option value="unpaid">Not paid</option>
+            </select>
+        </div>
+        <div id="peopleList"></div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="admin.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>
