@@ -1,6 +1,6 @@
 // Service worker: lets the app open fast and show its pages when the signal is weak.
 // Bump CACHE_NAME whenever you push changes, so phones pick up the new files.
-const CACHE_NAME = "lbn-v8";
+const CACHE_NAME = "lbn-v9";
 
 const APP_FILES = [
     "./",
@@ -53,7 +53,8 @@ self.addEventListener("activate", function (event) {
     self.clients.claim();
 });
 
-// Network first, so people always get your latest files; the saved copy is the backup.
+// Network first, and always checked with the server, so people get your latest files
+// right after you push. The saved copy is only the backup for weak signal.
 // Supabase, Paystack and other outside sites are never touched, so logins and payments stay live.
 self.addEventListener("fetch", function (event) {
     const request = event.request;
@@ -64,7 +65,7 @@ self.addEventListener("fetch", function (event) {
     }
 
     event.respondWith(
-        fetch(request)
+        fetch(request, { cache: "no-cache" })
             .then(function (response) {
                 const copy = response.clone();
                 caches.open(CACHE_NAME).then(function (cache) {
