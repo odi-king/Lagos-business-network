@@ -1,6 +1,4 @@
-// Paystack PUBLIC test key
-// Never put your Paystack secret key in website JavaScript.
-const PAYSTACK_PUBLIC_KEY = "pk_test_e40b34f200a74d585aacfe9826480ec8f096722c";
+// The Paystack public key lives in paystack-config.js
 const PRICE_NAIRA = 20000;
 
 const payBtn = document.getElementById("payBtn");
@@ -14,20 +12,12 @@ function showMessage(text, type) {
 
 async function init() {
     if (!db) {
-        showMessage(
-            "Supabase is not connected. Check supabase-config.js.",
-            "error"
-        );
+        showMessage("Supabase is not connected yet. Check supabase-config.js.", "error");
         payBtn.disabled = true;
         return;
     }
 
-    const { data, error } = await db.auth.getSession();
-
-    if (error) {
-        showMessage("Could not check your login: " + error.message, "error");
-        return;
-    }
+    const { data } = await db.auth.getSession();
 
     if (!data.session) {
         window.location.href = "auth.html";
@@ -36,64 +26,47 @@ async function init() {
 
     currentUser = data.session.user;
 
-    const active = await hasActiveMembership(currentUser.id);
-
-    if (active) {
+    if (await hasActiveMembership(currentUser.id)) {
         window.location.href = "dashboard.html";
         return;
     }
 
     if (membershipError) {
-        showMessage(
-            "Membership check: " + membershipError,
-            "error"
-        );
+        showMessage("Could not check your membership: " + membershipError, "error");
     }
 }
 
 async function waitForActivation() {
     payBtn.disabled = true;
-    showMessage("Payment received. Checking membership activation...", "ok");
+    showMessage("Payment received. Activating your membership...", "ok");
 
     for (let i = 0; i < 20; i++) {
         if (await hasActiveMembership(currentUser.id)) {
             window.location.href = "dashboard.html";
             return;
         }
-
-        await new Promise(function (resolve) {
-            setTimeout(resolve, 2000);
-        });
+        await new Promise(function (resolve) { setTimeout(resolve, 2000); });
     }
 
     payBtn.disabled = false;
-    showMessage(
-        "Payment was submitted, but membership is not active yet. Check your Paystack transaction and webhook configuration before paying again.",
-        "error"
-    );
+    showMessage("We received your payment, but activation is taking longer than usual. Refresh this page in a minute.", "ok");
 }
 
 payBtn.addEventListener("click", function () {
-    if (!currentUser) {
-        showMessage("Please log in first.", "error");
-        return;
-    }
+    if (!currentUser) return;
 
-    if (typeof PaystackPop === "undefined") {
-        showMessage("Paystack did not load. Refresh and try again.", "error");
+    if (PAYSTACK_PUBLIC_KEY.startsWith("PASTE")) {
+        showMessage("Add your Paystack public key at the top of pay.js first.", "error");
         return;
     }
 
     const handler = PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: currentUser.email,
-        amount: PRICE_NAIRA * 100,
+        amount: PRICE_NAIRA * 100, // Paystack counts in kobo
         currency: "NGN",
-        ref: "LBN-" + Date.now() + "-" +
-            Math.floor(Math.random() * 1000000),
-        metadata: {
-            user_id: currentUser.id
-        },
+        ref: "LBN-" + Date.now() + "-" + Math.floor(Math.random() * 1000000),
+        metadata: { user_id: currentUser.id },
         callback: function () {
             waitForActivation();
         },
@@ -105,18 +78,10 @@ payBtn.addEventListener("click", function () {
     handler.openIframe();
 });
 
-const logoutBtn = document.getElementById("logoutBtn");
-
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", async function (event) {
-        event.preventDefault();
-
-        if (db) {
-            await db.auth.signOut();
-        }
-
-        window.location.href = "auth.html";
-    });
-}
+document.getElementById("logoutBtn").addEventListener("click", async function (event) {
+    event.preventDefault();
+    if (db) await db.auth.signOut();
+    window.location.href = "auth.html";
+});
 
 init();

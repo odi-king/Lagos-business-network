@@ -79,7 +79,7 @@ async function init() {
 async function loadBusinesses() {
     const { data, error } = await db
         .from("businesses")
-        .select("*")
+        .select("id, owner_id, name, category, location, created_at")
         .order("created_at", { ascending: false });
 
     if (error) {
@@ -119,14 +119,16 @@ function renderBusinesses() {
             ? '<button type="button" class="delete-btn" data-id="' + escapeHTML(business.id) + '">Delete Business</button>'
             : "";
 
+        // Contact details stay private. Buyers start a chat instead.
+        const messageButton = business.owner_id === currentUser.id
+            ? '<p class="meta">This is your listing.</p>'
+            : '<button type="button" class="contact-btn chat-btn" data-business-id="' + escapeHTML(business.id) + '">Message seller</button>';
+
         card.innerHTML = `
             <h3>${escapeHTML(business.name)}</h3>
             <p>Category: ${escapeHTML(business.category)}</p>
             <p>Location: ${escapeHTML(business.location)}</p>
-            <p>Phone: ${escapeHTML(business.phone)}</p>
-            <p>Contact: ${escapeHTML(business.email)}</p>
-            <a href="mailto:${escapeHTML(business.email)}" class="contact-btn">Email Business</a>
-            <a href="tel:${escapeHTML(business.phone)}" class="contact-btn">Call Business</a>
+            ${messageButton}
             ${deleteButton}
         `;
 
@@ -179,7 +181,7 @@ businessList.addEventListener("click", async function (event) {
         .from("businesses")
         .delete()
         .eq("id", button.dataset.id)
-        .select();
+        .select("id");
 
     if (error || !data || data.length === 0) {
         alert("Could not delete this business.");
@@ -191,6 +193,28 @@ businessList.addEventListener("click", async function (event) {
     });
     renderBusinesses();
     alert("Business deleted successfully!");
+});
+
+// ---------- Start a chat with the seller ----------
+
+businessList.addEventListener("click", async function (event) {
+    const button = event.target.closest(".chat-btn");
+    if (!button) return;
+
+    button.disabled = true;
+
+    const { data, error } = await db.rpc("start_trade", {
+        p_business_id: button.dataset.businessId
+    });
+
+    button.disabled = false;
+
+    if (error) {
+        alert(error.message);
+        return;
+    }
+
+    window.location.href = "trade.html?id=" + encodeURIComponent(data);
 });
 
 // ---------- Log out ----------

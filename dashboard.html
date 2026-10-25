@@ -24,6 +24,7 @@
             <a href="dashboard.html" class="active">Dashboard</a>
             <a href="classes.html">Classes</a>
             <a href="marketplace.html">Marketplace</a>
+            <a href="trades.html">My trades</a>
             <a href="#" id="logoutBtn">Log out</a>
         </div>
     </div>
@@ -39,6 +40,19 @@
     <div id="pendingNotice" class="notice" style="display:none;">
         Your lecturer account is waiting for approval. You will be able to upload handouts and books once it is approved.
     </div>
+
+    <section class="panel">
+        <h2>Payout account</h2>
+        <p class="meta">Sellers are paid into this bank account after a trade is completed. Only you and the LBN team can see it.</p>
+        <p id="payoutSaved" class="meta"></p>
+        <form id="payoutForm">
+            <input type="text" id="payoutBank" placeholder="Bank name" required>
+            <input type="text" id="payoutNumber" placeholder="10-digit account number" inputmode="numeric" maxlength="10" required>
+            <input type="text" id="payoutName" placeholder="Account name" required>
+            <button type="submit" class="contact-btn">Save payout account</button>
+        </form>
+        <p id="payoutMsg" class="msg"></p>
+    </section>
 
     <section class="panel">
         <h2>Verified benefits</h2>
@@ -92,7 +106,7 @@
 </main>
 
 <footer class="footer">
-    <div class="container">&copy; 2026 Lagos Business Network</div>
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a></div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

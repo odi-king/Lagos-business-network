@@ -65,6 +65,8 @@ async function init() {
     if (profile.role === "lecturer" && profile.approved) {
         await loadMyClasses();
     }
+
+    await loadPayout();
 }
 
 async function loadMyClasses() {
@@ -213,6 +215,53 @@ handoutList.addEventListener("click", async function (event) {
 
     await loadHandouts();
 });
+
+
+// ---------- Payout account ----------
+
+async function loadPayout() {
+    const { data } = await db
+        .from("payout_accounts")
+        .select("bank_name, account_number, account_name")
+        .eq("user_id", currentUser.id)
+        .maybeSingle();
+
+    const saved = document.getElementById("payoutSaved");
+    if (!saved) return;
+
+    saved.textContent = data
+        ? "Saved: " + data.bank_name + ", account ending " + data.account_number.slice(-4) + " (" + data.account_name + ")"
+        : "No payout account saved yet.";
+}
+
+const payoutForm = document.getElementById("payoutForm");
+
+if (payoutForm) {
+    payoutForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const message = document.getElementById("payoutMsg");
+        message.className = "msg";
+        message.textContent = "Please wait...";
+
+        const { error } = await db.rpc("save_payout_account", {
+            p_bank: document.getElementById("payoutBank").value,
+            p_number: document.getElementById("payoutNumber").value,
+            p_name: document.getElementById("payoutName").value
+        });
+
+        if (error) {
+            message.className = "msg error";
+            message.textContent = error.message;
+            return;
+        }
+
+        payoutForm.reset();
+        message.className = "msg ok";
+        message.textContent = "Saved.";
+        await loadPayout();
+    });
+}
 
 const logoutBtn = document.getElementById("logoutBtn");
 

@@ -7,9 +7,12 @@ const tradeFilter = document.getElementById("tradeFilter");
 const STATUS_LABELS = {
     negotiating: "Negotiating",
     agreed: "Deal agreed",
-    delivered: "Delivered",
+    paid: "Paid, held by LBN",
+    delivered: "Done, awaiting confirmation",
+    disputed: "Dispute: money on hold",
     completed: "Completed",
-    cancelled: "Cancelled"
+    cancelled: "Cancelled",
+    refunded: "Refunded"
 };
 
 function escapeHTML(text) {
@@ -58,7 +61,7 @@ function render() {
     const filter = tradeFilter.value;
 
     const visible = trades.filter(function (t) {
-        const closed = t.status === "completed" || t.status === "cancelled";
+        const closed = t.status === "completed" || t.status === "cancelled" || t.status === "refunded";
         if (filter === "active") return !closed;
         if (filter === "closed") return closed;
         return true;

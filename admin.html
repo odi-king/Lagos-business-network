@@ -52,10 +52,52 @@
         </div>
         <div id="peopleList"></div>
     </section>
+
+    <section class="panel">
+        <h2>Payments and disputes</h2>
+        <p class="meta">Money held by LBN, disputes to decide, and payouts to make. Open the chat to read what both sides said.</p>
+        <div class="filters">
+            <select id="queueFilter">
+                <option value="action">Needs my action</option>
+                <option value="dispute">Disputes</option>
+                <option value="payout_due">Sellers to pay</option>
+                <option value="refund_due">Buyers to refund</option>
+                <option value="unmatched_payment">Payments that did not match</option>
+                <option value="awaiting_confirmation">Waiting for the buyer</option>
+                <option value="all">Everything</option>
+            </select>
+        </div>
+        <div id="queueList"></div>
+    </section>
+
+    <section class="panel">
+        <h2>Payment settings</h2>
+        <p id="paymentsStatus" class="meta"></p>
+        <button type="button" id="paymentsToggle" class="btn btn-outline">Loading...</button>
+        <form id="feeForm">
+            <input type="number" id="feePercent" placeholder="Fee % (normal)" step="0.1" min="0" max="30" required>
+            <input type="number" id="feePercentVerified" placeholder="Fee % (verified)" step="0.1" min="0" max="30" required>
+            <input type="number" id="minFee" placeholder="Smallest fee in naira" min="0" required>
+            <button type="submit" class="contact-btn">Save fees</button>
+        </form>
+        <p id="settingsMsg" class="msg"></p>
+    </section>
+
+    <section class="panel">
+        <h2>Customer care messages</h2>
+        <div class="filters">
+            <select id="supportFilter">
+                <option value="open">Open</option>
+                <option value="resolved">Resolved</option>
+                <option value="all">All</option>
+            </select>
+        </div>
+        <div id="supportList"></div>
+    </section>
 </main>
 
 <footer class="footer">
-    <div class="container">&copy; 2026 Lagos Business Network</div>
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a></div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

@@ -20,6 +20,15 @@ const STATUS_CLASSES = {
     cancelled: "badge closed"
 };
 
+STATUS_LABELS.paid = "Paid, held by LBN";
+STATUS_LABELS.disputed = "Dispute: money on hold";
+STATUS_LABELS.refunded = "Refunded";
+STATUS_LABELS.delivered = "Done, awaiting confirmation";
+STATUS_CLASSES.paid = "badge trader";
+STATUS_CLASSES.disputed = "badge admin";
+STATUS_CLASSES.refunded = "badge closed";
+
+let paymentsEnabled = false;
 let me = null;
 let trade = null;
 let lastSignature = "";
@@ -54,6 +63,10 @@ function nameFor(userId) {
     return person && person.full_name ? person.full_name : "Member";
 }
 
+function isService() {
+    return !!trade && trade.trade_kind === "service";
+}
+
 function isParticipant() {
     return trade && (trade.buyer_id === me.id || trade.seller_id === me.id);
 }
@@ -81,6 +94,13 @@ async function init() {
         window.location.href = "pay.html";
         return;
     }
+
+    const flag = await db.rpc("trade_payments_enabled");
+    paymentsEnabled = !flag.error && flag.data === true;
+
+    document.getElementById("scamPay").textContent = paymentsEnabled
+        ? "Pay only with the Pay now button on this page. The seller gets the money only after you confirm. Never send money anywhere else."
+        : "Do not send money to anyone yet. Protected payment on LBN is coming soon, so agree the price and details here first.";
 
     await refresh();
 
@@ -134,14 +154,22 @@ function renderHeader() {
     badge.textContent = STATUS_LABELS[trade.status] || trade.status;
     badge.className = STATUS_CLASSES[trade.status] || "badge";
 
-    document.getElementById("agreedLine").textContent =
-        trade.agreed_amount ? "Agreed price: " + money(trade.agreed_amount) : "";
+    let line = (isService() ? "Service" : "Item") + (trade.agreed_amount ? " \u2022 Agreed price: " + money(trade.agreed_amount) : "");
+
+    if (trade.paid_at) {
+        line += " \u2022 Paid and held by LBN";
+        if (trade.seller_id === me.id && trade.seller_amount) {
+            line += " \u2022 You receive " + money(trade.seller_amount) + " after the LBN fee of " + money(trade.fee_amount);
+        }
+    }
+
+    document.getElementById("agreedLine").textContent = line;
 }
 
 // Shows or hides the buttons and forms that fit the trade's stage
 function applyStatus() {
     const status = trade.status;
-    const closed = status === "completed" || status === "cancelled";
+    const closed = status === "completed" || status === "cancelled" || status === "refunded";
     const participant = isParticipant();
     const isBuyer = trade.buyer_id === me.id;
     const isSeller = trade.seller_id === me.id;
@@ -151,19 +179,49 @@ function applyStatus() {
 
     document.getElementById("cancelBtn").style.display =
         (status === "negotiating" || status === "agreed") && participant ? "" : "none";
+    document.getElementById("payBtn").style.display =
+        status === "agreed" && isBuyer && paymentsEnabled ? "" : "none";
     document.getElementById("deliveredBtn").style.display =
-        status === "agreed" && isSeller ? "" : "none";
+        (status === "paid" || (status === "agreed" && !paymentsEnabled)) && isSeller ? "" : "none";
     document.getElementById("receivedBtn").style.display =
-        status === "delivered" && isBuyer ? "" : "none";
+        (status === "paid" || status === "delivered") && isBuyer ? "" : "none";
+    document.getElementById("disputeBtn").style.display =
+        (status === "paid" || status === "delivered") && participant ? "" : "none";
     document.getElementById("reportBtn").style.display = participant ? "" : "none";
+
+    document.getElementById("deliveredBtn").textContent = isService() ? "Service done" : "Mark as delivered";
+    document.getElementById("receivedBtn").textContent = isService() ? "Confirm service completed" : "Confirm received";
+
+    const payNote = document.getElementById("payNote");
+
+    if (status === "agreed" && isBuyer) {
+        payNote.textContent = paymentsEnabled
+            ? "Tap Pay now. LBN holds your money. The seller is paid only after you confirm you got exactly what you ordered."
+            : "Protected payment is coming soon. Do not send money outside LBN.";
+    } else if (status === "agreed" && isSeller) {
+        payNote.textContent = paymentsEnabled
+            ? isService() ? "Waiting for the buyer to pay. Do not start the work until the payment shows here." : "Waiting for the buyer to pay. Do not deliver until the payment shows here."
+            : "";
+    } else if (status === "paid" && isSeller) {
+        payNote.textContent = isService() ? "The buyer has paid and LBN is holding the money. Do the work, then tap Service done." : "The buyer has paid and LBN is holding the money. Deliver now, then tap Mark as delivered.";
+    } else if (status === "paid" && isBuyer) {
+        payNote.textContent = "Your payment is held safely by LBN until you confirm.";
+    } else if (status === "delivered" && isBuyer) {
+        payNote.textContent = isService() ? "The seller says the service is done. Check the work. If it is right, tap Confirm service completed and the money is released. If not, open a dispute and the money stays on hold." : "Check that you got exactly what you ordered. If yes, tap Confirm received. If not, open a dispute and the money stays on hold.";
+    } else if (status === "disputed") {
+        payNote.textContent = "This trade is in dispute. The money stays on hold until the LBN team decides. Keep explaining in the chat.";
+    } else {
+        payNote.textContent = "";
+    }
 
     const notice = document.getElementById("closedNotice");
 
     if (closed) {
         notice.style.display = "block";
-        notice.textContent = status === "completed"
-            ? "This trade is completed. The chat is now closed."
-            : "This trade was cancelled. The chat is now closed.";
+        notice.textContent =
+            status === "completed" ? "This trade is completed. The chat is now closed." :
+            status === "refunded" ? "This trade was refunded. The chat is now closed." :
+            "This trade was cancelled. The chat is now closed.";
     } else if (!participant) {
         notice.style.display = "block";
         notice.textContent = "You are viewing this chat as an administrator.";
@@ -328,11 +386,11 @@ document.getElementById("cancelBtn").addEventListener("click", function () {
 });
 
 document.getElementById("deliveredBtn").addEventListener("click", function () {
-    runAction("mark_delivered", "Mark this as delivered?");
+    runAction("mark_delivered", isService() ? "Is the service finished? The buyer will be asked to confirm it." : "Mark this as delivered?");
 });
 
 document.getElementById("receivedBtn").addEventListener("click", function () {
-    runAction("confirm_received", "Confirm you received everything that was agreed? This completes the trade and closes the chat.");
+    runAction("confirm_received", isService() ? "Confirm the service was done properly? This releases the money to the seller and closes the chat." : "Confirm you received everything that was agreed? This completes the trade and closes the chat.");
 });
 
 document.getElementById("reportBtn").addEventListener("click", async function () {
@@ -347,6 +405,48 @@ document.getElementById("reportBtn").addEventListener("click", async function ()
     }
 
     showNote("Thank you. Your report was sent to the LBN team.", "ok");
+});
+
+document.getElementById("payBtn").addEventListener("click", function () {
+    if (typeof PAYSTACK_PUBLIC_KEY === "undefined" || PAYSTACK_PUBLIC_KEY.indexOf("PASTE") === 0) {
+        showNote("Payments are not set up yet. The Paystack key is missing.");
+        return;
+    }
+
+    if (typeof PaystackPop === "undefined") {
+        showNote("The payment window could not load. Check your internet and try again.");
+        return;
+    }
+
+    const handler = PaystackPop.setup({
+        key: PAYSTACK_PUBLIC_KEY,
+        email: me.email,
+        amount: trade.agreed_amount * 100, // Paystack counts in kobo
+        currency: "NGN",
+        ref: "TRD-" + trade.id.slice(0, 8) + "-" + Date.now(),
+        metadata: { kind: "trade", trade_id: trade.id },
+        callback: function () {
+            showNote("Payment received. Confirming it now...", "ok");
+            setTimeout(refresh, 2500);
+        },
+        onClose: function () {}
+    });
+
+    handler.openIframe();
+});
+
+document.getElementById("disputeBtn").addEventListener("click", async function () {
+    const reason = prompt("Tell us clearly what is wrong. The money will stay on hold until the LBN team decides.");
+    if (!reason) return;
+
+    const { error } = await db.rpc("open_dispute", { p_trade_id: tradeId, p_reason: reason });
+
+    if (error) {
+        showNote(error.message);
+        return;
+    }
+
+    await refresh();
 });
 
 document.getElementById("logoutBtn").addEventListener("click", async function (event) {

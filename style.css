@@ -352,3 +352,79 @@ img, video { max-width: 100%; height: auto; }
 .benefits { list-style: none; padding: 0; margin: 8px 0; color: var(--muted); }
 .benefits li { padding: 4px 0; }
 .benefits li::before { content: "\2713"; color: var(--accent); margin-right: 8px; font-weight: 700; }
+
+/* Trade chat */
+.scam-zone {
+    background: #2a2110;
+    border: 1px solid #5c4513;
+    color: #f2c14e;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin: 16px 0;
+    font-size: 14px;
+}
+.scam-zone ul { margin: 6px 0 0; padding-left: 18px; }
+
+.chat-box {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    height: 50vh;
+    min-height: 280px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.chat-msg {
+    max-width: 85%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 15px;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+.chat-msg.mine { align-self: flex-end; background: #0f2b2a; border: 1px solid #14503f; }
+.chat-msg.theirs { align-self: flex-start; background: var(--card); border: 1px solid var(--line); }
+.chat-name { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.chat-system {
+    align-self: center;
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 6px 12px;
+    max-width: 90%;
+}
+.offer-card {
+    max-width: 90%;
+    background: var(--card);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+.offer-card.mine { align-self: flex-end; }
+.offer-card.theirs { align-self: flex-start; }
+.offer-amount { font-size: 22px; font-weight: 700; color: var(--accent); }
+
+.chat-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.chat-actions .contact-btn,
+.chat-actions .delete-btn,
+.chat-actions .btn { margin: 0; }
+
+form.chat-form, form.offer-form { display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+form.chat-form input { flex: 1; min-width: 0; }
+form.offer-form input[type="number"] { width: 150px; flex: 0 0 150px; }
+form.offer-form input[type="text"] { flex: 1; min-width: 140px; }
+
+.badge.closed { background: var(--card); color: var(--muted); border-color: var(--line); }
+
+/* Contact page */
+.faq { border-top: 1px solid var(--line); padding: 12px 0; }
+.faq:first-of-type { border-top: none; }
+.faq summary { cursor: pointer; font-weight: 600; min-height: 32px; }
+.faq p { margin: 8px 0 0; color: var(--muted); }
+.support-card { margin-top: 12px; }
