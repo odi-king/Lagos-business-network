@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Member - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="classes.html">Classes</a>
+            <a href="feed.html" class="active">Marketplace</a>
+            <a href="marketplace.html">Listings</a>
+            <a href="trades.html">My trades</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <section class="panel" id="profileBox">
+        <h1 id="profileName">Loading...</h1>
+        <p id="profileMeta" class="meta"></p>
+        <div class="profile-stats" id="profileStats"></div>
+        <div id="profileFollow"></div>
+    </section>
+
+    <div id="memberPosts"></div>
+    <p id="memberNote" class="meta"></p>
+    <button type="button" id="memberMore" class="btn btn-outline" style="display:none; margin-top:14px;">Load more</button>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a></div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="membership.js"></script>
+<script src="badges.js"></script>
+<script src="video-utils.js"></script>
+<script src="posts.js"></script>
+<script src="member.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Marketplace - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="classes.html">Classes</a>
+            <a href="feed.html" class="active">Marketplace</a>
+            <a href="marketplace.html">Listings</a>
+            <a href="trades.html">My trades</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>Marketplace</h1>
+        <p>See what members sell and make. Follow the ones you like.</p>
+    </div>
+
+    <section class="panel">
+        <h2>Post something</h2>
+        <p class="meta">Show what you sell, make or offer. Do not put phone numbers or links in posts. Buyers message you on LBN.</p>
+        <form id="postForm">
+            <textarea id="postCaption" placeholder="What are you selling or offering? Describe it here." maxlength="1000"></textarea>
+            <input type="number" id="postPrice" placeholder="Price in naira (optional)" min="0">
+            <select id="postListing"><option value="">Attach one of your listings (optional)</option></select>
+            <input type="url" id="postVideo" placeholder="Video link from YouTube, Vimeo or Google Drive (optional)">
+            <input type="file" id="postImage" accept="image/*">
+            <button type="submit" id="postBtn" class="contact-btn">Post</button>
+        </form>
+        <p id="postNote" class="msg"></p>
+    </section>
+
+    <section class="panel">
+        <h2>Find members</h2>
+        <input type="text" id="memberSearch" placeholder="Search members by name">
+        <div id="memberResults"></div>
+    </section>
+
+    <div class="tabs">
+        <button type="button" class="tab-btn active" data-mode="all">Everyone</button>
+        <button type="button" class="tab-btn" data-mode="following">Following</button>
+    </div>
+
+    <div id="feedList"></div>
+    <p id="feedNote" class="meta"></p>
+    <button type="button" id="loadMore" class="btn btn-outline" style="display:none; margin-top:14px;">Load more</button>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a></div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="membership.js"></script>
+<script src="badges.js"></script>
+<script src="video-utils.js"></script>
+<script src="posts.js"></script>
+<script src="feed.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>
