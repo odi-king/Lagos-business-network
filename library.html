@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Handouts and books - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="classes.html">Classes</a>
+            <a href="feed.html">Marketplace</a>
+            <a href="reels.html">Reels</a>
+            <a href="trades.html">My trades</a>
+            <a href="member.html">Profile</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>Handouts and books</h1>
+        <p>Learn from your lecturers' notes and books. Buy once, download anytime.</p>
+    </div>
+
+    <div class="tabs">
+        <button type="button" class="tab-btn active" data-tab="browse">Browse</button>
+        <button type="button" class="tab-btn" data-tab="purchases">My purchases</button>
+        <button type="button" class="tab-btn" data-tab="sales" id="salesTab" style="display:none;">My sales</button>
+    </div>
+
+    <section id="browsePane">
+        <input type="text" id="searchBox" class="search-box" placeholder="Search by title or lecturer">
+        <select id="kindFilter">
+            <option value="">Handouts and books</option>
+            <option value="handout">Handouts only</option>
+            <option value="book">Books only</option>
+        </select>
+        <div id="browseList"></div>
+    </section>
+
+    <section id="purchasesPane" style="display:none;">
+        <div id="purchasesList"></div>
+    </section>
+
+    <section id="salesPane" style="display:none;">
+        <div id="salesSummary"></div>
+        <div id="salesList"></div>
+    </section>
+
+    <p id="libNote" class="meta"></p>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a></div>
+</footer>
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="paystack-config.js"></script>
+<script src="membership.js"></script>
+<script src="badges.js"></script>
+<script src="library.js"></script>
+<script src="appnav.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>
