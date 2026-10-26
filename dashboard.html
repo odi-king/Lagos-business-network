@@ -24,7 +24,9 @@
             <a href="dashboard.html" class="active">Dashboard</a>
             <a href="classes.html">Classes</a>
             <a href="feed.html">Marketplace</a>
+            <a href="reels.html">Reels</a>
             <a href="trades.html">My trades</a>
+            <a href="member.html">Profile</a>
             <a href="#" id="logoutBtn">Log out</a>
         </div>
     </div>
@@ -40,6 +42,13 @@
     <div id="pendingNotice" class="notice" style="display:none;">
         Your lecturer account is waiting for approval. You will be able to upload handouts and books once it is approved.
     </div>
+
+    <section id="graduationPanel" class="panel" style="display:none;">
+        <h2>Your path to graduation</h2>
+        <p>You can graduate before one year is over. The faster you learn, the sooner you graduate.</p>
+        <div id="gradBody"><p class="meta">Loading...</p></div>
+        <p class="meta">Being active helps you learn, but activity alone never graduates you. You graduate by showing you have met the learning standards.</p>
+    </section>
 
     <section class="panel">
         <h2>Payout account</h2>
@@ -63,7 +72,7 @@
         </p>
         <p class="meta"><strong>Verified lecturers</strong> are checked to be real teachers from a school or university. <strong>Verified traders</strong> are students who trade and post videos about their business regularly.</p>
         <ul class="benefits">
-            <li>Access to the marketplace (verified lecturers, and students once they finish the year)</li>
+            <li>Access to the marketplace (verified lecturers, and students once they graduate)</li>
             <li>A badge next to your name on classes and videos</li>
             <li>A share of the monthly rewards for trading often and posting videos about what you sell, make or market</li>
             <li>Higher placement and a lower platform fee on trades</li>
@@ -106,13 +115,14 @@
 </main>
 
 <footer class="footer">
-    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a></div>
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a></div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="membership.js"></script>
 <script src="dashboard.js"></script>
+<script src="appnav.js"></script>
 <script src="pwa.js"></script>
 </body>
 </html>

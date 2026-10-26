@@ -24,38 +24,51 @@
             <a href="dashboard.html">Dashboard</a>
             <a href="classes.html">Classes</a>
             <a href="feed.html" class="active">Marketplace</a>
-            <a href="marketplace.html">Listings</a>
+            <a href="reels.html">Reels</a>
             <a href="trades.html">My trades</a>
+            <a href="member.html">Profile</a>
             <a href="#" id="logoutBtn">Log out</a>
         </div>
     </div>
 </nav>
 
-<main class="container">
-    <div class="page-head">
+<main class="container feed-page">
+    <div class="feed-top">
         <h1>Marketplace</h1>
-        <p>See what members sell and make. Follow the ones you like.</p>
+        <p class="meta">See what members sell and make. Follow the ones you like.</p>
     </div>
 
-    <section class="panel">
-        <h2>Post something</h2>
+    <div class="tips" id="tips" style="display:none;">
+        <button type="button" class="plain-btn tips-close" id="tipsClose">Close</button>
+        <h3>Welcome. Three easy steps</h3>
+        <ol>
+            <li>Tap <strong>Post something</strong> to show what you sell.</li>
+            <li>Tap <strong>Follow</strong> on members you like.</li>
+            <li>Tap <strong>Message seller</strong> to start a safe trade.</li>
+        </ol>
+    </div>
+
+    <details class="composer" id="composer">
+        <summary>Post something</summary>
         <p class="meta">Show what you sell, make or offer. Do not put phone numbers or links in posts. Buyers message you on LBN.</p>
         <form id="postForm">
             <textarea id="postCaption" placeholder="What are you selling or offering? Describe it here." maxlength="1000"></textarea>
             <input type="number" id="postPrice" placeholder="Price in naira (optional)" min="0">
             <select id="postListing"><option value="">Attach one of your listings (optional)</option></select>
-            <input type="url" id="postVideo" placeholder="Video link from YouTube, Vimeo or Google Drive (optional)">
-            <input type="file" id="postImage" accept="image/*">
+            <label class="file-label">Photo
+                <input type="file" id="postImage" accept="image/*">
+            </label>
+            <label class="file-label">Video from your phone (up to 90 seconds, 50 MB)
+                <input type="file" id="postVideoFile" accept="video/*">
+            </label>
+            <input type="url" id="postVideo" placeholder="Or paste a YouTube, Vimeo or Google Drive link (optional)">
             <button type="submit" id="postBtn" class="contact-btn">Post</button>
         </form>
         <p id="postNote" class="msg"></p>
-    </section>
+    </details>
 
-    <section class="panel">
-        <h2>Find members</h2>
-        <input type="text" id="memberSearch" placeholder="Search members by name">
-        <div id="memberResults"></div>
-    </section>
+    <input type="text" id="memberSearch" class="search-box" placeholder="Find members by name">
+    <div id="memberResults"></div>
 
     <div class="tabs">
         <button type="button" class="tab-btn active" data-mode="all">Everyone</button>
@@ -68,7 +81,7 @@
 </main>
 
 <footer class="footer">
-    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a></div>
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a></div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -78,6 +91,7 @@
 <script src="video-utils.js"></script>
 <script src="posts.js"></script>
 <script src="feed.js"></script>
+<script src="appnav.js"></script>
 <script src="pwa.js"></script>
 </body>
 </html>

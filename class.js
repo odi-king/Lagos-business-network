@@ -3,6 +3,8 @@ const classId = new URLSearchParams(window.location.search).get("id");
 let currentUser = null;
 let currentClass = null;
 let isOwner = false;
+let isStudent = false;
+let completedLessons = new Set();
 
 const lessonList = document.getElementById("lessonList");
 const liveList = document.getElementById("liveList");
@@ -117,7 +119,14 @@ async function init() {
         document.getElementById("ownerPanel").style.display = "block";
     }
 
+    // Students can tick off lessons they have finished
+    const mine = await db.from("profiles").select("role").eq("id", currentUser.id).maybeSingle();
+    isStudent = !!(mine.data && mine.data.role === "student");
+    if (isStudent) await loadMyProgress();
+
     await Promise.all([loadLessons(), loadLive()]);
+
+    if (isOwner) loadAssessmentPanel();
 
     // Links from the dashboard jump straight to the lesson or live class form
     if (isOwner && (location.hash === "#addLesson" || location.hash === "#addLive")) {
@@ -164,6 +173,7 @@ async function loadLessons() {
             <h3>${index + 1}. ${escapeHTML(lesson.title)}</h3>
             <div class="video-slot"></div>
             ${watch}
+            ${completeButton(lesson)}
             ${remove}
         `;
 
@@ -353,6 +363,129 @@ document.getElementById("logoutBtn").addEventListener("click", async function (e
     event.preventDefault();
     if (db) await db.auth.signOut();
     window.location.href = "auth.html";
+});
+
+// ---------- Students: mark lessons as complete ----------
+
+async function loadMyProgress() {
+    const { data } = await db.rpc("my_lesson_progress", { p_class_id: classId });
+    completedLessons = new Set((data || []).map(function (row) { return row.lesson_id; }));
+}
+
+function completeButton(lesson) {
+    if (!isStudent) return "";
+
+    const done = completedLessons.has(lesson.id);
+
+    return '<button type="button" class="btn ' + (done ? "done-btn" : "btn-outline") + ' complete-btn" data-lesson="' +
+        escapeHTML(lesson.id) + '">' + (done ? "\u2713 Completed" : "Mark as complete") + "</button>";
+}
+
+lessonList.addEventListener("click", async function (event) {
+    const button = event.target.closest(".complete-btn");
+    if (!button) return;
+
+    const id = button.dataset.lesson;
+    const makeDone = !completedLessons.has(id);
+
+    button.disabled = true;
+
+    const { error } = await db.rpc("mark_lesson_complete", { p_lesson_id: id, p_done: makeDone });
+
+    button.disabled = false;
+
+    if (error) {
+        alert(error.message);
+        return;
+    }
+
+    if (makeDone) completedLessons.add(id); else completedLessons.delete(id);
+
+    button.className = "btn " + (makeDone ? "done-btn" : "btn-outline") + " complete-btn";
+    button.textContent = makeDone ? "\u2713 Completed" : "Mark as complete";
+});
+
+// ---------- Lecturers: record who met the standard ----------
+
+async function loadAssessmentPanel() {
+    const list = document.getElementById("studentProgressList");
+    const select = document.getElementById("assessStudent");
+    const log = document.getElementById("assessLog");
+
+    const students = await db.rpc("class_students", { p_class_id: classId });
+
+    if (students.error) {
+        list.innerHTML = "<p class='meta'>" + escapeHTML(students.error.message) + "</p>";
+        return;
+    }
+
+    select.innerHTML = '<option value="" disabled selected>Choose a student</option>';
+
+    if (students.data.length === 0) {
+        list.innerHTML = "<p class='meta'>No students have completed a lesson yet.</p>";
+    } else {
+        list.innerHTML = "";
+
+        students.data.forEach(function (s) {
+            const row = document.createElement("p");
+            row.className = "meta";
+            row.textContent = (s.full_name || "Student") + ": " + s.lessons_done + " of " + s.total_lessons +
+                " lessons done, " + s.passed_here + " passed here";
+            list.appendChild(row);
+
+            const option = document.createElement("option");
+            option.value = s.student_id;
+            option.textContent = s.full_name || "Student";
+            select.appendChild(option);
+        });
+    }
+
+    const entries = await db.rpc("class_assessment_log", { p_class_id: classId });
+
+    if (entries.error || entries.data.length === 0) {
+        log.innerHTML = "<p class='meta'>Nothing recorded yet.</p>";
+        return;
+    }
+
+    log.innerHTML = "";
+
+    entries.data.forEach(function (a) {
+        const row = document.createElement("div");
+        row.className = "comment";
+        row.innerHTML =
+            "<strong>" + escapeHTML(a.student_name || "Student") + "</strong>: " + escapeHTML(a.title) + " \u2022 " +
+            (a.result === "passed" ? "Passed" : "Not yet") +
+            (a.note ? " \u2022 " + escapeHTML(a.note) : "") +
+            ' <span class="meta">' + new Date(a.created_at).toLocaleDateString() + "</span>";
+        log.appendChild(row);
+    });
+}
+
+document.getElementById("assessForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const message = document.getElementById("assessMsg");
+    message.className = "msg ok";
+    message.textContent = "Saving...";
+
+    const { error } = await db.rpc("record_assessment", {
+        p_class_id: classId,
+        p_student_id: document.getElementById("assessStudent").value,
+        p_title: document.getElementById("assessTitle").value,
+        p_result: document.getElementById("assessResult").value,
+        p_note: document.getElementById("assessNote").value
+    });
+
+    if (error) {
+        message.className = "msg error";
+        message.textContent = error.message;
+        return;
+    }
+
+    message.textContent = "Saved.";
+    document.getElementById("assessTitle").value = "";
+    document.getElementById("assessNote").value = "";
+    await loadAssessmentPanel();
 });
 
 init();

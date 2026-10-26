@@ -3,6 +3,15 @@ const SITE_URL = "https://odi-king.github.io/Lagos-business-network/";
 
 let mode = "login";
 
+// After logging in, go to the page the person wanted (only pages on this site)
+function nextPage() {
+    const wanted = new URLSearchParams(window.location.search).get("next");
+    if (wanted && /^[a-z0-9_-]+\.html(\?[a-zA-Z0-9=&_%.-]*)?$/i.test(wanted)) {
+        return wanted;
+    }
+    return "dashboard.html";
+}
+
 const authTitle = document.getElementById("authTitle");
 const authForm = document.getElementById("authForm");
 const signupFields = document.getElementById("signupFields");
@@ -138,7 +147,7 @@ authForm.addEventListener("submit", async function (event) {
             if (error) throw error;
 
             if (data.session) {
-                window.location.href = "dashboard.html";
+                window.location.href = nextPage();
             } else {
                 setMode("login");
                 showMessage("Account created. Check your email to confirm it, then log in.", "ok");
@@ -150,7 +159,7 @@ authForm.addEventListener("submit", async function (event) {
             });
 
             if (error) throw error;
-            window.location.href = "dashboard.html";
+            window.location.href = nextPage();
         }
     } catch (error) {
         showMessage(error.message, "error");
@@ -163,7 +172,7 @@ authForm.addEventListener("submit", async function (event) {
 if (typeof db !== "undefined" && db) {
     db.auth.getSession().then(function (result) {
         if (result.data.session) {
-            window.location.href = "dashboard.html";
+            window.location.href = nextPage();
         }
     });
 }

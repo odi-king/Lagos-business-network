@@ -24,6 +24,8 @@
             <a href="dashboard.html">Dashboard</a>
             <a href="classes.html" class="active">Classes</a>
             <a href="feed.html">Marketplace</a>
+            <a href="reels.html">Reels</a>
+            <a href="member.html">Profile</a>
             <a href="#" id="logoutBtn">Log out</a>
         </div>
     </div>
@@ -68,6 +70,25 @@
             </form>
         </section>
 
+        <section class="panel" id="assessPanel">
+            <h2>Student progress and assessments</h2>
+            <p class="meta">Students who have started your lessons appear here. After you check a student's work, record whether they met the standard. This helps decide who graduates.</p>
+            <div id="studentProgressList"></div>
+            <form id="assessForm">
+                <select id="assessStudent" required><option value="" disabled selected>Choose a student</option></select>
+                <input type="text" id="assessTitle" placeholder="What did you check? (for example: Pricing assignment)" maxlength="100" required>
+                <select id="assessResult" required>
+                    <option value="passed">Passed</option>
+                    <option value="not_yet">Not yet</option>
+                </select>
+                <textarea id="assessNote" placeholder="A short note for the student (optional)" maxlength="300"></textarea>
+                <button type="submit" class="contact-btn">Save assessment</button>
+            </form>
+            <p id="assessMsg" class="msg"></p>
+            <h3>Recent assessments</h3>
+            <div id="assessLog"></div>
+        </section>
+
         <section class="panel">
             <button type="button" id="deleteClassBtn" class="delete-btn">Delete this class</button>
         </section>
@@ -75,7 +96,7 @@
 </main>
 
 <footer class="footer">
-    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a></div>
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a></div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -83,6 +104,7 @@
 <script src="membership.js"></script>
 <script src="badges.js"></script>
 <script src="class.js"></script>
+<script src="appnav.js"></script>
 <script src="pwa.js"></script>
 </body>
 </html>

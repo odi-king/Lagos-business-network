@@ -46,7 +46,7 @@ async function init() {
         return;
     }
 
-    await Promise.all([loadPeople(), loadSupport(), loadQueue(), loadSettings()]);
+    await Promise.all([loadPeople(), loadSupport(), loadQueue(), loadSettings(), loadGradRequests(), loadGradRules()]);
 }
 
 async function loadPeople() {
@@ -487,6 +487,121 @@ document.getElementById("feeForm").addEventListener("submit", async function (ev
     message.className = "msg ok";
     message.textContent = "Fees saved.";
     await loadSettings();
+});
+
+// ---------- Graduation requests ----------
+
+let gradRequests = [];
+
+const gradList = document.getElementById("gradList");
+const gradFilter = document.getElementById("gradFilter");
+
+async function loadGradRequests() {
+    const { data, error } = await db.rpc("admin_graduation_requests", { p_status: gradFilter.value });
+
+    if (error) {
+        gradList.innerHTML = "<p>Could not load requests. " + escapeHTML(error.message) + "</p>";
+        return;
+    }
+
+    gradRequests = data;
+    renderGradRequests();
+}
+
+function renderGradRequests() {
+    if (gradRequests.length === 0) {
+        gradList.innerHTML = "<p class='meta'>No requests here.</p>";
+        return;
+    }
+
+    gradList.innerHTML = "";
+
+    gradRequests.forEach(function (r) {
+        const card = document.createElement("div");
+        card.className = "business-card";
+
+        const evidence = (r.evidence || []).map(function (e) {
+            return "<div class='comment'><strong>" + (e.result === "passed" ? "Passed" : "Not yet") + "</strong> \u2022 " +
+                escapeHTML(e.title) + " <span class='meta'>(" + escapeHTML(e.class) + ", " + escapeHTML(e.lecturer || "Lecturer") + ")</span>" +
+                (e.note ? " \u2022 " + escapeHTML(e.note) : "") + "</div>";
+        }).join("") || "<p class='meta'>No assessments recorded.</p>";
+
+        const decided = r.status !== "pending";
+
+        card.innerHTML = `
+            <h3>${escapeHTML(r.student_name || "Student")}
+                <span class="badge ${r.status === "approved" ? "lecturer" : r.status === "declined" ? "closed" : "admin"}">${r.status}</span>
+            </h3>
+            <p class="meta">${escapeHTML(r.student_email)} &bull; asked on ${new Date(r.created_at).toLocaleDateString()}</p>
+            <p><strong>${r.lessons_done}</strong> lessons completed &bull; <strong>${r.assessments_passed}</strong> assessments passed</p>
+            ${r.student_note ? "<p>Student says: " + escapeHTML(r.student_note) + "</p>" : ""}
+            <details class="faq"><summary>See the evidence</summary>${evidence}</details>
+            ${decided
+                ? (r.admin_note ? "<p class='meta'>Your note: " + escapeHTML(r.admin_note) + "</p>" : "")
+                : '<button type="button" class="contact-btn" data-grad="approve" data-id="' + escapeHTML(r.id) + '">Approve graduation</button>' +
+                  '<button type="button" class="delete-btn" data-grad="decline" data-id="' + escapeHTML(r.id) + '">Decline</button>'}
+        `;
+
+        gradList.appendChild(card);
+    });
+}
+
+gradList.addEventListener("click", async function (event) {
+    const button = event.target.closest("button[data-grad]");
+    if (!button) return;
+
+    const approve = button.dataset.grad === "approve";
+
+    if (!confirm(approve
+        ? "Approve this graduation? The student gets marketplace access."
+        : "Decline this request?")) return;
+
+    const note = prompt(approve
+        ? "Add a short note (optional):"
+        : "Tell the student what to improve. They will see this:") || "";
+
+    button.disabled = true;
+
+    const { error } = await db.rpc("admin_decide_graduation", {
+        p_request_id: button.dataset.id,
+        p_approve: approve,
+        p_note: note
+    });
+
+    if (error) {
+        alert("Could not do that: " + error.message);
+        button.disabled = false;
+        return;
+    }
+
+    await Promise.all([loadGradRequests(), loadPeople()]);
+});
+
+gradFilter.addEventListener("change", loadGradRequests);
+
+// ---------- Graduation requirements ----------
+
+async function loadGradRules() {
+    const { data } = await db.rpc("graduation_rules_now");
+
+    if (data && data[0]) {
+        document.getElementById("ruleLessons").value = data[0].min_lessons;
+        document.getElementById("ruleAssessments").value = data[0].min_assessments;
+    }
+}
+
+document.getElementById("gradRulesForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const message = document.getElementById("gradRulesMsg");
+
+    const { error } = await db.rpc("admin_set_graduation_rules", {
+        p_lessons: parseInt(document.getElementById("ruleLessons").value, 10),
+        p_assessments: parseInt(document.getElementById("ruleAssessments").value, 10)
+    });
+
+    message.className = error ? "msg error" : "msg ok";
+    message.textContent = error ? error.message : "Requirements saved.";
 });
 
 init();

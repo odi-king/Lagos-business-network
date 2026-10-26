@@ -23,6 +23,7 @@
         <div class="nav-links">
             <a href="dashboard.html">Dashboard</a>
             <a href="admin.html" class="active">Admin</a>
+            <a href="member.html">Profile</a>
             <a href="#" id="logoutBtn">Log out</a>
         </div>
     </div>
@@ -84,6 +85,25 @@
     </section>
 
     <section class="panel">
+        <h2>Graduation requests</h2>
+        <p class="meta">Students ask to graduate after finishing lessons and passing assessments. Read the evidence, then approve or decline.</p>
+        <div class="filters">
+            <select id="gradFilter">
+                <option value="pending">Waiting for review</option>
+                <option value="all">All requests</option>
+            </select>
+        </div>
+        <div id="gradList"></div>
+        <h3>Starting requirements</h3>
+        <form id="gradRulesForm">
+            <input type="number" id="ruleLessons" min="0" max="100" placeholder="Lessons a student must complete" required>
+            <input type="number" id="ruleAssessments" min="0" max="100" placeholder="Assessments a student must pass" required>
+            <button type="submit" class="contact-btn">Save requirements</button>
+        </form>
+        <p id="gradRulesMsg" class="msg"></p>
+    </section>
+
+    <section class="panel">
         <h2>Customer care messages</h2>
         <div class="filters">
             <select id="supportFilter">
@@ -97,12 +117,13 @@
 </main>
 
 <footer class="footer">
-    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a></div>
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a></div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="admin.js"></script>
+<script src="appnav.js"></script>
 <script src="pwa.js"></script>
 </body>
 </html>

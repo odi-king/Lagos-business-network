@@ -67,6 +67,10 @@ async function init() {
     }
 
     await loadPayout();
+
+    if (profile.role === "student") {
+        await loadGraduation();
+    }
 }
 
 async function loadMyClasses() {
@@ -123,6 +127,7 @@ function showRole() {
         roleBadge.textContent = profile.verified ? "\u2713 Verified trader" : profile.graduated ? "Graduate" : "Student";
         roleBadge.className = profile.verified ? "badge trader" : "badge";
         document.getElementById("studentPanel").style.display = "block";
+        document.getElementById("graduationPanel").style.display = "block";
     }
 
     if (profile.is_admin) {
@@ -216,6 +221,92 @@ handoutList.addEventListener("click", async function (event) {
     await loadHandouts();
 });
 
+
+// ---------- Path to graduation ----------
+
+function progressRow(label, done, needed) {
+    const percent = needed === 0 ? 100 : Math.min(100, Math.round(done * 100 / needed));
+
+    return '<div class="progress-row"><div class="progress-label"><span>' + label + "</span><span>" +
+        done + " of " + needed + '</span></div><div class="progress"><div class="bar" style="width:' + percent + '%"></div></div></div>';
+}
+
+async function loadGraduation() {
+    const body = document.getElementById("gradBody");
+    const result = await db.rpc("my_graduation_progress");
+
+    if (result.error || !result.data || !result.data[0]) {
+        body.innerHTML = "<p class='meta'>Your progress is not available yet.</p>";
+        return;
+    }
+
+    const g = result.data[0];
+
+    if (g.graduated) {
+        body.innerHTML = "<p><strong>You have graduated.</strong> The marketplace is open to you.</p>";
+        return;
+    }
+
+    const ready = Number(g.lessons_done) >= g.min_lessons && Number(g.assessments_passed) >= g.min_assessments;
+
+    let action = "";
+
+    if (g.pending) {
+        action = "<p class='notice'>Your request is waiting for review by the LBN team.</p>";
+    } else if (ready) {
+        action =
+            '<textarea id="gradNote" placeholder="Anything you want the team to know (optional)" maxlength="300"></textarea>' +
+            '<button type="button" id="gradRequestBtn" class="contact-btn">Ask to graduate</button>' +
+            '<p id="gradMsg" class="msg"></p>';
+    } else {
+        action = "<p class='meta'>Keep going. When you reach both numbers, you can ask to graduate here.</p>";
+    }
+
+    if (!g.pending && g.last_status === "declined") {
+        action = "<p class='notice'>Your last request was not approved." + (g.last_note ? " " + escapeHTML(g.last_note) : "") +
+            " Keep learning and ask again.</p>" + action;
+    }
+
+    body.innerHTML =
+        progressRow("Lessons completed", Number(g.lessons_done), g.min_lessons) +
+        progressRow("Assessments passed", Number(g.assessments_passed), g.min_assessments) +
+        action +
+        '<div id="myAssessments"></div>';
+
+    const request = document.getElementById("gradRequestBtn");
+
+    if (request) {
+        request.addEventListener("click", async function () {
+            request.disabled = true;
+
+            const { error } = await db.rpc("request_graduation", {
+                p_note: document.getElementById("gradNote").value
+            });
+
+            if (error) {
+                const message = document.getElementById("gradMsg");
+                message.className = "msg error";
+                message.textContent = error.message;
+                request.disabled = false;
+                return;
+            }
+
+            await loadGraduation();
+        });
+    }
+
+    const mine = await db.rpc("my_assessments");
+    const box = document.getElementById("myAssessments");
+
+    if (box && mine.data && mine.data.length > 0) {
+        box.innerHTML = "<h3>Your assessments</h3>" + mine.data.map(function (a) {
+            return "<div class='comment'><strong>" + (a.result === "passed" ? "Passed" : "Not yet") + "</strong> \u2022 " +
+                escapeHTML(a.title) + " <span class='meta'>(" + escapeHTML(a.class_title) + ", " +
+                escapeHTML(a.lecturer_name || "Lecturer") + ")</span>" +
+                (a.note ? " \u2022 " + escapeHTML(a.note) : "") + "</div>";
+        }).join("");
+    }
+}
 
 // ---------- Payout account ----------
 

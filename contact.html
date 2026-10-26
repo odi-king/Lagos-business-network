@@ -20,10 +20,7 @@
 
 <nav class="nav">
     <div class="container">
-        <a href="index.html" class="logo">
-            <span class="logo-mark">LBN</span>
-            <span class="logo-name">Lagos Business Network</span>
-        </a>
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
         <div class="nav-links">
             <a href="index.html">Home</a>
             <a href="contact.html" class="active">Contact</a>
@@ -40,39 +37,14 @@
 
     <section class="panel">
         <h2>Reach us</h2>
-
-        <p>
-            <strong>Email:</strong>
-            <a href="mailto:ugbomeleonardo@gmail.com">
-                ugbomeleonardo@gmail.com
-            </a>
-        </p>
-
-        <p>
-            <strong>Phone:</strong>
-            <a href="tel:+2348027440442">
-                08027440442
-            </a>
-        </p>
-
-        <p class="meta">
-            Contact us for help with membership, accounts, classes,
-            marketplace transactions and reporting scams.
-        </p>
+        <div id="contactDetails"></div>
     </section>
 
     <section class="panel">
         <h2>Send a message</h2>
-
         <form id="supportForm">
-            <input type="text" id="supName"
-                placeholder="Your name" maxlength="100"
-                autocomplete="name" required>
-
-            <input type="email" id="supEmail"
-                placeholder="Your email address" maxlength="200"
-                autocomplete="email" required>
-
+            <input type="text" id="supName" placeholder="Your name" maxlength="100" autocomplete="name" required>
+            <input type="email" id="supEmail" placeholder="Your email address" maxlength="200" autocomplete="email" required>
             <select id="supTopic" required>
                 <option value="" disabled selected>What is it about?</option>
                 <option>Payments and membership</option>
@@ -82,52 +54,35 @@
                 <option>Report a scam</option>
                 <option>Something else</option>
             </select>
-
-            <textarea id="supMessage"
-                placeholder="Tell us what happened. Please do not include passwords or card numbers."
-                maxlength="2000" required></textarea>
-
-            <input type="text" id="supTrap"
-                tabindex="-1" autocomplete="off"
-                aria-hidden="true"
-                style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;">
-
-            <button type="submit" id="supBtn" class="contact-btn">
-                Send message
-            </button>
+            <textarea id="supMessage" placeholder="Tell us what happened. Please do not include passwords or card numbers." maxlength="2000" required></textarea>
+            <input type="text" id="supTrap" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;">
+            <button type="submit" id="supBtn" class="contact-btn">Send message</button>
         </form>
-
         <p id="supMessageNote" class="msg"></p>
     </section>
 
     <section class="panel">
         <h2>Common questions</h2>
-
         <details class="faq">
             <summary>How much is the membership?</summary>
-            <p>Membership is ₦20,000 per year, paid securely through Paystack. It gives you classes, handouts and books, and access to the marketplace once you qualify.</p>
+            <p>Membership is &#8358;20,000 per year, paid securely through Paystack. It gives you classes, handouts and books, and access to the marketplace once you qualify.</p>
         </details>
-
         <details class="faq">
             <summary>I forgot my password</summary>
             <p>On the log in page, tap Forgot password and enter your email. We will send you a link to set a new one. If you are logged in, use Change password on your dashboard.</p>
         </details>
-
         <details class="faq">
             <summary>Why is the marketplace locked for me?</summary>
-            <p>Students unlock the marketplace after finishing the one-year program. Lecturers unlock it once their account is verified as a real teacher from a school or university.</p>
+            <p>Students unlock the marketplace when they graduate. You can graduate before one year by showing you have met the learning standards, checked by your lecturers. Lecturers unlock it once their account is verified as a real teacher from a school or university.</p>
         </details>
-
         <details class="faq">
             <summary>How do I become a verified lecturer?</summary>
             <p>Sign up as a lecturer and enter your school or university. The LBN team checks that you are a real lecturer, then approves your account.</p>
         </details>
-
         <details class="faq">
             <summary>How do I report a scam?</summary>
             <p>Inside a trade chat, tap Report a problem. You can also send us a message above and choose Report a scam. Never send money outside LBN and never share bank details, card numbers or OTP codes.</p>
         </details>
-
         <details class="faq">
             <summary>Can I cancel a trade?</summary>
             <p>Yes. Either side can cancel from the trade chat before any payment has been made.</p>
@@ -136,16 +91,12 @@
 </main>
 
 <footer class="footer">
-    <div class="container">
-        &copy; 2026 Lagos Business Network &bull;
-        <a href="contact.html" style="color: var(--accent);">Contact us</a>
-    </div>
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a></div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="contact.js"></script>
 <script src="pwa.js"></script>
-
 </body>
 </html>

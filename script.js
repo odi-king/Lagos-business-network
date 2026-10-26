@@ -59,7 +59,7 @@ async function init() {
                 <h2>The marketplace is not open to you yet</h2>
                 <p class="meta">${waiting
                     ? "Your lecturer account is still being verified. The marketplace opens as soon as it is approved."
-                    : "Students unlock the marketplace after finishing the one-year program."}</p>
+                    : "Students unlock the marketplace when they graduate. You can graduate before one year by showing you have met the learning standards."}</p>
                 <a href="classes.html" class="btn btn-primary" style="margin-top:10px;">Go to classes</a>
             </section>`;
         return;

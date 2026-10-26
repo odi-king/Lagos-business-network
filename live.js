@@ -77,4 +77,4 @@ document.getElementById("logoutBtn").addEventListener("click", async function (e
     window.location.href = "auth.html";
 });
 
-init();
+init(); 
