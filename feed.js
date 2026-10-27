@@ -90,6 +90,74 @@ document.querySelectorAll(".tab-btn").forEach(function (button) {
     });
 });
 
+// ---------- Picking a photo or video from the phone gallery ----------
+
+let mediaFile = null;
+let previewUrl = null;
+
+function clearMedia() {
+    mediaFile = null;
+
+    if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+    }
+
+    document.getElementById("postMedia").value = "";
+
+    const preview = document.getElementById("mediaPreview");
+    preview.style.display = "none";
+    preview.innerHTML = "";
+
+    document.getElementById("pickMedia").style.display = "";
+}
+
+function formatDuration(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const rest = Math.round(seconds % 60);
+    return minutes + ":" + (rest < 10 ? "0" : "") + rest;
+}
+
+document.getElementById("pickMedia").addEventListener("click", function () {
+    document.getElementById("postMedia").click();
+});
+
+document.getElementById("postMedia").addEventListener("change", function (event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const isVideo = file.type.startsWith("video/");
+
+    if (!isVideo && !file.type.startsWith("image/")) {
+        showPostNote("Please choose a photo or a video.", "error");
+        return;
+    }
+
+    showPostNote("");
+    mediaFile = file;
+    previewUrl = URL.createObjectURL(file);
+
+    const preview = document.getElementById("mediaPreview");
+
+    preview.innerHTML =
+        (isVideo
+            ? '<video src="' + previewUrl + '#t=0.1" muted playsinline preload="metadata"></video><span class="media-duration" id="mediaDuration"></span>'
+            : '<img src="' + previewUrl + '" alt="Your photo">') +
+        '<button type="button" class="media-remove" id="mediaRemove" aria-label="Remove">\u00D7</button>';
+
+    preview.style.display = "block";
+    document.getElementById("pickMedia").style.display = "none";
+
+    if (isVideo) {
+        const video = preview.querySelector("video");
+        video.addEventListener("loadedmetadata", function () {
+            document.getElementById("mediaDuration").textContent = formatDuration(video.duration);
+        });
+    }
+
+    document.getElementById("mediaRemove").addEventListener("click", clearMedia);
+});
+
 // ---------- Posting ----------
 
 postForm.addEventListener("submit", async function (event) {
@@ -98,8 +166,8 @@ postForm.addEventListener("submit", async function (event) {
     const caption = document.getElementById("postCaption").value.trim();
     const priceValue = document.getElementById("postPrice").value;
     const link = document.getElementById("postVideo").value.trim();
-    const photo = document.getElementById("postImage").files[0];
-    const videoFile = document.getElementById("postVideoFile").files[0];
+    const photo = mediaFile && mediaFile.type.startsWith("image/") ? mediaFile : null;
+    const videoFile = mediaFile && mediaFile.type.startsWith("video/") ? mediaFile : null;
     const listing = document.getElementById("postListing").value;
     const button = document.getElementById("postBtn");
 
@@ -167,6 +235,7 @@ postForm.addEventListener("submit", async function (event) {
     }
 
     postForm.reset();
+    clearMedia();
     button.disabled = false;
     showPostNote("");
     document.getElementById("composer").open = false;

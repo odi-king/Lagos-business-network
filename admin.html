@@ -63,6 +63,7 @@
                 <option value="dispute">Disputes</option>
                 <option value="payout_due">Sellers to pay</option>
                 <option value="refund_due">Buyers to refund</option>
+                <option value="handout_payout">Lecturers to pay (handouts)</option>
                 <option value="unmatched_payment">Payments that did not match</option>
                 <option value="awaiting_confirmation">Waiting for the buyer</option>
                 <option value="all">Everything</option>
@@ -79,6 +80,7 @@
             <input type="number" id="feePercent" placeholder="Fee % (normal)" step="0.1" min="0" max="30" required>
             <input type="number" id="feePercentVerified" placeholder="Fee % (verified)" step="0.1" min="0" max="30" required>
             <input type="number" id="minFee" placeholder="Smallest fee in naira" min="0" required>
+            <input type="number" id="handoutFee" placeholder="Fee % on handout sales" step="0.1" min="0" max="50">
             <button type="submit" class="contact-btn">Save fees</button>
         </form>
         <p id="settingsMsg" class="msg"></p>

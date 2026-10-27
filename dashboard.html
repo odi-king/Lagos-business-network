@@ -50,7 +50,7 @@
         <p class="meta">Being active helps you learn, but activity alone never graduates you. You graduate by showing you have met the learning standards.</p>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="payout">
         <h2>Payout account</h2>
         <p class="meta">Sellers are paid into this bank account after a trade is completed. Only you and the LBN team can see it.</p>
         <p id="payoutSaved" class="meta"></p>
@@ -104,13 +104,18 @@
             </select>
             <input type="number" id="handoutPrice" placeholder="Price in naira (0 for free)" min="0" required>
             <textarea id="handoutDesc" placeholder="Short description"></textarea>
+            <label class="file-label">The file to sell (PDF, Word, PowerPoint or ZIP, up to 20 MB)
+                <input type="file" id="handoutFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.epub" required>
+            </label>
             <button type="submit" class="contact-btn">Add to the library</button>
         </form>
     </section>
 
     <section class="panel">
         <h2>Handouts and books</h2>
-        <div id="handoutList"></div>
+        <p class="meta">Browse, buy and download handouts and books in the library.</p>
+        <a href="library.html" class="btn btn-primary" style="margin-top:10px;">Open the library</a>
+        <div id="handoutList" style="display:none;"></div>
     </section>
 </main>
 

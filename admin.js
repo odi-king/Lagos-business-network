@@ -286,7 +286,8 @@ const KIND_LABELS = {
     payout_due: "Pay the seller",
     refund_due: "Refund the buyer",
     awaiting_confirmation: "Waiting for the buyer",
-    unmatched_payment: "Payment did not match a trade"
+    unmatched_payment: "Payment did not match a trade",
+    handout_payout: "Pay the lecturer (handout sale)"
 };
 
 function money(amount) {
@@ -307,7 +308,7 @@ async function loadQueue() {
 
 function renderQueue() {
     const filter = queueFilter.value;
-    const actionKinds = ["dispute", "payout_due", "refund_due", "unmatched_payment"];
+    const actionKinds = ["dispute", "payout_due", "refund_due", "unmatched_payment", "handout_payout"];
 
     const visible = queue.filter(function (row) {
         if (filter === "all") return true;
@@ -351,6 +352,14 @@ function renderQueue() {
                 "<p><strong>Refund the buyer " + money(row.amount) + "</strong> through your Paystack dashboard.</p>" +
                 "<p class='meta'>Payment reference: " + escapeHTML(row.reference) + "</p>";
             buttons = '<button type="button" class="contact-btn" data-act="refunded" data-trade="' + id + '">Mark as refunded</button>';
+        } else if (row.kind === "handout_payout") {
+            details =
+                "<p><strong>Pay the lecturer " + money(row.seller_amount) + "</strong> (LBN fee " + money(row.fee_amount) + ")</p>" +
+                "<p class='meta'>Handout bought by " + escapeHTML(row.buyer_name || "a student") + " for " + money(row.amount) + "</p>" +
+                (row.account_number
+                    ? "<p>" + escapeHTML(row.bank_name) + " &bull; " + escapeHTML(row.account_number) + " &bull; " + escapeHTML(row.account_name) + "</p>"
+                    : "<p class='meta'>The lecturer has not saved a payout account yet.</p>");
+            buttons = '<button type="button" class="contact-btn" data-act="handoutpaid" data-ref="' + escapeHTML(row.reference) + '">Mark as paid out</button>';
         } else if (row.kind === "unmatched_payment") {
             details =
                 "<p><strong>" + money(row.amount) + "</strong> was paid but did not match a trade. " + escapeHTML(row.reason) + "</p>" +
@@ -398,6 +407,10 @@ queueList.addEventListener("click", async function (event) {
         if (!confirm("Mark as refunded? Do this only after you refunded the buyer in Paystack.")) return;
         button.disabled = true;
         result = await db.rpc("admin_mark_refunded", { p_trade_id: button.dataset.trade });
+    } else if (act === "handoutpaid") {
+        if (!confirm("Mark as paid out? Do this only after you sent the money to the lecturer's bank account.")) return;
+        button.disabled = true;
+        result = await db.rpc("admin_mark_handout_paid", { p_reference: button.dataset.ref });
     } else if (act === "unmatched") {
         if (!confirm("Mark this payment as handled?")) return;
         button.disabled = true;
@@ -442,6 +455,7 @@ async function loadSettings() {
     document.getElementById("feePercent").value = settings.fee_percent || "";
     document.getElementById("feePercentVerified").value = settings.fee_percent_verified || "";
     document.getElementById("minFee").value = settings.min_fee || "";
+    document.getElementById("handoutFee").value = settings.handout_fee_percent || "";
 }
 
 document.getElementById("paymentsToggle").addEventListener("click", async function () {
@@ -473,6 +487,9 @@ document.getElementById("feeForm").addEventListener("submit", async function (ev
         ["fee_percent_verified", document.getElementById("feePercentVerified").value],
         ["min_fee", document.getElementById("minFee").value]
     ];
+
+    const handoutFee = document.getElementById("handoutFee").value;
+    if (handoutFee !== "") pairs.push(["handout_fee_percent", handoutFee]);
 
     for (const pair of pairs) {
         const { error } = await db.rpc("admin_set_setting", { p_key: pair[0], p_value: String(pair[1]) });

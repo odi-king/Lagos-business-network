@@ -143,6 +143,11 @@ async function renderMember() {
 
     if (isOwn) renderMenu();
 
+    if (isOwn && query.get("edit") === "1") {
+        const editButton = document.getElementById("editBtn");
+        if (editButton) editButton.click();
+    }
+
     mountPosts(memberPosts);
     await loadPosts(true);
 }
@@ -167,7 +172,10 @@ function renderPreview() {
 
 function renderMenu() {
     const items = [
-        '<a class="menu-row" href="dashboard.html">Dashboard and settings</a>',
+        '<a class="menu-row" href="settings.html">Settings and activity</a>',
+        '<a class="menu-row" href="notifications.html">Notifications</a>',
+        '<a class="menu-row" href="library.html">Handouts and books</a>',
+        '<a class="menu-row" href="dashboard.html">Dashboard</a>',
         '<a class="menu-row" href="trades.html">My trades</a>',
         '<a class="menu-row" href="live.html">Live classes</a>'
     ];

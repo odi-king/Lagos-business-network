@@ -55,12 +55,13 @@
             <textarea id="postCaption" placeholder="What are you selling or offering? Describe it here." maxlength="1000"></textarea>
             <input type="number" id="postPrice" placeholder="Price in naira (optional)" min="0">
             <select id="postListing"><option value="">Attach one of your listings (optional)</option></select>
-            <label class="file-label">Photo
-                <input type="file" id="postImage" accept="image/*">
-            </label>
-            <label class="file-label">Video from your phone (up to 90 seconds, 50 MB)
-                <input type="file" id="postVideoFile" accept="video/*">
-            </label>
+            <input type="file" id="postMedia" accept="image/*,video/*" style="display:none;">
+            <button type="button" id="pickMedia" class="media-tile">
+                <span class="media-plus">+</span>
+                <span>Add a photo or video from your phone</span>
+                <span class="meta">Videos can be up to 90 seconds</span>
+            </button>
+            <div id="mediaPreview" class="media-preview" style="display:none;"></div>
             <input type="url" id="postVideo" placeholder="Or paste a YouTube, Vimeo or Google Drive link (optional)">
             <button type="submit" id="postBtn" class="contact-btn">Post</button>
         </form>

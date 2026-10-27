@@ -182,12 +182,41 @@ if (handoutForm) {
         const submitButton = handoutForm.querySelector("button[type='submit']");
         submitButton.disabled = true;
 
-        const { error } = await db.from("handouts").insert({
-            title: document.getElementById("handoutTitle").value.trim(),
-            kind: document.getElementById("handoutKind").value,
-            price: Number(document.getElementById("handoutPrice").value),
-            description: document.getElementById("handoutDesc").value.trim()
+        const file = document.getElementById("handoutFile").files[0];
+
+        if (!file || file.size > 20 * 1024 * 1024) {
+            submitButton.disabled = false;
+            alert(!file ? "Please choose the file you want to sell." : "That file is larger than 20 MB.");
+            return;
+        }
+
+        const handoutId = newId();
+        const filePath = currentUser.id + "/" + handoutId + "/" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+
+        const upload = await db.storage.from("handout-files").upload(filePath, file, {
+            contentType: file.type || "application/octet-stream"
         });
+
+        if (upload.error) {
+            submitButton.disabled = false;
+            alert("Could not upload the file: " + upload.error.message);
+            return;
+        }
+
+        const { error } = await db.rpc("create_handout", {
+            p_id: handoutId,
+            p_title: document.getElementById("handoutTitle").value.trim(),
+            p_kind: document.getElementById("handoutKind").value,
+            p_price: Number(document.getElementById("handoutPrice").value),
+            p_description: document.getElementById("handoutDesc").value.trim(),
+            p_file_path: filePath,
+            p_file_name: file.name,
+            p_file_size: file.size
+        });
+
+        if (error) {
+            await db.storage.from("handout-files").remove([filePath]);
+        }
 
         submitButton.disabled = false;
 
@@ -352,6 +381,18 @@ if (payoutForm) {
         message.textContent = "Saved.";
         await loadPayout();
     });
+}
+
+function newId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+    const hex = Array.from(bytes, function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+    return hex.slice(0, 8) + "-" + hex.slice(8, 12) + "-" + hex.slice(12, 16) + "-" + hex.slice(16, 20) + "-" + hex.slice(20);
 }
 
 const logoutBtn = document.getElementById("logoutBtn");

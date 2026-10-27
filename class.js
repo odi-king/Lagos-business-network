@@ -237,7 +237,7 @@ async function loadLive() {
 
         const join = finished
             ? '<p class="meta">This live class has ended.</p>'
-            : '<a class="contact-btn" target="_blank" rel="noopener" href="' + escapeHTML(session.join_url) + '">Join live class</a>';
+            : '<a class="contact-btn join-live" data-session="' + escapeHTML(session.id) + '" target="_blank" rel="noopener" href="' + escapeHTML(session.join_url) + '">Join live class</a>';
 
         const remove = isOwner
             ? '<button type="button" class="delete-btn" data-kind="live_sessions" data-id="' + escapeHTML(session.id) + '">Delete</button>'
@@ -249,6 +249,20 @@ async function loadLive() {
             ${join}
             ${remove}
         `;
+
+        if (isOwner) {
+            const who = document.createElement("button");
+            who.type = "button";
+            who.className = "btn btn-outline attendees-btn";
+            who.textContent = "Who joined";
+            who.dataset.session = session.id;
+            who.style.margin = "10px 8px 0 0";
+            card.appendChild(who);
+
+            const box = document.createElement("div");
+            box.className = "attendees-box";
+            card.appendChild(box);
+        }
 
         liveList.appendChild(card);
     });
@@ -486,6 +500,36 @@ document.getElementById("assessForm").addEventListener("submit", async function 
     document.getElementById("assessTitle").value = "";
     document.getElementById("assessNote").value = "";
     await loadAssessmentPanel();
+});
+
+// ---------- Live classes: attendance ----------
+
+liveList.addEventListener("click", async function (event) {
+    const join = event.target.closest(".join-live");
+
+    if (join) {
+        // The link opens as usual. This only writes down that the person joined.
+        db.rpc("join_live_session", { p_session_id: join.dataset.session });
+        return;
+    }
+
+    const who = event.target.closest(".attendees-btn");
+    if (!who) return;
+
+    const box = who.parentElement.querySelector(".attendees-box");
+    const { data, error } = await db.rpc("live_attendees", { p_session_id: who.dataset.session });
+
+    if (error) {
+        box.textContent = error.message;
+        return;
+    }
+
+    box.innerHTML = data.length === 0
+        ? "<p class='meta'>Nobody has joined yet.</p>"
+        : "<p class='meta'>" + data.length + " joined:</p>" + data.map(function (a) {
+            return "<div class='comment'>" + escapeHTML(a.full_name || "Member") + " <span class='meta'>" +
+                new Date(a.joined_at).toLocaleTimeString() + "</span></div>";
+        }).join("");
 });
 
 init();
