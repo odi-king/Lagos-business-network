@@ -117,7 +117,14 @@ function showRole() {
 
     welcomeText.textContent = "Welcome, " + name + ".";
 
-    if (isLecturer) {
+    if (profile.role === "business") {
+        roleBadge.textContent = profile.approved ? "\u2713 Verified business" : "Business (pending)";
+        roleBadge.className = "badge business";
+
+        const notice = document.getElementById("pendingNotice");
+        notice.textContent = "Your business account is waiting for approval. The LBN team checks every business. The marketplace opens as soon as it is approved.";
+        notice.style.display = profile.approved ? "none" : "block";
+    } else if (isLecturer) {
         roleBadge.textContent = profile.approved ? "\u2713 Verified lecturer" : "Lecturer (pending)";
         roleBadge.className = "badge lecturer";
         document.getElementById("pendingNotice").style.display = profile.approved ? "none" : "block";

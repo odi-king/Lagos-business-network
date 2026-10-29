@@ -866,3 +866,41 @@ button.settings-row.danger {
 .notif strong { display: block; }
 
 .attendees-box { margin-top: 8px; font-size: 14px; }
+
+/* ===================== Choosing who you are (sign up) ===================== */
+.role-picker { display: flex; flex-direction: column; gap: 10px; }
+.role-title { font-weight: 700; font-size: 20px; margin: 4px 0 2px; }
+.role-card {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+    background: var(--bg);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 16px;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+}
+.role-card.selected { border-color: var(--accent); background: #0f2b2a; }
+.role-head { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+.role-head svg { color: var(--accent); flex-shrink: 0; }
+.role-text { color: var(--muted); font-size: 15px; line-height: 1.5; }
+
+.vbadge.business { color: #c4a7ff; background: #241a3d; border-color: #41306b; }
+.badge.business { background: #241a3d; color: #c4a7ff; border-color: #41306b; }
+
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.chip {
+    padding: 8px 14px;
+    min-height: 40px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--muted);
+    font: inherit;
+    cursor: pointer;
+}
+.chip.active { color: var(--accent); border-color: var(--accent); }

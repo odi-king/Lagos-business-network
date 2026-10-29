@@ -248,6 +248,7 @@ postForm.addEventListener("submit", async function (event) {
 const memberSearch = document.getElementById("memberSearch");
 const memberResults = document.getElementById("memberResults");
 let searchTimer = null;
+let currentRole = "";
 
 memberSearch.addEventListener("input", function () {
     clearTimeout(searchTimer);
@@ -255,12 +256,12 @@ memberSearch.addEventListener("input", function () {
     searchTimer = setTimeout(async function () {
         const text = memberSearch.value.trim();
 
-        if (text.length < 2) {
+        if (text.length < 2 && !currentRole) {
             memberResults.innerHTML = "";
             return;
         }
 
-        const { data, error } = await db.rpc("find_members", { p_search: text });
+        const { data, error } = await db.rpc("find_members", { p_search: text, p_role: currentRole || null });
 
         if (error) {
             memberResults.innerHTML = "<p class='meta'>" + escapeHTML(error.message) + "</p>";
@@ -288,6 +289,15 @@ memberSearch.addEventListener("input", function () {
             memberResults.appendChild(row);
         });
     }, 300);
+});
+
+document.querySelectorAll(".chip").forEach(function (chip) {
+    chip.addEventListener("click", function () {
+        document.querySelectorAll(".chip").forEach(function (c) { c.classList.remove("active"); });
+        chip.classList.add("active");
+        currentRole = chip.dataset.role;
+        memberSearch.dispatchEvent(new Event("input"));
+    });
 });
 
 document.getElementById("tipsClose").addEventListener("click", function () {

@@ -1,5 +1,4 @@
-
- // Shared code for the marketplace feed, member profiles and reels.
+// Shared code for the marketplace feed, member profiles and reels.
 
 const postsContext = { meId: null, isAdmin: false };
 
@@ -96,7 +95,7 @@ function resizeToBlob(file, drawFn, width, height, quality) {
 
         image.onload = function () {
             const canvas = document.createElement("canvas");
-            drawFn(image, canvas, width, height);
+            const size = drawFn(image, canvas, width, height);
             URL.revokeObjectURL(url);
 
             canvas.toBlob(function (blob) {
@@ -217,18 +216,19 @@ async function requireMarketplaceMember() {
     const allowed = profile && (
         profile.is_admin ||
         (profile.role === "lecturer" && profile.approved) ||
-        (profile.role === "student" && profile.graduated)
+        (profile.role === "student" && profile.graduated) ||
+        (profile.role === "business" && profile.approved)
     );
 
     if (!allowed) {
-        const waiting = profile && profile.role === "lecturer";
+        const waiting = profile && (profile.role === "lecturer" || profile.role === "business");
 
         main.innerHTML = `
             <div class="page-head"><h1>Marketplace</h1></div>
             <section class="panel">
                 <h2>The marketplace is not open to you yet</h2>
                 <p class="meta">${waiting
-                    ? "Your lecturer account is still being verified. The marketplace opens as soon as it is approved."
+                    ? "Your " + profile.role + " account is still being verified. The marketplace opens as soon as it is approved."
                     : "Students unlock the marketplace when they graduate. You can graduate before one year by showing you have met the learning standards."}</p>
                 <a href="classes.html" class="btn btn-primary" style="margin-top:10px;">Go to classes</a>
             </section>`;
@@ -253,47 +253,30 @@ async function fetchPosts(mode, author, before, onlyVideo) {
     });
 
     if (error) throw error;
-    return data || [];
+    return data;
 }
 
-// Photos and videos are private, so each one needs a short-lived link.
-// Improved: checks signing errors and avoids duplicate file paths.
+// Photos and videos are private, so each one needs a short-lived link
 async function signMedia(posts) {
     const media = { images: {}, videos: {} };
 
     async function sign(bucket, paths, target) {
-        const uniquePaths = [...new Set(paths.filter(Boolean))];
-        if (uniquePaths.length === 0) return;
+        if (paths.length === 0) return;
 
-        const { data, error } = await db.storage
-            .from(bucket)
-            .createSignedUrls(uniquePaths, 3600);
-
-        if (error) {
-            console.error("Could not sign media from " + bucket + ":", error);
-            throw error;
-        }
+        const { data } = await db.storage.from(bucket).createSignedUrls(paths, 3600);
 
         (data || []).forEach(function (item) {
-            if (item.signedUrl && item.path) {
-                target[item.path] = item.signedUrl;
-            } else if (item.error) {
-                console.error("Could not sign file:", item.path, item.error);
-            }
+            if (item.signedUrl) target[item.path] = item.signedUrl;
         });
     }
 
-    await sign(
-        "post-images",
-        posts.map(function (p) { return p.image_path; }),
-        media.images
-    );
+    await sign("post-images",
+        posts.filter(function (p) { return p.image_path; }).map(function (p) { return p.image_path; }),
+        media.images);
 
-    await sign(
-        "post-videos",
-        posts.map(function (p) { return p.video_path; }),
-        media.videos
-    );
+    await sign("post-videos",
+        posts.filter(function (p) { return p.video_path; }).map(function (p) { return p.video_path; }),
+        media.videos);
 
     return media;
 }
@@ -713,6 +696,7 @@ function mountPosts(listEl) {
             const { error } = await db.rpc("delete_post", { p_post_id: card.dataset.postId });
             if (error) { alert(friendlyError(error)); return; }
 
+            // Remove the files too (this only works for your own posts)
             if (card.dataset.imagePath) await db.storage.from("post-images").remove([card.dataset.imagePath]);
             if (card.dataset.videoPath) await db.storage.from("post-videos").remove([card.dataset.videoPath]);
 

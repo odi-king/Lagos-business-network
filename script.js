@@ -48,17 +48,18 @@ async function init() {
     const allowed = me && (
         me.is_admin ||
         (me.role === "lecturer" && me.approved) ||
-        (me.role === "student" && me.graduated)
+        (me.role === "student" && me.graduated) ||
+        (me.role === "business" && me.approved)
     );
 
     if (!allowed) {
-        const waiting = me && me.role === "lecturer";
+        const waiting = me && (me.role === "lecturer" || me.role === "business");
         document.querySelector("main").innerHTML = `
             <div class="page-head"><h1>Marketplace</h1></div>
             <section class="panel">
                 <h2>The marketplace is not open to you yet</h2>
                 <p class="meta">${waiting
-                    ? "Your lecturer account is still being verified. The marketplace opens as soon as it is approved."
+                    ? "Your " + me.role + " account is still being verified. The marketplace opens as soon as it is approved."
                     : "Students unlock the marketplace when they graduate. You can graduate before one year by showing you have met the learning standards."}</p>
                 <a href="classes.html" class="btn btn-primary" style="margin-top:10px;">Go to classes</a>
             </section>`;

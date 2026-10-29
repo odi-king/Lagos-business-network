@@ -62,13 +62,32 @@ function supabaseReady() {
 
 // Lecturers must say which school or university they teach at
 function syncInstitution() {
-    const isLecturer = mode === "signup" && roleSelect.value === "lecturer";
-    institutionInput.style.display = isLecturer ? "block" : "none";
-    lecturerNote.style.display = isLecturer ? "block" : "none";
-    institutionInput.required = isLecturer;
+    const role = roleSelect.value;
+    const needsName = mode === "signup" && (role === "lecturer" || role === "business");
+
+    institutionInput.style.display = needsName ? "block" : "none";
+    lecturerNote.style.display = needsName ? "block" : "none";
+    institutionInput.required = needsName;
+    institutionInput.placeholder = role === "business" ? "Your business or company name" : "Your school or university";
+    lecturerNote.textContent = role === "business"
+        ? "We check every business before the marketplace opens for it."
+        : "We check every lecturer with their school before approving the account.";
+
+    document.querySelectorAll(".role-card").forEach(function (card) {
+        const on = card.dataset.role === role;
+        card.classList.toggle("selected", on);
+        card.setAttribute("aria-pressed", on ? "true" : "false");
+    });
 }
 
 roleSelect.addEventListener("change", syncInstitution);
+
+document.querySelectorAll(".role-card").forEach(function (card) {
+    card.addEventListener("click", function () {
+        roleSelect.value = card.dataset.role;
+        syncInstitution();
+    });
+});
 
 function setMode(newMode) {
     mode = newMode;
@@ -139,7 +158,7 @@ authForm.addEventListener("submit", async function (event) {
                     data: {
                         full_name: fullName.value.trim(),
                         role: roleSelect.value,
-                        institution: roleSelect.value === "lecturer" ? institutionInput.value.trim() : ""
+                        institution: (roleSelect.value === "lecturer" || roleSelect.value === "business") ? institutionInput.value.trim() : ""
                     }
                 }
             });

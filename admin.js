@@ -63,14 +63,14 @@ async function loadPeople() {
 }
 
 function renderStats() {
-    const waiting = people.filter(function (p) { return p.role === "lecturer" && !p.approved; }).length;
+    const waiting = people.filter(function (p) { return (p.role === "lecturer" || p.role === "business") && !p.approved; }).length;
     const paid = people.filter(isPaid).length;
     const graduates = people.filter(function (p) { return p.role === "student" && p.graduated; }).length;
 
     const items = [
         { label: "Members", value: people.length },
         { label: "Paid members", value: paid },
-        { label: "Lecturers waiting", value: waiting },
+        { label: "Waiting for approval", value: waiting },
         { label: "Graduates", value: graduates }
     ];
 
@@ -87,7 +87,8 @@ function renderPeople() {
         const text = [p.full_name, p.email, p.institution].join(" ").toLowerCase();
         if (!text.includes(search)) return false;
 
-        if (filter === "waiting") return p.role === "lecturer" && !p.approved;
+        if (filter === "waiting") return (p.role === "lecturer" || p.role === "business") && !p.approved;
+        if (filter === "businesses") return p.role === "business";
         if (filter === "lecturers") return p.role === "lecturer";
         if (filter === "students") return p.role === "student";
         if (filter === "graduates") return p.role === "student" && p.graduated;
@@ -106,13 +107,13 @@ function renderPeople() {
         const card = document.createElement("div");
         card.className = "business-card";
 
-        const isLecturer = p.role === "lecturer";
+        const isLecturer = p.role === "lecturer" || p.role === "business";
         const statusBadge = p.is_admin
             ? "\u2605 Administrator"
             : isLecturer
-                ? (p.approved ? "\u2713 Verified lecturer" : "Waiting for approval")
+                ? (p.approved ? (p.role === "business" ? "\u2713 Verified business" : "\u2713 Verified lecturer") : "Waiting for approval")
                 : (p.verified ? "\u2713 Verified trader" : (p.graduated ? "Graduate" : "Student"));
-        const badgeClass = p.is_admin ? "admin" : isLecturer ? "lecturer" : p.verified ? "trader" : "";
+        const badgeClass = p.is_admin ? "admin" : p.role === "business" ? "business" : isLecturer ? "lecturer" : p.verified ? "trader" : "";
 
         const verifyButton = (!isLecturer && !p.is_admin)
             ? (p.verified

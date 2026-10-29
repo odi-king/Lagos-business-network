@@ -33,9 +33,25 @@
         <form id="authForm">
             <div id="signupFields" style="display:none; flex-direction:column; gap:10px;">
                 <input type="text" id="fullName" placeholder="Full name" autocomplete="name">
-                <select id="role">
-                    <option value="student">I am a student or graduate</option>
-                    <option value="lecturer">I am a lecturer</option>
+                <div class="role-picker">
+                    <div class="role-title">I am a...</div>
+                    <button type="button" class="role-card selected" data-role="student" aria-pressed="true">
+                        <span class="role-head"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg> Student or Graduate</span>
+                        <span class="role-text">Learn skills, find opportunities, showcase talent and connect with businesses.</span>
+                    </button>
+                    <button type="button" class="role-card" data-role="lecturer" aria-pressed="false">
+                        <span class="role-head"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="12" rx="2"/><path d="M12 15v3M8 21l4-3 4 3"/></svg> Lecturer or Instructor</span>
+                        <span class="role-text">Teach courses, share knowledge and sell handouts.</span>
+                    </button>
+                    <button type="button" class="role-card" data-role="business" aria-pressed="false">
+                        <span class="role-head"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V6l7-3v18M11 21h9V10l-9-3M7 9h1M7 13h1M7 17h1M15 13h1M15 17h1"/></svg> Business Owner or Company</span>
+                        <span class="role-text">Promote businesses, sell products and services, and discover talent.</span>
+                    </button>
+                </div>
+                <select id="role" style="display:none;">
+                    <option value="student">Student or graduate</option>
+                    <option value="lecturer">Lecturer or instructor</option>
+                    <option value="business">Business owner or company</option>
                 </select>
                 <input type="text" id="institution" placeholder="Your school or university" autocomplete="organization" style="display:none;">
                 <p id="lecturerNote" class="meta" style="display:none; margin:0;">We check every lecturer with their school before approving the account.</p>

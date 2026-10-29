@@ -55,6 +55,8 @@ async function init() {
         standing = "Administrator";
     } else if (profile.role === "lecturer") {
         standing = profile.approved ? "Verified lecturer" : "Lecturer, waiting for approval";
+    } else if (profile.role === "business") {
+        standing = profile.approved ? "Verified business" : "Business, waiting for approval";
     } else {
         standing = profile.verified ? "Verified trader" : profile.graduated ? "Graduate" : "Student";
     }

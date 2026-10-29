@@ -11,6 +11,9 @@ function badgeHTML(person) {
     if (person.role === "lecturer" && person.approved) {
         return '<span class="vbadge lecturer" title="Verified lecturer">&#10003; Verified lecturer</span>';
     }
+    if (person.role === "business" && person.approved) {
+        return '<span class="vbadge business" title="Verified business">&#10003; Verified business</span>';
+    }
     if (person.role === "student" && person.verified) {
         return '<span class="vbadge trader" title="Verified trader">&#10003; Verified trader</span>';
     }
