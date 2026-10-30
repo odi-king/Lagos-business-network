@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chat - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="classes.html">Classes</a>
+            <a href="feed.html">Marketplace</a>
+            <a href="reels.html">Reels</a>
+            <a href="messages.html">Messages</a>
+            <a href="member.html">Profile</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="dm-head">
+        <a href="messages.html" class="plain-btn dm-back" aria-label="Back to messages">&larr;</a>
+        <a id="dmPerson" class="dm-person" href="messages.html">Loading...</a>
+        <button type="button" id="dmMenu" class="plain-btn dm-menu" aria-label="More">&#8943;</button>
+    </div>
+
+    <div id="dmBox" class="chat-box dm-box"></div>
+    <p id="dmNote" class="msg"></p>
+
+    <form id="dmForm" class="chat-form">
+        <input type="text" id="dmInput" placeholder="Message..." maxlength="1000" autocomplete="off">
+        <button type="submit" id="dmSend" class="contact-btn">Send</button>
+    </form>
+    <p id="dmBlocked" class="notice" style="display:none;"></p>
+</main>
+
+<div id="dmSheet" class="sheet" style="display:none;">
+    <div class="sheet-card">
+        <div class="sheet-head"><strong>Options</strong><button type="button" id="dmSheetClose" class="plain-btn">Close</button></div>
+        <div class="menu">
+            <a class="settings-row" id="optProfile" href="#"><span>View profile</span><span class="chev">&rsaquo;</span></a>
+            <button type="button" class="settings-row" id="optBlock"><span>Block</span><span class="chev">&rsaquo;</span></button>
+            <button type="button" class="settings-row" id="optReport"><span>Report</span><span class="chev">&rsaquo;</span></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="membership.js"></script>
+<script src="badges.js"></script>
+<script src="video-utils.js"></script>
+<script src="posts.js"></script>
+<script src="chat.js"></script>
+<script src="appnav.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>
