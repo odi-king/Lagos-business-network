@@ -124,7 +124,7 @@ function renderPeople() {
         const roleButton = isLecturer
             ? (p.approved
                 ? '<button type="button" class="delete-btn" data-action="unapprove" data-id="' + escapeHTML(p.id) + '">Remove approval</button>'
-                : '<button type="button" class="contact-btn" data-action="approve" data-id="' + escapeHTML(p.id) + '">Approve lecturer</button>')
+                : '<button type="button" class="contact-btn" data-action="approve" data-id="' + escapeHTML(p.id) + '">Approve ' + (p.role === "business" ? "business" : "lecturer") + '</button>')
             : (p.graduated
                 ? '<button type="button" class="delete-btn" data-action="ungraduate" data-id="' + escapeHTML(p.id) + '">Undo graduation</button>'
                 : '<button type="button" class="contact-btn" data-action="graduate" data-id="' + escapeHTML(p.id) + '">Graduate student</button>');
@@ -159,8 +159,8 @@ peopleList.addEventListener("click", async function (event) {
     const name = person ? (person.full_name || person.email) : "this person";
 
     const messages = {
-        approve: "Approve " + name + " as a verified lecturer?",
-        unapprove: "Remove " + name + "'s lecturer approval?",
+        approve: "Approve " + name + " as a verified " + (person && person.role === "business" ? "business" : "lecturer") + "?",
+        unapprove: "Remove " + name + "'s approval?",
         graduate: "Graduate " + name + " and open the marketplace for them?",
         ungraduate: "Undo graduation for " + name + "?",
         verify: "Make " + name + " a verified trader (blue tick)?",

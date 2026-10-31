@@ -137,6 +137,7 @@ async function renderMember() {
         ? '<button type="button" class="btn btn-outline" id="editBtn">Edit profile</button>' +
           '<button type="button" class="btn btn-outline" id="shareBtn">Share profile</button>'
         : followButton(profileRow.id, profileRow.i_follow) +
+          '<button type="button" class="btn btn-outline" id="messageBtn">Message</button>' +
           '<button type="button" class="btn btn-outline" id="shareBtn">Share</button>';
 
     profileBox.innerHTML = headerHTML(true, actions);
@@ -148,7 +149,7 @@ async function renderMember() {
         if (editButton) editButton.click();
     }
 
-    mountPosts(memberPosts);
+    document.getElementById("profileTabs").style.display = "flex";
     await loadPosts(true);
 }
 
@@ -200,9 +201,81 @@ async function reloadProfile() {
 
 // ---------- Posts on this profile ----------
 
+// ---------- The four tabs: Posts, Reels, Reposts, Tagged ----------
+
+let currentTab = "posts";
+let reelsOrder = "latest";
+
+const EMPTY_TEXT = {
+    posts: "No posts yet.",
+    reels: "No videos yet.",
+    reposts: "Nothing reposted yet.",
+    tagged: "Nobody has tagged this member yet."
+};
+
+const EYE_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+
+function compact(value) {
+    const n = Number(value) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+    return String(n);
+}
+
+async function fetchTab(tab, before) {
+    if (tab === "reposts" || tab === "tagged") {
+        const { data, error } = await db.rpc(tab === "reposts" ? "profile_reposts" : "profile_tagged", {
+            p_user: memberId,
+            p_limit: 30,
+            p_before: before
+        });
+
+        if (error) throw error;
+        return data;
+    }
+
+    return await fetchPosts("all", memberId, before, tab === "reels", 30);
+}
+
+async function appendGrid(posts) {
+    const media = await signMedia(posts);
+    const ordered = currentTab === "reels" && reelsOrder === "popular"
+        ? posts.slice().sort(function (a, b) { return Number(b.view_count) - Number(a.view_count); })
+        : posts;
+
+    ordered.forEach(function (p) {
+        const tile = document.createElement("a");
+        tile.className = "grid-tile";
+        tile.href = "post.html?id=" + encodeURIComponent(p.id);
+
+        let inner;
+
+        if (p.video_path && media.videos[p.video_path]) {
+            inner = '<video src="' + escapeHTML(media.videos[p.video_path]) + '#t=0.1" muted playsinline preload="metadata"></video>';
+        } else if (p.image_path && media.images[p.image_path]) {
+            inner = '<img src="' + escapeHTML(media.images[p.image_path]) + '" alt="" loading="lazy">';
+        } else if (p.video_url) {
+            inner = '<div class="tile-text">Video</div>';
+        } else {
+            inner = '<div class="tile-text">' + escapeHTML((p.caption || "").slice(0, 120)) + "</div>";
+        }
+
+        const isVideo = !!(p.video_path || p.video_url);
+
+        if (isVideo) {
+            inner += '<span class="tile-views">' + EYE_ICON + compact(p.view_count) + "</span>";
+            if (currentTab !== "reels") inner += '<span class="tile-play">\u25B6</span>';
+        }
+
+        tile.innerHTML = inner;
+        memberPosts.appendChild(tile);
+    });
+}
+
 async function loadPosts(reset) {
     if (reset) {
         memberPosts.innerHTML = "";
+        memberPosts.className = "profile-grid" + (currentTab === "reels" ? " reels-grid" : "");
         lastCreated = null;
         memberNote.textContent = "";
     }
@@ -210,24 +283,50 @@ async function loadPosts(reset) {
     let posts;
 
     try {
-        posts = await fetchPosts("all", memberId, lastCreated, false);
+        posts = await fetchTab(currentTab, lastCreated);
     } catch (error) {
-        memberNote.textContent = "Could not load posts. " + error.message;
+        memberNote.textContent = "Could not load this tab. " + friendlyError(error);
         return;
     }
 
     if (posts.length === 0 && reset) {
-        memberNote.textContent = isOwn ? "You have not posted yet. Share what you sell on the Marketplace page." : "No posts yet.";
+        memberNote.textContent = isOwn && currentTab === "posts"
+            ? "You have not posted yet. Share what you sell on the Marketplace page."
+            : EMPTY_TEXT[currentTab];
     }
 
-    await appendPosts(memberPosts, posts);
+    await appendGrid(posts);
 
     if (posts.length > 0) {
         lastCreated = posts[posts.length - 1].created_at;
     }
 
-    memberMore.style.display = posts.length === 10 ? "" : "none";
+    memberMore.style.display = posts.length === 30 ? "" : "none";
 }
+
+document.getElementById("profileTabs").addEventListener("click", function (event) {
+    const tab = event.target.closest(".ptab");
+    if (!tab) return;
+
+    document.querySelectorAll(".ptab").forEach(function (t) { t.classList.remove("active"); });
+    tab.classList.add("active");
+
+    currentTab = tab.dataset.tab;
+    document.getElementById("reelsSort").style.display = currentTab === "reels" ? "flex" : "none";
+
+    loadPosts(true);
+});
+
+document.getElementById("reelsSort").addEventListener("click", function (event) {
+    const chip = event.target.closest(".chip");
+    if (!chip) return;
+
+    document.querySelectorAll("#reelsSort .chip").forEach(function (c) { c.classList.remove("active"); });
+    chip.classList.add("active");
+
+    reelsOrder = chip.dataset.sort;
+    loadPosts(true);
+});
 
 memberMore.addEventListener("click", function () {
     loadPosts(false);
@@ -298,6 +397,17 @@ profileBox.addEventListener("click", function (event) {
         } else {
             openList(stat.dataset.list);
         }
+        return;
+    }
+
+    if (event.target.closest("#messageBtn")) {
+        db.rpc("start_conversation", { p_other: memberId }).then(function (result) {
+            if (result.error) {
+                alert(friendlyError(result.error));
+                return;
+            }
+            window.location.href = "chat.html?id=" + encodeURIComponent(result.data);
+        });
         return;
     }
 

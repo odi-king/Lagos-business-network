@@ -904,3 +904,130 @@ button.settings-row.danger {
     cursor: pointer;
 }
 .chip.active { color: var(--accent); border-color: var(--accent); }
+
+/* ===================== Sharing, messages, comments, profile tabs ===================== */
+.avatar-xs { width: 32px; height: 32px; font-size: 13px; }
+.avatar-md { width: 52px; height: 52px; font-size: 20px; }
+
+.share-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 8px 0 14px; }
+.share-opt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    text-align: center;
+    cursor: pointer;
+}
+.share-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.convo-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--line); color: var(--text); }
+.convo-row:first-child { border-top: none; }
+.convo-row.unread .convo-preview { color: var(--text); font-weight: 700; }
+.convo-main { flex: 1; min-width: 0; }
+.convo-preview { color: var(--muted); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.convo-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.unread-dot {
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-dark);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dm-head { display: flex; align-items: center; gap: 10px; padding: 12px 0; }
+.dm-person { display: flex; align-items: center; gap: 10px; flex: 1; color: var(--text); }
+.dm-back, .dm-menu { font-size: 26px; color: var(--text); }
+.dm-box { height: calc(100vh - 340px); height: calc(100dvh - 340px); min-height: 260px; }
+.dm-time { font-size: 11px; color: var(--muted); margin-top: 4px; text-align: right; }
+.dm-post { padding: 0; overflow: hidden; }
+.dm-post .dm-time { padding: 0 12px 8px; }
+.share-card { display: flex; flex-direction: column; gap: 4px; padding: 12px; color: var(--text); }
+
+.comment-item { display: flex; gap: 10px; align-items: flex-start; }
+.comment-main { flex: 1; min-width: 0; word-wrap: break-word; }
+.comment-meta { display: flex; gap: 12px; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.comment-meta .plain-btn { min-height: 24px; font-size: 12px; }
+.comment-like {
+    background: none;
+    border: none;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font: inherit;
+    cursor: pointer;
+    min-width: 36px;
+    padding: 0;
+}
+.comment-like .heart { font-size: 18px; line-height: 1.2; }
+.comment-like .clc { font-size: 11px; }
+.comment-like.liked { color: #f4506e; }
+.emoji-bar { display: flex; gap: 4px; padding: 8px 0; overflow-x: auto; }
+.emoji-btn { background: none; border: none; font-size: 26px; cursor: pointer; padding: 4px 6px; min-height: 44px; }
+.post-repost.reposted { color: var(--accent); }
+
+.profile-tabs { display: flex; border-top: 1px solid var(--line); margin-top: 16px; }
+.ptab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 52px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    cursor: pointer;
+}
+.ptab.active { color: var(--text); border-bottom-color: var(--text); }
+
+.profile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 2px; }
+.grid-tile { position: relative; display: block; aspect-ratio: 4 / 5; background: #111827; overflow: hidden; color: #fff; }
+.reels-grid .grid-tile { aspect-ratio: 9 / 16; }
+.grid-tile img, .grid-tile video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tile-text {
+    padding: 10px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--text);
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-wrap: break-word;
+}
+.tile-views {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 700;
+    font-size: 14px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+.tile-play { position: absolute; top: 8px; right: 8px; font-size: 14px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }

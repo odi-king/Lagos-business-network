@@ -64,11 +64,19 @@ async function loadNotifications() {
 }
 
 // Opening one marks it as read
-notifList.addEventListener("click", function (event) {
+// Opening one marks it as read, and waits until that is saved before leaving the page
+notifList.addEventListener("click", async function (event) {
     const row = event.target.closest(".notif");
     if (!row) return;
 
-    db.rpc("mark_notifications_read", { p_id: row.dataset.id });
+    event.preventDefault();
+    const destination = row.href;
+
+    row.classList.remove("unread");
+    await db.rpc("mark_notifications_read", { p_id: row.dataset.id });
+    if (window.refreshBell) await window.refreshBell();
+
+    window.location.href = destination;
 });
 
 document.getElementById("readAll").addEventListener("click", async function () {

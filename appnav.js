@@ -11,7 +11,8 @@
         trades: '<path d="M7 7h12l-3-3M17 17H5l3 3"/>',
         me: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
         bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
-        menu: '<path d="M4 7h16M4 12h16M4 17h16"/>'
+        menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+        send: '<path d="M22 3L11 14"/><path d="M22 3l-7 19-4-8-8-4z"/>'
     };
 
     function svg(name, size) {
@@ -21,11 +22,11 @@
 
     // ----- Bottom menu -----
     const tabs = [
-        { href: "feed.html", label: "Market", icon: "market", pages: ["feed.html", "marketplace.html", "library.html"] },
+        { href: "feed.html", label: "Market", icon: "market", pages: ["feed.html", "marketplace.html", "library.html", "post.html"] },
         { href: "reels.html", label: "Reels", icon: "reels", pages: ["reels.html"] },
         { href: "classes.html", label: "Classes", icon: "classes", pages: ["classes.html", "class.html", "live.html"] },
         { href: "trades.html", label: "Trades", icon: "trades", pages: ["trades.html", "trade.html"] },
-        { href: "member.html", label: "Me", icon: "me", pages: ["member.html", "dashboard.html", "admin.html", "settings.html", "notifications.html"] }
+        { href: "member.html", label: "Me", icon: "me", pages: ["member.html", "dashboard.html", "admin.html", "settings.html", "notifications.html", "messages.html", "chat.html"] }
     ];
 
     const bar = document.createElement("nav");
@@ -47,6 +48,8 @@
         const actions = document.createElement("div");
         actions.className = "nav-actions";
         actions.innerHTML =
+            '<a href="messages.html" class="icon-link" aria-label="Messages">' + svg("send", 24) +
+            '<span class="bell-badge" id="dmBadge" style="display:none;"></span></a>' +
             '<a href="notifications.html" class="icon-link" aria-label="Notifications">' + svg("bell", 24) +
             '<span class="bell-badge" id="bellBadge" style="display:none;"></span></a>' +
             '<a href="settings.html" class="icon-link" aria-label="Settings and activity">' + svg("menu", 24) + "</a>";
@@ -70,10 +73,33 @@
         } catch (e) {}
     }
 
+    async function refreshDm() {
+        if (typeof db === "undefined" || !db) return;
+
+        try {
+            const { data, error } = await db.rpc("dm_unread_count");
+            const badge = document.getElementById("dmBadge");
+            if (error || !badge) return;
+
+            if (data > 0) {
+                badge.textContent = data > 9 ? "9+" : String(data);
+                badge.style.display = "flex";
+            } else {
+                badge.style.display = "none";
+            }
+        } catch (e) {}
+    }
+
+    window.refreshDm = refreshDm;
+    refreshDm();
+
     window.refreshBell = refreshBell;
     refreshBell();
 
     setInterval(function () {
-        if (!document.hidden) refreshBell();
+        if (!document.hidden) {
+            refreshBell();
+            refreshDm();
+        }
     }, 60000);
 })();

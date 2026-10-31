@@ -158,6 +158,75 @@ document.getElementById("postMedia").addEventListener("change", function (event)
     document.getElementById("mediaRemove").addEventListener("click", clearMedia);
 });
 
+// ---------- Tagging people in a post ----------
+
+let taggedPeople = [];
+
+function renderTagChips() {
+    const chips = document.getElementById("tagChips");
+
+    chips.innerHTML = taggedPeople.map(function (t) {
+        return '<button type="button" class="chip active tag-chip" data-id="' + escapeHTML(t.id) + '">' +
+            escapeHTML(t.name || "Member") + " \u00D7</button>";
+    }).join("");
+}
+
+let tagTimer = null;
+
+document.getElementById("tagSearch").addEventListener("input", function (event) {
+    clearTimeout(tagTimer);
+
+    tagTimer = setTimeout(async function () {
+        const text = event.target.value.trim();
+        const results = document.getElementById("tagResults");
+
+        if (text.length < 2) {
+            results.innerHTML = "";
+            return;
+        }
+
+        const { data, error } = await db.rpc("find_members", { p_search: text });
+
+        if (error || data.length === 0) {
+            results.innerHTML = "<p class='meta'>No members found.</p>";
+            return;
+        }
+
+        results.innerHTML = data.slice(0, 6).map(function (m) {
+            return '<div class="member-row"><div class="member-link">' + avatarHTML(m.full_name, m.avatar_path, "avatar-sm") +
+                "<span class='post-author'>" + escapeHTML(m.full_name || "Member") + "</span></div>" +
+                '<button type="button" class="btn btn-outline tag-add" data-id="' + escapeHTML(m.id) +
+                '" data-name="' + escapeHTML(m.full_name || "Member") + '">Tag</button></div>';
+        }).join("");
+    }, 300);
+});
+
+document.getElementById("tagResults").addEventListener("click", function (event) {
+    const add = event.target.closest(".tag-add");
+    if (!add) return;
+
+    if (taggedPeople.length >= 5) {
+        showPostNote("You can tag up to 5 people.", "error");
+        return;
+    }
+
+    if (!taggedPeople.some(function (t) { return t.id === add.dataset.id; })) {
+        taggedPeople.push({ id: add.dataset.id, name: add.dataset.name });
+    }
+
+    renderTagChips();
+    document.getElementById("tagResults").innerHTML = "";
+    document.getElementById("tagSearch").value = "";
+});
+
+document.getElementById("tagChips").addEventListener("click", function (event) {
+    const chip = event.target.closest(".tag-chip");
+    if (!chip) return;
+
+    taggedPeople = taggedPeople.filter(function (t) { return t.id !== chip.dataset.id; });
+    renderTagChips();
+});
+
 // ---------- Posting ----------
 
 postForm.addEventListener("submit", async function (event) {
@@ -215,7 +284,7 @@ postForm.addEventListener("submit", async function (event) {
 
         showPostNote("Posting...", "ok");
 
-        const { error } = await db.rpc("create_post", {
+        const created = await db.rpc("create_post", {
             p_caption: caption,
             p_price: priceValue === "" ? null : parseInt(priceValue, 10),
             p_video_url: link || null,
@@ -224,7 +293,14 @@ postForm.addEventListener("submit", async function (event) {
             p_business_id: listing || null
         });
 
-        if (error) throw error;
+        if (created.error) throw created.error;
+
+        if (taggedPeople.length > 0) {
+            await db.rpc("tag_post", {
+                p_post_id: created.data,
+                p_users: taggedPeople.map(function (t) { return t.id; })
+            });
+        }
     } catch (error) {
         if (imagePath) await db.storage.from("post-images").remove([imagePath]);
         if (videoPath) await db.storage.from("post-videos").remove([videoPath]);
@@ -236,6 +312,8 @@ postForm.addEventListener("submit", async function (event) {
 
     postForm.reset();
     clearMedia();
+    taggedPeople = [];
+    renderTagChips();
     button.disabled = false;
     showPostNote("");
     document.getElementById("composer").open = false;

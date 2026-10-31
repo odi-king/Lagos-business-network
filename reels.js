@@ -97,6 +97,8 @@ function renderReel(p, src) {
             <button type="button" class="reel-btn reel-like${p.liked ? " liked" : ""}"><span class="reel-icon">${p.liked ? "\u2665" : "\u2661"}</span><span class="like-count">${Number(p.like_count)}</span></button>
             <div class="reel-stat"><span class="reel-icon">\u25B6</span><span class="view-count">${Number(p.view_count)}</span></div>
             <button type="button" class="reel-btn reel-sound"><span class="reel-icon">\uD83D\uDD07</span><span>Sound</span></button>
+            <button type="button" class="reel-btn reel-share"><span class="reel-icon">\u2197</span><span>Share</span></button>
+            <a class="reel-btn" href="post.html?id=${encodeURIComponent(p.id)}"><span class="reel-icon">\uD83D\uDCAC</span><span>Comments</span></a>
         </div>
     `;
 
@@ -156,6 +158,13 @@ reelsEl.addEventListener("click", async function (event) {
     if (!reel) return;
 
     const video = reel.querySelector(".reel-video");
+
+    if (target.closest(".reel-share")) {
+        const who = reel.querySelector(".post-author");
+        const cap = reel.querySelector(".reel-caption");
+        openShare(reel.dataset.postId, cap ? cap.textContent : "", who ? who.textContent : "");
+        return;
+    }
 
     const like = target.closest(".reel-like");
     if (like) {
