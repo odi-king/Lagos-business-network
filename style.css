@@ -1117,3 +1117,12 @@ button.settings-row.danger {
 .status-line { text-align: right; font-size: 12px; color: var(--muted); margin: 2px 4px 8px; }
 .flash { animation: flashmsg 1.2s ease; }
 @keyframes flashmsg { 0% { outline: 2px solid var(--accent); } 100% { outline: 2px solid transparent; } }
+
+/* ===================== Disputes ===================== */
+.admin-msg { background: #2a2110; border: 1px solid #5c4513; color: var(--text); align-self: center; max-width: 92%; }
+.evidence-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 10px 0; }
+.evidence-item img { width: 100%; height: 130px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); display: block; }
+.evidence-item p { margin: 4px 0; font-size: 13px; }
+.kv { display: flex; justify-content: space-between; gap: 12px; margin: 6px 0; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.kv strong { text-align: right; word-break: break-word; }
+#disputeForm select, #disputeForm textarea, #disputeForm input { margin-top: 8px; }

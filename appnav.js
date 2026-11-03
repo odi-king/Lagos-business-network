@@ -76,6 +76,10 @@
     async function refreshDm() {
         if (typeof db === "undefined" || !db) return;
 
+        // Having the app open means messages sent to you have been Delivered
+        db.rpc("mark_dm_delivered").then(function () {}, function () {});
+        db.rpc("mark_trade_delivered").then(function () {}, function () {});
+
         try {
             const { data, error } = await db.rpc("dm_unread_count");
             const badge = document.getElementById("dmBadge");

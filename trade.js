@@ -23,10 +23,12 @@ const STATUS_CLASSES = {
 STATUS_LABELS.paid = "Paid, held by LBN";
 STATUS_LABELS.disputed = "Dispute: money on hold";
 STATUS_LABELS.refunded = "Refunded";
+STATUS_LABELS.settled = "Settled by the LBN team";
 STATUS_LABELS.delivered = "Done, awaiting confirmation";
 STATUS_CLASSES.paid = "badge trader";
 STATUS_CLASSES.disputed = "badge admin";
 STATUS_CLASSES.refunded = "badge closed";
+STATUS_CLASSES.settled = "badge closed";
 
 let paymentsEnabled = false;
 let me = null;
@@ -128,6 +130,7 @@ async function refresh() {
     if (stateKey !== lastStatus) {
         applyStatus();
         lastStatus = stateKey;
+        updateDisputeUI();
     }
 
     const messages = await db
@@ -174,6 +177,11 @@ function renderHeader() {
 
     document.getElementById("agreedLine").textContent = line;
 
+    if (trade.deliver_by) {
+        document.getElementById("agreedLine").textContent += " Deliver by " +
+            new Date(trade.deliver_by).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) + ".";
+    }
+
     const postLinkEl = document.getElementById("postLink");
 
     if (postLinkEl) {
@@ -185,7 +193,7 @@ function renderHeader() {
 // Shows or hides the buttons and forms that fit the trade's stage
 function applyStatus() {
     const status = trade.status;
-    const closed = status === "completed" || status === "cancelled" || status === "refunded";
+    const closed = status === "completed" || status === "cancelled" || status === "refunded" || status === "settled";
     const participant = isParticipant();
     const isBuyer = trade.buyer_id === me.id;
     const isSeller = trade.seller_id === me.id;
@@ -204,7 +212,7 @@ function applyStatus() {
     document.getElementById("sellerDoneBtn").style.display =
         status === "delivered" && !isBuyer && !trade.seller_confirmed_at ? "" : "none";
     document.getElementById("disputeBtn").style.display =
-        (status === "paid" || status === "delivered") && participant ? "" : "none";
+        (status === "agreed" || status === "paid" || status === "delivered") && participant ? "" : "none";
     document.getElementById("reportBtn").style.display = participant ? "" : "none";
 
     document.getElementById("deliveredBtn").textContent = isService() ? "Service done" : "Mark as delivered";
@@ -252,6 +260,7 @@ function applyStatus() {
         notice.style.display = "block";
         notice.textContent =
             status === "completed" ? "This trade is completed. The chat is now closed." :
+            status === "settled" ? "The LBN team settled this dispute. The chat is now closed." :
             status === "refunded" ? "This trade was refunded. The chat is now closed." :
             "This trade was cancelled. The chat is now closed.";
     } else if (!participant) {
@@ -286,6 +295,15 @@ function renderMessages(rows) {
     rows.forEach(function (r) {
         const mine = r.sender_id === me.id;
         const item = document.createElement("div");
+
+        if (r.kind === "admin") {
+            item.className = "chat-msg admin-msg";
+            item.innerHTML = '<div class="chat-name">LBN team</div>' + escapeHTML(r.body) +
+                '<div class="msg-meta"><span class="msg-time">' + chatTime(r.created_at) + "</span></div>";
+            chatBox.appendChild(item);
+            return;
+        }
+
 
         if (r.kind === "system") {
             item.className = "chat-system";
@@ -413,11 +431,13 @@ offerForm.addEventListener("submit", async function (event) {
 
     showNote("");
 
-    const { error } = await db.rpc("send_offer", {
-        p_trade_id: tradeId,
-        p_amount: amount,
-        p_note: note
-    });
+    const offerParams = { p_trade_id: tradeId, p_amount: amount, p_note: note };
+    const deliverBy = document.getElementById("offerDeliverBy").value;
+
+    // The end of the chosen day, so the seller has the whole day
+    if (deliverBy) offerParams.p_deliver_by = new Date(deliverBy + "T23:59:00").toISOString();
+
+    const { error } = await db.rpc("send_offer", offerParams);
 
     if (error) {
         showNote(error.message);
@@ -529,19 +549,252 @@ document.getElementById("payBtn").addEventListener("click", function () {
     handler.openIframe();
 });
 
-document.getElementById("disputeBtn").addEventListener("click", async function () {
-    const reason = prompt("Tell us clearly what is wrong. The money will stay on hold until the LBN team decides.");
-    if (!reason) return;
+// ---------- Disputes with evidence ----------
 
-    const { error } = await db.rpc("open_dispute", { p_trade_id: tradeId, p_reason: reason });
+let disputeFormOpen = false;
+let evidenceTick = 0;
+const MAX_EVIDENCE_BYTES = 5 * 1024 * 1024;
+
+const CATEGORY_TEXT = {
+    not_delivered: "Not delivered on time",
+    not_as_described: "Not as described",
+    poor_quality: "Poor quality or incomplete",
+    no_response: "The other person stopped replying",
+    other: "Other problem"
+};
+
+function niceDate(value) {
+    return new Date(value).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+}
+
+function disputeNote(text, ok) {
+    const box = document.getElementById("disputeMsg");
+    box.textContent = text;
+    box.className = "msg " + (ok ? "ok" : "error");
+}
+
+function buildCategories() {
+    const isBuyer = trade.buyer_id === me.id;
+    const overdue = trade.deliver_by && new Date(trade.deliver_by) < new Date();
+    const keys = isBuyer ? ["not_delivered", "not_as_described", "poor_quality", "no_response", "other"] : ["no_response", "other"];
+
+    const select = document.getElementById("disputeCategory");
+    select.innerHTML = keys.map(function (k) {
+        return '<option value="' + k + '">' + CATEGORY_TEXT[k] + "</option>";
+    }).join("");
+
+    if (isBuyer && overdue) select.value = "not_delivered";
+}
+
+function updateDisputeUI() {
+    if (!trade || !me) return;
+
+    const status = trade.status;
+    const isBuyer = trade.buyer_id === me.id;
+
+    // The agreed delivery date
+    const note = document.getElementById("deadlineNote");
+
+    if (trade.deliver_by && (status === "agreed" || status === "paid") && isParticipant()) {
+        const overdue = new Date(trade.deliver_by) < new Date();
+        note.style.display = "block";
+        note.textContent = overdue
+            ? (isBuyer
+                ? "The agreed delivery date (" + niceDate(trade.deliver_by) + ") has passed and the seller has not delivered. You can open a dispute."
+                : "The agreed delivery date (" + niceDate(trade.deliver_by) + ") has passed. Please deliver now, or tell the buyer what is happening.")
+            : "Deliver by " + niceDate(trade.deliver_by) + ".";
+    } else {
+        note.style.display = "none";
+    }
+
+    const inDispute = status === "disputed";
+    const panel = document.getElementById("disputePanel");
+
+    panel.style.display = isParticipant() && (inDispute || disputeFormOpen) ? "block" : "none";
+    document.getElementById("disputeForm").style.display = disputeFormOpen && !inDispute ? "block" : "none";
+    document.getElementById("evidenceBox").style.display = inDispute ? "block" : "none";
+
+    if (inDispute) {
+        loadDisputeSummary();
+        loadEvidence();
+    } else {
+        document.getElementById("disputeSummary").innerHTML = "";
+    }
+}
+
+async function loadDisputeSummary() {
+    const { data } = await db
+        .from("disputes")
+        .select("reason, category, created_at, opened_by")
+        .eq("trade_id", tradeId)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+    const d = data && data[0];
+    if (!d) return;
+
+    document.getElementById("disputeSummary").innerHTML =
+        '<p class="notice">This trade is in dispute. The LBN team will read this chat, look at the evidence and decide. It cannot be completed until they do.</p>' +
+        "<p><strong>" + escapeHTML(CATEGORY_TEXT[d.category] || "Dispute") + "</strong> opened by " +
+        escapeHTML(d.opened_by === me.id ? "you" : nameFor(d.opened_by)) + " on " + niceDate(d.created_at) + "</p>" +
+        "<p>" + escapeHTML(d.reason) + "</p>";
+}
+
+async function loadEvidence() {
+    const list = document.getElementById("evidenceList");
+    const { data, error } = await db.rpc("dispute_evidence_list", { p_trade_id: tradeId });
 
     if (error) {
-        showNote(error.message);
+        list.innerHTML = "<p class='meta'>Could not load the evidence.</p>";
         return;
     }
 
+    if (data.length === 0) {
+        list.innerHTML = "<p class='meta'>No evidence has been added yet.</p>";
+        return;
+    }
+
+    const items = await Promise.all(data.map(async function (e) {
+        const signed = await db.storage.from("dispute-evidence").createSignedUrl(e.file_path, 3600);
+        const url = signed.data ? signed.data.signedUrl : "";
+        const isImage = /\.(jpe?g|png|webp)$/i.test(e.file_path);
+
+        return '<div class="evidence-item">' +
+            (isImage && url
+                ? '<a href="' + escapeHTML(url) + '" target="_blank" rel="noopener"><img src="' + escapeHTML(url) + '" alt="Evidence"></a>'
+                : '<a class="btn btn-outline" href="' + escapeHTML(url) + '" target="_blank" rel="noopener">Open ' + escapeHTML(e.file_name) + "</a>") +
+            '<p class="meta">From ' + escapeHTML(e.added_by === me.id ? "you" : (e.added_by_name || "the other person")) + ", " + niceDate(e.created_at) + "</p>" +
+            (e.note ? "<p>" + escapeHTML(e.note) + "</p>" : "") + "</div>";
+    }));
+
+    list.innerHTML = '<div class="evidence-grid">' + items.join("") + "</div>";
+}
+
+// Uploads the files, then records each one against the dispute. Returns how many failed.
+async function uploadEvidence(files, note) {
+    let failed = 0;
+
+    for (const file of files) {
+        const extension = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+        const unique = window.crypto && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+        const path = tradeId + "/" + me.id + "/" + unique + "." + extension;
+
+        const upload = await db.storage.from("dispute-evidence").upload(path, file, { contentType: file.type });
+
+        if (upload.error) {
+            failed++;
+            continue;
+        }
+
+        const saved = await db.rpc("add_dispute_evidence", { p_trade_id: tradeId, p_path: path, p_name: file.name, p_note: note || null });
+        if (saved.error) failed++;
+    }
+
+    return failed;
+}
+
+function checkFiles(files) {
+    if (files.length > 5) return "Please choose up to 5 files at a time.";
+
+    for (const file of files) {
+        if (!file.type.startsWith("image/") && file.type !== "application/pdf") return "Evidence must be photos or a PDF.";
+        if (file.size > MAX_EVIDENCE_BYTES) return file.name + " is bigger than 5 MB.";
+    }
+
+    return "";
+}
+
+document.getElementById("disputeBtn").addEventListener("click", function () {
+    disputeFormOpen = !disputeFormOpen;
+    buildCategories();
+    updateDisputeUI();
+
+    if (disputeFormOpen) document.getElementById("disputePanel").scrollIntoView({ behavior: "smooth" });
+});
+
+document.getElementById("disputeCancel").addEventListener("click", function () {
+    disputeFormOpen = false;
+    updateDisputeUI();
+});
+
+document.getElementById("disputeForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const files = Array.from(document.getElementById("disputeFiles").files);
+    const problem = checkFiles(files);
+
+    if (problem) {
+        disputeNote(problem, false);
+        return;
+    }
+
+    const button = document.getElementById("disputeSubmit");
+    button.disabled = true;
+    disputeNote("Opening the dispute...", true);
+
+    const { error } = await db.rpc("open_dispute", {
+        p_trade_id: tradeId,
+        p_category: document.getElementById("disputeCategory").value,
+        p_reason: document.getElementById("disputeReason").value
+    });
+
+    if (error) {
+        button.disabled = false;
+        disputeNote(/could not find the function|schema cache/i.test(error.message)
+            ? "Disputes need the latest database update. Run supabase-disputes.sql in Supabase."
+            : error.message, false);
+        return;
+    }
+
+    if (files.length > 0) {
+        disputeNote("Uploading your evidence...", true);
+        const failed = await uploadEvidence(files, "");
+        if (failed > 0) disputeNote(failed + " file(s) could not be uploaded. You can add them again below.", false);
+    }
+
+    button.disabled = false;
+    document.getElementById("disputeForm").reset();
+    disputeFormOpen = false;
+
+    if (files.length === 0 || !document.getElementById("disputeMsg").textContent.includes("could not")) disputeNote("");
+
     await refresh();
 });
+
+document.getElementById("addEvidenceBtn").addEventListener("click", async function () {
+    const input = document.getElementById("moreFiles");
+    const files = Array.from(input.files);
+
+    if (files.length === 0) {
+        disputeNote("Choose a photo or PDF first.", false);
+        return;
+    }
+
+    const problem = checkFiles(files);
+
+    if (problem) {
+        disputeNote(problem, false);
+        return;
+    }
+
+    const button = document.getElementById("addEvidenceBtn");
+    button.disabled = true;
+    disputeNote("Uploading...", true);
+
+    const failed = await uploadEvidence(files, document.getElementById("moreNote").value.trim());
+
+    button.disabled = false;
+    input.value = "";
+    document.getElementById("moreNote").value = "";
+
+    disputeNote(failed > 0 ? failed + " file(s) could not be uploaded." : "Evidence added.", failed === 0);
+    await loadEvidence();
+});
+
+// New evidence from the other person appears while the chat is open
+setInterval(function () {
+    if (trade && trade.status === "disputed" && !document.hidden && ++evidenceTick % 4 === 0) loadEvidence();
+}, 5000);
 
 document.getElementById("logoutBtn").addEventListener("click", async function (event) {
     event.preventDefault();

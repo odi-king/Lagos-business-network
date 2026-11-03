@@ -53,11 +53,14 @@
         <div id="chatBox" class="chat-box"></div>
         <p id="chatNote" class="msg"></p>
         <p id="closedNotice" class="notice" style="display:none;"></p>
+        <p id="deadlineNote" class="notice" style="display:none;"></p>
         <p id="payNote" class="meta"></p>
 
         <form id="offerForm" class="offer-form" style="display:none;">
             <input type="number" id="offerAmount" placeholder="Offer in naira" min="100" required>
             <input type="text" id="offerNote" placeholder="Note (optional)" maxlength="200">
+            <label class="meta" for="offerDeliverBy">Deliver by (optional)</label>
+            <input type="date" id="offerDeliverBy">
             <button type="submit" class="contact-btn">Send offer</button>
         </form>
 
@@ -76,6 +79,31 @@
             <button type="button" id="disputeBtn" class="delete-btn" style="display:none;">Open a dispute</button>
             <button type="button" id="reportBtn" class="btn btn-outline">Report a problem</button>
         </div>
+    </section>
+
+    <section class="panel" id="disputePanel" style="display:none;">
+        <h2>Dispute</h2>
+        <div id="disputeSummary"></div>
+
+        <form id="disputeForm" style="display:none;">
+            <p class="meta">Tell the LBN team what went wrong. The trade is frozen and cannot be completed until they decide. Be honest and clear.</p>
+            <select id="disputeCategory"></select>
+            <textarea id="disputeReason" maxlength="1000" placeholder="Explain what happened. Say what was agreed and what you got."></textarea>
+            <label class="meta" for="disputeFiles">Evidence: photos, screenshots, receipts or a PDF (up to 5 files, 5 MB each)</label>
+            <input type="file" id="disputeFiles" multiple accept="image/*,application/pdf">
+            <button type="submit" id="disputeSubmit" class="delete-btn">Open the dispute</button>
+            <button type="button" id="disputeCancel" class="plain-btn">Cancel</button>
+        </form>
+
+        <div id="evidenceBox" style="display:none;">
+            <h3>Evidence</h3>
+            <div id="evidenceList"><p class="meta">Loading...</p></div>
+            <label class="meta" for="moreFiles">Add more evidence</label>
+            <input type="file" id="moreFiles" multiple accept="image/*,application/pdf">
+            <input type="text" id="moreNote" placeholder="What does this show? (optional)" maxlength="300">
+            <button type="button" id="addEvidenceBtn" class="contact-btn">Add evidence</button>
+        </div>
+        <p id="disputeMsg" class="msg"></p>
     </section>
 </main>
 

@@ -3,6 +3,8 @@ const conversationId = new URLSearchParams(window.location.search).get("id");
 let me = null;
 let conversation = null;
 let lastSignature = "";
+let replyTo = null;
+let currentRows = [];
 
 const dmBox = document.getElementById("dmBox");
 const dmNote = document.getElementById("dmNote");
@@ -14,8 +16,8 @@ function showNote(text, type) {
     dmNote.className = "msg " + (type || "error");
 }
 
-function timeLabel(value) {
-    return new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+function nameOf(senderId) {
+    return senderId === me.id ? "You" : (conversation.other_name || "Member");
 }
 
 async function init() {
@@ -58,6 +60,7 @@ function renderHeader() {
 
     const blocked = c.blocked_by_me || c.blocked_me;
     dmForm.style.display = blocked ? "none" : "flex";
+    if (blocked) cancelReply();
 
     const banner = document.getElementById("dmBlocked");
     banner.style.display = blocked ? "block" : "none";
@@ -75,7 +78,10 @@ async function refresh(first) {
     }
 
     const rows = data.slice().reverse();
-    const signature = rows.map(function (r) { return r.id; }).join("|");
+    currentRows = rows;
+
+    // The marks change when the other person reads, so they are part of the signature
+    const signature = rows.map(function (r) { return r.id + ":" + chatStatus(r); }).join("|");
 
     if (signature !== lastSignature) {
         const nearBottom = dmBox.scrollHeight - dmBox.scrollTop - dmBox.clientHeight < 120;
@@ -85,10 +91,12 @@ async function refresh(first) {
         if (first || nearBottom) dmBox.scrollTop = dmBox.scrollHeight;
     }
 
-    // Opening the chat marks what you can see as read
-    db.rpc("mark_conversation_read", { p_cid: conversationId }).then(function () {
-        if (window.refreshDm) window.refreshDm();
-    });
+    // Opening the chat marks what you can see as Seen
+    if (!document.hidden) {
+        db.rpc("mark_conversation_read", { p_cid: conversationId }).then(function () {
+            if (window.refreshDm) window.refreshDm();
+        }, function () {});
+    }
 }
 
 function renderMessages(rows) {
@@ -99,30 +107,82 @@ function renderMessages(rows) {
         return;
     }
 
+    const byId = {};
+    rows.forEach(function (r) { byId[r.id] = r; });
+
+    let lastMine = null;
+    rows.forEach(function (r) { if (r.sender_id === me.id) lastMine = r; });
+
+    const canReply = dmForm.style.display !== "none";
+
     rows.forEach(function (r) {
         const mine = r.sender_id === me.id;
         const item = document.createElement("div");
+        item.dataset.id = r.id;
+
+        const quote = r.reply_to ? quoteHTML(byId[r.reply_to], nameOf) : "";
+
+        const meta = '<div class="msg-meta"><span class="msg-time">' + chatTime(r.created_at) + "</span>" +
+            (canReply ? '<button type="button" class="reply-link" data-id="' + chatEscape(r.id) + '">Reply</button>' : "") +
+            (mine ? ticksHTML(r) : "") + "</div>";
 
         if (r.kind === "post") {
             item.className = "chat-msg dm-post " + (mine ? "mine" : "theirs");
 
-            item.innerHTML = r.post_id
+            item.innerHTML = quote + (r.post_id
                 ? '<a class="share-card" href="post.html?id=' + encodeURIComponent(r.post_id) + '">' +
                   "<strong>" + (r.post_is_video ? "Shared a video" : "Shared a post") + "</strong>" +
                   "<span>By " + escapeHTML(r.post_author || "a member") + "</span>" +
                   (r.post_caption ? "<span>" + escapeHTML(r.post_caption) + "</span>" : "") +
                   (r.post_price !== null ? "<span class='post-price' style='margin:6px 0 0;font-size:16px;'>" + formatPrice(r.post_price) + "</span>" : "") +
-                  "<span class='meta'>Tap to open</span></a>" +
-                  '<div class="dm-time">' + timeLabel(r.created_at) + "</div>"
-                : "<em>This post is no longer available.</em>" + '<div class="dm-time">' + timeLabel(r.created_at) + "</div>";
+                  "<span class='meta'>Tap to open</span></a>"
+                : "<em>This post is no longer available.</em>") + meta;
         } else {
             item.className = "chat-msg " + (mine ? "mine" : "theirs");
-            item.innerHTML = escapeHTML(r.body) + '<div class="dm-time">' + timeLabel(r.created_at) + "</div>";
+            item.innerHTML = quote + escapeHTML(r.body) + meta;
         }
 
         dmBox.appendChild(item);
+
+        if (lastMine && r.id === lastMine.id) {
+            const line = document.createElement("div");
+            line.className = "status-line";
+            line.textContent = chatStatusWord(r);
+            dmBox.appendChild(line);
+        }
     });
 }
+
+// ---------- Reply to a message ----------
+
+function startReply(id) {
+    const row = currentRows.find(function (r) { return r.id === id; });
+    if (!row) return;
+
+    replyTo = { id: row.id };
+    setReplyBar(nameOf(row.sender_id), chatSnippet(row));
+    dmInput.focus();
+}
+
+function cancelReply() {
+    replyTo = null;
+    hideReplyBar();
+}
+
+document.getElementById("replyCancel").addEventListener("click", cancelReply);
+
+dmBox.addEventListener("click", function (event) {
+    const reply = event.target.closest(".reply-link");
+    if (reply) {
+        startReply(reply.dataset.id);
+        return;
+    }
+
+    const quote = event.target.closest(".reply-quote[data-goto]");
+    if (quote) jumpToMessage(dmBox, quote.dataset.goto);
+});
+
+// ---------- Sending ----------
 
 dmForm.addEventListener("submit", async function (event) {
     event.preventDefault();
@@ -134,7 +194,10 @@ dmForm.addEventListener("submit", async function (event) {
     button.disabled = true;
     showNote("");
 
-    const { error } = await db.rpc("send_dm", { p_conversation_id: conversationId, p_body: text });
+    const params = { p_conversation_id: conversationId, p_body: text };
+    if (replyTo) params.p_reply_to = replyTo.id;
+
+    const { error } = await db.rpc("send_dm", params);
 
     button.disabled = false;
 
@@ -144,6 +207,7 @@ dmForm.addEventListener("submit", async function (event) {
     }
 
     dmInput.value = "";
+    cancelReply();
     await refresh(true);
 });
 
@@ -153,7 +217,7 @@ function listen() {
     try {
         db.channel("dm-" + conversationId)
             .on("postgres_changes", {
-                event: "INSERT",
+                event: "*",
                 schema: "public",
                 table: "dm_messages",
                 filter: "conversation_id=eq." + conversationId
@@ -164,7 +228,7 @@ function listen() {
     // A backup in case the live connection drops
     setInterval(function () {
         if (!document.hidden) refresh(false);
-    }, 8000);
+    }, 6000);
 
     document.addEventListener("visibilitychange", function () {
         if (!document.hidden) refresh(false);
