@@ -379,8 +379,7 @@ function renderQueue() {
         if (row.kind === "dispute") {
             details = "<p><strong>Reason:</strong> " + escapeHTML(row.reason) + "</p>";
             buttons =
-                '<button type="button" class="contact-btn" data-act="release" data-trade="' + id + '">Release to seller</button>' +
-                '<button type="button" class="delete-btn" data-act="refund" data-trade="' + id + '">Refund buyer</button>';
+                '<a class="contact-btn" href="dispute.html?id=' + id + '">Review the dispute</a>';
         } else if (row.kind === "payout_due") {
             details =
                 "<p><strong>Pay the seller " + money(row.seller_amount) + "</strong> (LBN fee " + money(row.fee_amount) + ")</p>" +
@@ -494,7 +493,8 @@ async function loadSettings() {
     document.getElementById("paymentsToggle").textContent = paymentsOn ? "Turn payments off" : "Turn payments on";
 
     document.getElementById("feePercent").value = settings.fee_percent || "";
-    document.getElementById("feePercentVerified").value = settings.fee_percent_verified || "";
+    document.getElementById("feePercentLarge").value = settings.fee_percent_large || "";
+    document.getElementById("largeThreshold").value = settings.large_threshold || "";
     document.getElementById("minFee").value = settings.min_fee || "";
     document.getElementById("handoutFee").value = settings.handout_fee_percent || "";
 }
@@ -525,7 +525,8 @@ document.getElementById("feeForm").addEventListener("submit", async function (ev
     const message = document.getElementById("settingsMsg");
     const pairs = [
         ["fee_percent", document.getElementById("feePercent").value],
-        ["fee_percent_verified", document.getElementById("feePercentVerified").value],
+        ["fee_percent_large", document.getElementById("feePercentLarge").value],
+        ["large_threshold", document.getElementById("largeThreshold").value],
         ["min_fee", document.getElementById("minFee").value]
     ];
 

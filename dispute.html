@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dispute review - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="admin.html">Admin</a>
+            <a href="member.html">Profile</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>Dispute review</h1>
+        <p id="pageNote">Read the chat, the payment and the evidence, talk to both people, then decide.</p>
+    </div>
+
+    <div id="body" style="display:none;">
+        <section class="panel">
+            <h2 id="tradeTitle">Trade</h2>
+            <p><span id="statusBadge" class="badge"></span></p>
+            <div id="tradeFacts"></div>
+        </section>
+
+        <section class="panel">
+            <h2>The dispute</h2>
+            <div id="disputeFacts"></div>
+        </section>
+
+        <section class="panel">
+            <h2>Evidence</h2>
+            <div id="evidenceList"><p class="meta">Loading...</p></div>
+        </section>
+
+        <section class="panel">
+            <h2>The chat</h2>
+            <div id="chatBox" class="chat-box"></div>
+            <form id="adminForm" class="chat-form" style="display:none;">
+                <input type="text" id="adminInput" placeholder="Message both people as the LBN team" maxlength="1000" autocomplete="off">
+                <button type="submit" id="adminSend" class="contact-btn">Send</button>
+            </form>
+            <p id="adminNote" class="msg"></p>
+        </section>
+
+        <section class="panel" id="decisionPanel" style="display:none;">
+            <h2>Your decision</h2>
+            <select id="decision">
+                <option value="release">Release the money to the seller</option>
+                <option value="refund">Refund the buyer in full</option>
+                <option value="split">Split the money</option>
+            </select>
+            <input type="number" id="buyerAmount" placeholder="Amount that goes back to the buyer (naira)" min="1" style="display:none;">
+            <textarea id="decisionNote" maxlength="500" placeholder="Explain your decision. Both people will see this."></textarea>
+            <button type="button" id="decideBtn" class="contact-btn">Make this decision</button>
+            <p id="decisionMsg" class="msg"></p>
+            <p class="meta">After you decide, the trade closes. Then go to Admin, Payments and disputes, and mark the payout or refund as done once you have sent the money in Paystack.</p>
+        </section>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="dispute.js"></script>
+<script src="appnav.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>

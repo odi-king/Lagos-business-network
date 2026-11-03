@@ -1126,3 +1126,9 @@ button.settings-row.danger {
 .kv { display: flex; justify-content: space-between; gap: 12px; margin: 6px 0; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
 .kv strong { text-align: right; word-break: break-word; }
 #disputeForm select, #disputeForm textarea, #disputeForm input { margin-top: 8px; }
+
+/* ===================== LBN fee breakdown ===================== */
+.fee-box { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 10px 0; }
+.fee-box h4 { margin: 0 0 8px; }
+.fee-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.fee-row.total { border-bottom: none; font-size: 17px; }
