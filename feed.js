@@ -1,12 +1,28 @@
 let me = null;
 let feedMode = "all";
+let marketFilter = "all";
+let searchText = "";
 let lastCreated = null;
+let marketAvailable = true;
+
+let postIntent = "";
+let postItemType = "";
+let taggedPeople = [];
+let mediaFile = null;
+let previewUrl = null;
 
 const feedList = document.getElementById("feedList");
 const feedNote = document.getElementById("feedNote");
 const loadMoreBtn = document.getElementById("loadMore");
 const postForm = document.getElementById("postForm");
 const postNote = document.getElementById("postNote");
+
+const EMPTY_TEXT = {
+    all: "No posts yet. Be the first to post.",
+    selling: "Nothing is for sale yet.",
+    services: "Nobody is offering a service yet.",
+    wanted: "Nobody has asked for anything yet."
+};
 
 function showPostNote(text, type) {
     postNote.textContent = text;
@@ -46,6 +62,32 @@ async function loadMyListings() {
     });
 }
 
+// ---------- Loading the marketplace ----------
+
+async function fetchFeedPage(before) {
+    if (marketAvailable) {
+        const { data, error } = await db.rpc("market_posts", {
+            p_search: searchText,
+            p_filter: marketFilter,
+            p_mode: feedMode,
+            p_limit: 10,
+            p_before: before
+        });
+
+        if (!error) return data;
+
+        if (!/market_posts|schema cache|could not find/i.test(error.message)) throw error;
+
+        // The database has not been updated with supabase-market.sql yet: use the plain feed
+        marketAvailable = false;
+        ["filterChips", "marketSearch", "intentGrid"].forEach(function (id) {
+            document.getElementById(id).style.display = "none";
+        });
+    }
+
+    return await fetchPosts(feedMode, null, before, false);
+}
+
 async function loadFeed(reset) {
     if (reset) {
         feedList.innerHTML = "";
@@ -56,16 +98,20 @@ async function loadFeed(reset) {
     let posts;
 
     try {
-        posts = await fetchPosts(feedMode, null, lastCreated, false);
+        posts = await fetchFeedPage(lastCreated);
     } catch (error) {
         feedNote.textContent = "Could not load posts. " + friendlyError(error);
         return;
     }
 
     if (posts.length === 0 && reset) {
-        feedNote.textContent = feedMode === "following"
-            ? "Nothing here yet. Follow members to see their posts."
-            : "No posts yet. Be the first to post.";
+        if (searchText) {
+            feedNote.textContent = 'Nothing found for "' + searchText + '". Try another word.';
+        } else if (feedMode === "following") {
+            feedNote.textContent = "Nothing here yet. Follow members to see their posts.";
+        } else {
+            feedNote.textContent = EMPTY_TEXT[marketFilter] || EMPTY_TEXT.all;
+        }
     }
 
     await appendPosts(feedList, posts);
@@ -81,19 +127,72 @@ loadMoreBtn.addEventListener("click", function () {
     loadFeed(false);
 });
 
-document.querySelectorAll(".tab-btn").forEach(function (button) {
+document.querySelectorAll(".tabs .tab-btn").forEach(function (button) {
     button.addEventListener("click", function () {
-        document.querySelectorAll(".tab-btn").forEach(function (b) { b.classList.remove("active"); });
+        document.querySelectorAll(".tabs .tab-btn").forEach(function (b) { b.classList.remove("active"); });
         button.classList.add("active");
         feedMode = button.dataset.mode;
         loadFeed(true);
     });
 });
 
-// ---------- Picking a photo or video from the phone gallery ----------
+document.getElementById("filterChips").addEventListener("click", function (event) {
+    const chip = event.target.closest(".chip");
+    if (!chip) return;
 
-let mediaFile = null;
-let previewUrl = null;
+    document.querySelectorAll("#filterChips .chip").forEach(function (c) { c.classList.remove("active"); });
+    chip.classList.add("active");
+
+    marketFilter = chip.dataset.filter;
+    loadFeed(true);
+});
+
+let marketTimer = null;
+
+document.getElementById("marketSearch").addEventListener("input", function (event) {
+    clearTimeout(marketTimer);
+
+    marketTimer = setTimeout(function () {
+        searchText = event.target.value.trim();
+        loadFeed(true);
+    }, 350);
+});
+
+// ---------- What kind of post is it? ----------
+
+const INTENT_TEXT = {
+    "": { title: "", caption: "What do you want to share?", price: "Price in naira (optional)" },
+    "offer-product": { title: "What are you selling?", caption: "Describe it: condition, size, where you are...", price: "Price in naira" },
+    "offer-service": { title: "What service do you offer?", caption: "Describe what you do, your experience and where...", price: "Your price in naira (optional)" },
+    "need-product": { title: "What do you need?", caption: "Describe what you are looking for...", price: "Your budget in naira (optional)" },
+    "need-service": { title: "What service do you need?", caption: "Describe the job, the place and the timing...", price: "Your budget in naira (optional)" }
+};
+
+function applyIntent(intent, type) {
+    postIntent = intent;
+    postItemType = type;
+
+    const text = INTENT_TEXT[intent ? intent + "-" + type : ""];
+    const titleInput = document.getElementById("postTitle");
+
+    titleInput.style.display = intent ? "" : "none";
+    titleInput.placeholder = text.title;
+    document.getElementById("postCaption").placeholder = text.caption;
+    document.getElementById("postPrice").placeholder = text.price;
+
+    document.querySelectorAll("#intentGrid .intent-card").forEach(function (card) {
+        card.classList.toggle("selected", card.dataset.intent === intent && card.dataset.type === type);
+    });
+}
+
+document.getElementById("intentGrid").addEventListener("click", function (event) {
+    const card = event.target.closest(".intent-card");
+    if (!card) return;
+
+    applyIntent(card.dataset.intent, card.dataset.type);
+});
+
+// ---------- Picking a photo or video from the phone gallery ----------
 
 function clearMedia() {
     mediaFile = null;
@@ -160,12 +259,8 @@ document.getElementById("postMedia").addEventListener("change", function (event)
 
 // ---------- Tagging people in a post ----------
 
-let taggedPeople = [];
-
 function renderTagChips() {
-    const chips = document.getElementById("tagChips");
-
-    chips.innerHTML = taggedPeople.map(function (t) {
+    document.getElementById("tagChips").innerHTML = taggedPeople.map(function (t) {
         return '<button type="button" class="chip active tag-chip" data-id="' + escapeHTML(t.id) + '">' +
             escapeHTML(t.name || "Member") + " \u00D7</button>";
     }).join("");
@@ -232,6 +327,7 @@ document.getElementById("tagChips").addEventListener("click", function (event) {
 postForm.addEventListener("submit", async function (event) {
     event.preventDefault();
 
+    const title = document.getElementById("postTitle").value.trim();
     const caption = document.getElementById("postCaption").value.trim();
     const priceValue = document.getElementById("postPrice").value;
     const link = document.getElementById("postVideo").value.trim();
@@ -242,6 +338,16 @@ postForm.addEventListener("submit", async function (event) {
 
     if (link && !toEmbedUrl(link)) {
         showPostNote("Please use a YouTube, Vimeo or Google Drive video link.", "error");
+        return;
+    }
+
+    if (postIntent && title.length < 3) {
+        showPostNote("Give your post a title of at least 3 letters.", "error");
+        return;
+    }
+
+    if (postIntent && caption.length < 10) {
+        showPostNote("Describe it in a few words so people know what you mean.", "error");
         return;
     }
 
@@ -284,14 +390,23 @@ postForm.addEventListener("submit", async function (event) {
 
         showPostNote("Posting...", "ok");
 
-        const created = await db.rpc("create_post", {
+        const params = {
             p_caption: caption,
             p_price: priceValue === "" ? null : parseInt(priceValue, 10),
             p_video_url: link || null,
             p_image_path: imagePath,
             p_video_path: videoPath,
             p_business_id: listing || null
-        });
+        };
+
+        // Only sales, services and requests send the extra details
+        if (postIntent) {
+            params.p_title = title;
+            params.p_intent = postIntent;
+            params.p_item_type = postItemType;
+        }
+
+        const created = await db.rpc("create_post", params);
 
         if (created.error) throw created.error;
 
@@ -305,13 +420,20 @@ postForm.addEventListener("submit", async function (event) {
         if (imagePath) await db.storage.from("post-images").remove([imagePath]);
         if (videoPath) await db.storage.from("post-videos").remove([videoPath]);
 
-        showPostNote(friendlyError(error), "error");
+        const message = friendlyError(error);
+        showPostNote(
+            /could not find the function|schema cache/i.test(message)
+                ? "The marketplace needs its latest database update. Run supabase-market.sql in Supabase."
+                : message,
+            "error"
+        );
         button.disabled = false;
         return;
     }
 
     postForm.reset();
     clearMedia();
+    applyIntent("", "");
     taggedPeople = [];
     renderTagChips();
     button.disabled = false;
@@ -342,7 +464,7 @@ memberSearch.addEventListener("input", function () {
         const { data, error } = await db.rpc("find_members", { p_search: text, p_role: currentRole || null });
 
         if (error) {
-            memberResults.innerHTML = "<p class='meta'>" + escapeHTML(error.message) + "</p>";
+            memberResults.innerHTML = "<p class='meta'>" + escapeHTML(friendlyError(error)) + "</p>";
             return;
         }
 
@@ -369,13 +491,15 @@ memberSearch.addEventListener("input", function () {
     }, 300);
 });
 
-document.querySelectorAll(".chip").forEach(function (chip) {
-    chip.addEventListener("click", function () {
-        document.querySelectorAll(".chip").forEach(function (c) { c.classList.remove("active"); });
-        chip.classList.add("active");
-        currentRole = chip.dataset.role;
-        memberSearch.dispatchEvent(new Event("input"));
-    });
+document.getElementById("roleChips").addEventListener("click", function (event) {
+    const chip = event.target.closest(".chip");
+    if (!chip) return;
+
+    document.querySelectorAll("#roleChips .chip").forEach(function (c) { c.classList.remove("active"); });
+    chip.classList.add("active");
+
+    currentRole = chip.dataset.role;
+    memberSearch.dispatchEvent(new Event("input"));
 });
 
 document.getElementById("tipsClose").addEventListener("click", function () {

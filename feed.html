@@ -35,24 +35,33 @@
 <main class="container feed-page">
     <div class="feed-top">
         <h1>Marketplace</h1>
-        <p class="meta">See what members sell and make. Follow the ones you like.</p>
+        <p class="meta">Buy, sell and offer services. Tap a post to chat and trade safely.</p>
     </div>
 
     <div class="tips" id="tips" style="display:none;">
         <button type="button" class="plain-btn tips-close" id="tipsClose">Close</button>
-        <h3>Welcome. Three easy steps</h3>
+        <h3>Welcome. Four easy steps</h3>
         <ol>
-            <li>Tap <strong>Post something</strong> to show what you sell.</li>
-            <li>Tap <strong>Follow</strong> on members you like.</li>
-            <li>Tap <strong>Message seller</strong> to start a safe trade.</li>
+            <li>Tap <strong>Post something</strong> to sell, offer a service, or ask for what you need.</li>
+            <li>Search the marketplace, or use the buttons for items for sale, services and wanted.</li>
+            <li>Tap <strong>Chat to buy</strong> or <strong>Chat to offer</strong> on a post to start a safe trade.</li>
+            <li>Both of you confirm when it is done, and the trade closes.</li>
         </ol>
     </div>
 
     <details class="composer" id="composer">
         <summary>Post something</summary>
-        <p class="meta">Show what you sell, make or offer. Do not put phone numbers or links in posts. Buyers message you on LBN.</p>
+        <p class="meta">Do not put phone numbers or links in posts. Buyers and sellers talk in the trade chat on LBN.</p>
         <form id="postForm">
-            <textarea id="postCaption" placeholder="What are you selling or offering? Describe it here." maxlength="1000"></textarea>
+            <div class="intent-grid" id="intentGrid">
+                <button type="button" class="intent-card wide selected" data-intent="" data-type=""><strong>Share an update</strong><span>Just talk to the community</span></button>
+                <button type="button" class="intent-card" data-intent="offer" data-type="product"><strong>Sell a product</strong><span>Something you have for sale</span></button>
+                <button type="button" class="intent-card" data-intent="offer" data-type="service"><strong>Offer a service</strong><span>Work you can do</span></button>
+                <button type="button" class="intent-card" data-intent="need" data-type="product"><strong>I need a product</strong><span>Tell people what you want</span></button>
+                <button type="button" class="intent-card" data-intent="need" data-type="service"><strong>I need a service</strong><span>Ask for help with a job</span></button>
+            </div>
+            <input type="text" id="postTitle" maxlength="80" placeholder="Title" style="display:none;">
+            <textarea id="postCaption" placeholder="What do you want to share?" maxlength="1000"></textarea>
             <input type="number" id="postPrice" placeholder="Price in naira (optional)" min="0">
             <select id="postListing"><option value="">Attach one of your listings (optional)</option></select>
             <input type="text" id="tagSearch" placeholder="Tag people (optional)" autocomplete="off">
@@ -71,14 +80,14 @@
         <p id="postNote" class="msg"></p>
     </details>
 
-    <input type="text" id="memberSearch" class="search-box" placeholder="Find members by name">
-    <div class="chips" id="roleChips">
-        <button type="button" class="chip active" data-role="">Everyone</button>
-        <button type="button" class="chip" data-role="student">Talent</button>
-        <button type="button" class="chip" data-role="lecturer">Lecturers</button>
-        <button type="button" class="chip" data-role="business">Businesses</button>
+    <input type="text" id="marketSearch" class="search-box" placeholder="Search products and services">
+
+    <div class="chips" id="filterChips">
+        <button type="button" class="chip active" data-filter="all">Everything</button>
+        <button type="button" class="chip" data-filter="selling">For sale</button>
+        <button type="button" class="chip" data-filter="services">Services</button>
+        <button type="button" class="chip" data-filter="wanted">Wanted</button>
     </div>
-    <div id="memberResults"></div>
 
     <div class="tabs">
         <button type="button" class="tab-btn active" data-mode="all">Everyone</button>
@@ -88,6 +97,18 @@
     <div id="feedList"></div>
     <p id="feedNote" class="meta"></p>
     <button type="button" id="loadMore" class="btn btn-outline" style="display:none; margin-top:14px;">Load more</button>
+
+    <details class="composer" id="membersBox" style="margin-top:20px;">
+        <summary>Find members</summary>
+        <input type="text" id="memberSearch" class="search-box" placeholder="Find members by name">
+        <div class="chips" id="roleChips">
+            <button type="button" class="chip active" data-role="">Everyone</button>
+            <button type="button" class="chip" data-role="student">Talent</button>
+            <button type="button" class="chip" data-role="lecturer">Lecturers</button>
+            <button type="button" class="chip" data-role="business">Businesses</button>
+        </div>
+        <div id="memberResults"></div>
+    </details>
 </main>
 
 <footer class="footer">

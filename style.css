@@ -1031,3 +1031,89 @@ button.settings-row.danger {
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 .tile-play { position: absolute; top: 8px; right: 8px; font-size: 14px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
+
+/* ===================== Replying to comments ===================== */
+.comment-reply { margin-left: 42px; }
+.reply-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--muted);
+}
+.reply-bar strong { color: var(--text); }
+
+/* ===================== Buy and sell marketplace ===================== */
+.intent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+.intent-card {
+    text-align: left;
+    background: var(--bg);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.intent-card.wide { grid-column: 1 / -1; }
+.intent-card.selected { border-color: var(--accent); background: #0f2b2a; }
+.intent-card strong { font-size: 15px; }
+.intent-card span { font-size: 13px; color: var(--muted); }
+
+.market-head { padding: 12px 14px 0; }
+.market-badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-right: 6px;
+}
+.market-badge.offer { background: #0f2b2a; color: var(--accent); border: 1px solid #14503f; }
+.market-badge.need { background: #2a2110; color: #f2c14e; border: 1px solid #5c4513; }
+.market-badge.closed { background: var(--card); color: var(--muted); border: 1px solid var(--line); }
+.post-title { font-size: 19px; font-weight: 700; margin-top: 8px; }
+
+/* ===================== Admin team ===================== */
+.perm-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--line); }
+.perm-row input { width: 22px; height: 22px; margin-top: 3px; flex: 0 0 auto; }
+.staff-card { border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-top: 12px; background: var(--bg); }
+.staff-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.staff-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+.staff-edit-box { margin-top: 12px; }
+.badge-on { color: var(--accent); border-color: #14503f; }
+.badge-off { color: #ff6b6b; border-color: #5a2a2a; }
+.audit-row { padding: 8px 0; border-top: 1px solid var(--line); margin: 0; }
+
+/* ===================== Chat replies and read marks ===================== */
+.reply-quote {
+    display: flex;
+    flex-direction: column;
+    border-left: 3px solid var(--accent);
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+}
+.reply-quote strong { font-size: 12px; }
+.reply-quote span { opacity: 0.8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reply-quote.gone { cursor: default; font-style: italic; }
+.msg-meta { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 4px; font-size: 11px; opacity: 0.8; }
+.reply-link { background: none; border: none; color: inherit; font: inherit; font-size: 12px; cursor: pointer; padding: 4px 2px; min-height: 28px; text-decoration: underline; }
+.ticks { letter-spacing: -3px; font-size: 13px; }
+.ticks.seen { color: #4fc3f7; }
+.status-line { text-align: right; font-size: 12px; color: var(--muted); margin: 2px 4px 8px; }
+.flash { animation: flashmsg 1.2s ease; }
+@keyframes flashmsg { 0% { outline: 2px solid var(--accent); } 100% { outline: 2px solid transparent; } }

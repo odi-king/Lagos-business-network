@@ -76,6 +76,10 @@ function renderReel(p, src) {
         ? '<div class="post-price">' + formatPrice(p.price) + "</div>"
         : "";
 
+    const tradeBtn = p.intent && !own && p.status !== "closed"
+        ? '<button type="button" class="contact-btn reel-trade" data-post="' + escapeHTML(p.id) + '">' +
+          (p.intent === "offer" ? "Chat to buy" : "Chat to offer") + "</button>"
+        : "";
     const message = p.business_id && !own
         ? '<button type="button" class="contact-btn reel-message" data-business="' + escapeHTML(p.business_id) + '">Message seller</button>'
         : "";
@@ -91,7 +95,7 @@ function renderReel(p, src) {
             </div>
             ${price}
             ${p.caption ? '<div class="reel-caption">' + escapeHTML(p.caption) + "</div>" : ""}
-            ${message}
+            ${tradeBtn}${message}
         </div>
         <div class="reel-actions">
             <button type="button" class="reel-btn reel-like${p.liked ? " liked" : ""}"><span class="reel-icon">${p.liked ? "\u2665" : "\u2661"}</span><span class="like-count">${Number(p.like_count)}</span></button>
@@ -158,6 +162,18 @@ reelsEl.addEventListener("click", async function (event) {
     if (!reel) return;
 
     const video = reel.querySelector(".reel-video");
+
+    const reelTrade = target.closest(".reel-trade");
+    if (reelTrade) {
+        reelTrade.disabled = true;
+        const { data, error } = await db.rpc("start_trade_from_post", { p_post_id: reelTrade.dataset.post });
+        reelTrade.disabled = false;
+
+        if (error) { alert(friendlyError(error)); return; }
+
+        window.location.href = "trade.html?id=" + encodeURIComponent(data);
+        return;
+    }
 
     if (target.closest(".reel-share")) {
         const who = reel.querySelector(".post-author");

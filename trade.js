@@ -32,6 +32,8 @@ let paymentsEnabled = false;
 let me = null;
 let trade = null;
 let lastSignature = "";
+let replyTo = null;
+let currentRows = [];
 let lastStatus = "";
 
 const chatBox = document.getElementById("chatBox");
@@ -121,9 +123,11 @@ async function refresh() {
     trade = result.data;
     renderHeader();
 
-    if (trade.status !== lastStatus) {
+    const stateKey = trade.status + ":" + (trade.buyer_confirmed_at ? "b" : "") + (trade.seller_confirmed_at ? "s" : "");
+
+    if (stateKey !== lastStatus) {
         applyStatus();
-        lastStatus = trade.status;
+        lastStatus = stateKey;
     }
 
     const messages = await db
@@ -138,6 +142,11 @@ async function refresh() {
     }
 
     renderMessages(messages.data);
+
+    // Looking at the chat marks the other person's messages as Seen
+    if (isParticipant() && !document.hidden) {
+        db.rpc("mark_trade_seen", { p_trade_id: tradeId }).then(function () {}, function () {});
+    }
 }
 
 function renderHeader() {
@@ -164,6 +173,13 @@ function renderHeader() {
     }
 
     document.getElementById("agreedLine").textContent = line;
+
+    const postLinkEl = document.getElementById("postLink");
+
+    if (postLinkEl) {
+        postLinkEl.style.display = trade.post_id ? "inline" : "none";
+        if (trade.post_id) postLinkEl.href = "post.html?id=" + encodeURIComponent(trade.post_id);
+    }
 }
 
 // Shows or hides the buttons and forms that fit the trade's stage
@@ -184,13 +200,15 @@ function applyStatus() {
     document.getElementById("deliveredBtn").style.display =
         (status === "paid" || (status === "agreed" && !paymentsEnabled)) && isSeller ? "" : "none";
     document.getElementById("receivedBtn").style.display =
-        (status === "paid" || status === "delivered") && isBuyer ? "" : "none";
+        status === "delivered" && isBuyer && !trade.buyer_confirmed_at ? "" : "none";
+    document.getElementById("sellerDoneBtn").style.display =
+        status === "delivered" && !isBuyer && !trade.seller_confirmed_at ? "" : "none";
     document.getElementById("disputeBtn").style.display =
         (status === "paid" || status === "delivered") && participant ? "" : "none";
     document.getElementById("reportBtn").style.display = participant ? "" : "none";
 
     document.getElementById("deliveredBtn").textContent = isService() ? "Service done" : "Mark as delivered";
-    document.getElementById("receivedBtn").textContent = isService() ? "Confirm service completed" : "Confirm received";
+    document.getElementById("receivedBtn").textContent = "I am satisfied: confirm complete";
 
     const payNote = document.getElementById("payNote");
 
@@ -214,6 +232,20 @@ function applyStatus() {
         payNote.textContent = "";
     }
 
+    if (status === "delivered") {
+        const you = isBuyer ? trade.buyer_confirmed_at : trade.seller_confirmed_at;
+        const other = isBuyer ? trade.seller_confirmed_at : trade.buyer_confirmed_at;
+
+        if (you && !other) {
+            payNote.textContent = "You confirmed. Waiting for the other person to confirm. The trade closes when both of you confirm.";
+        } else if (!you && other) {
+            payNote.textContent = "The other person confirmed. Please confirm if you are satisfied, or open a dispute.";
+        } else if (!you) {
+            payNote.textContent = (isBuyer ? "Check what you received. " : "") +
+                "The trade closes only when both of you confirm that it is complete and you are satisfied.";
+        }
+    }
+
     const notice = document.getElementById("closedNotice");
 
     if (closed) {
@@ -231,7 +263,8 @@ function applyStatus() {
 }
 
 function renderMessages(rows) {
-    const signature = rows.map(function (r) { return r.id + ":" + (r.offer_status || ""); }).join("|");
+    currentRows = rows;
+    const signature = rows.map(function (r) { return r.id + ":" + (r.offer_status || "") + ":" + chatStatus(r); }).join("|");
     if (signature === lastSignature) return;
 
     const firstLoad = lastSignature === "";
@@ -239,6 +272,16 @@ function renderMessages(rows) {
     lastSignature = signature;
 
     chatBox.innerHTML = "";
+
+    const byId = {};
+    rows.forEach(function (r) { byId[r.id] = r; });
+
+    let lastMine = null;
+    rows.forEach(function (r) {
+        if (r.sender_id === me.id && r.kind !== "system" && r.kind !== "offer") lastMine = r;
+    });
+
+    const canReply = isParticipant() && chatForm.style.display !== "none";
 
     rows.forEach(function (r) {
         const mine = r.sender_id === me.id;
@@ -278,12 +321,24 @@ function renderMessages(rows) {
                 buttons;
         } else {
             item.className = "chat-msg " + (mine ? "mine" : "theirs");
+            item.dataset.id = r.id;
             item.innerHTML =
                 (mine ? "" : '<div class="chat-name">' + escapeHTML(nameFor(r.sender_id)) + "</div>") +
-                escapeHTML(r.body);
+                (r.reply_to ? quoteHTML(byId[r.reply_to], function (id) { return id === me.id ? "You" : nameFor(id); }) : "") +
+                escapeHTML(r.body) +
+                '<div class="msg-meta"><span class="msg-time">' + chatTime(r.created_at) + "</span>" +
+                (canReply ? '<button type="button" class="reply-link" data-id="' + escapeHTML(r.id) + '">Reply</button>' : "") +
+                (mine ? ticksHTML(r) : "") + "</div>";
         }
 
         chatBox.appendChild(item);
+
+        if (lastMine && r.id === lastMine.id) {
+            const line = document.createElement("div");
+            line.className = "status-line";
+            line.textContent = chatStatusWord(r);
+            chatBox.appendChild(line);
+        }
     });
 
     if (firstLoad || nearBottom) {
@@ -303,7 +358,10 @@ chatForm.addEventListener("submit", async function (event) {
     button.disabled = true;
     showNote("");
 
-    const { error } = await db.rpc("send_message", { p_trade_id: tradeId, p_body: text });
+    const params = { p_trade_id: tradeId, p_body: text };
+    if (replyTo) params.p_reply_to = replyTo.id;
+
+    const { error } = await db.rpc("send_message", params);
 
     button.disabled = false;
 
@@ -313,7 +371,38 @@ chatForm.addEventListener("submit", async function (event) {
     }
 
     chatInput.value = "";
+    cancelReply();
     await refresh();
+});
+
+// ---------- Reply to a message ----------
+
+function cancelReply() {
+    replyTo = null;
+    hideReplyBar();
+}
+
+document.getElementById("replyCancel").addEventListener("click", cancelReply);
+
+chatBox.addEventListener("click", function (event) {
+    const reply = event.target.closest(".reply-link");
+
+    if (reply) {
+        const row = currentRows.find(function (r) { return r.id === reply.dataset.id; });
+        if (!row) return;
+
+        replyTo = { id: row.id };
+        setReplyBar(row.sender_id === me.id ? "yourself" : nameFor(row.sender_id), chatSnippet(row));
+        chatInput.focus();
+        return;
+    }
+
+    const quote = event.target.closest(".reply-quote[data-goto]");
+    if (quote) jumpToMessage(chatBox, quote.dataset.goto);
+});
+
+document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && trade) refresh();
 });
 
 offerForm.addEventListener("submit", async function (event) {
@@ -389,8 +478,12 @@ document.getElementById("deliveredBtn").addEventListener("click", function () {
     runAction("mark_delivered", isService() ? "Is the service finished? The buyer will be asked to confirm it." : "Mark this as delivered?");
 });
 
+document.getElementById("sellerDoneBtn").addEventListener("click", function () {
+    runAction("confirm_complete", "Confirm that the transaction is complete and you are satisfied? The trade closes only when both of you confirm.");
+});
+
 document.getElementById("receivedBtn").addEventListener("click", function () {
-    runAction("confirm_received", isService() ? "Confirm the service was done properly? This releases the money to the seller and closes the chat." : "Confirm you received everything that was agreed? This completes the trade and closes the chat.");
+    runAction("confirm_complete", "Confirm that the transaction is complete and you are satisfied? The trade closes only when both of you confirm.");
 });
 
 document.getElementById("reportBtn").addEventListener("click", async function () {

@@ -299,6 +299,10 @@ function renderPostCard(p, media) {
     card.dataset.imagePath = p.image_path || "";
     card.dataset.videoPath = p.video_path || "";
     card.dataset.caption = p.caption || "";
+    card.dataset.title = p.title || "";
+    card.dataset.intent = p.intent || "";
+    card.dataset.itemType = p.item_type || "";
+    card.dataset.status = p.status || "open";
     card.dataset.price = p.price === null || p.price === undefined ? "" : String(p.price);
     card.dataset.edited = p.edited_at ? "yes" : "";
     card.dataset.created = p.created_at;
@@ -333,6 +337,14 @@ function renderPostCard(p, media) {
 
     const report = own ? "" : '<button type="button" class="plain-btn post-report">Report</button>';
     const edit = own ? '<button type="button" class="plain-btn post-edit">Edit</button>' : "";
+    const tradeBtn = p.intent && !own && p.status !== "closed"
+        ? '<button type="button" class="contact-btn post-trade" data-post="' + escapeHTML(p.id) + '">' +
+          (p.intent === "offer" ? "Chat to buy" : "Chat to offer") + "</button>"
+        : "";
+    const statusBtn = p.intent && own
+        ? '<button type="button" class="plain-btn post-status" data-status="' + (p.status === "closed" ? "open" : "closed") + '">' +
+          (p.status === "closed" ? "Reopen" : "Mark as closed") + "</button>"
+        : "";
     const repost = own ? "" : '<button type="button" class="plain-btn post-repost' + (p.reposted ? " reposted" : "") +
         '">\u21BB <span class="repost-count">' + Number(p.repost_count || 0) + "</span></button>";
 
@@ -355,7 +367,9 @@ function renderPostCard(p, media) {
             <span><span class="view-count">${Number(p.view_count)}</span> views</span>
             ${repost}
             <button type="button" class="plain-btn post-share">Share</button>
+            ${tradeBtn}
             ${message}
+            ${statusBtn}
             ${edit}
             ${remove}
             ${report}
@@ -373,7 +387,18 @@ function setPostText(card) {
     const price = card.dataset.price;
     let html = "";
 
-    if (price !== "") html += '<div class="post-price">' + formatPrice(price) + "</div>";
+    const intent = card.dataset.intent;
+
+    if (intent) {
+        const service = card.dataset.itemType === "service";
+        const label = intent === "need" ? (service ? "Needs a service" : "Wanted") : (service ? "Service" : "For sale");
+
+        html += '<div class="market-head"><span class="market-badge ' + intent + '">' + label + "</span>" +
+            (card.dataset.status === "closed" ? '<span class="market-badge closed">Closed</span>' : "") +
+            '<div class="post-title">' + escapeHTML(card.dataset.title || "") + "</div></div>";
+    }
+
+    if (price !== "") html += '<div class="post-price">' + (intent === "need" ? "Budget " : "") + formatPrice(price) + "</div>";
     if (caption) html += '<div class="post-caption">' + escapeHTML(caption) + "</div>";
 
     box.innerHTML = html;
@@ -503,11 +528,17 @@ async function loadComments(card) {
         return;
     }
 
-    box.innerHTML = "";
-
+    // Replies sit under the comment they answer
+    const repliesOf = {};
     data.forEach(function (c) {
+        if (c.parent_id) {
+            (repliesOf[c.parent_id] = repliesOf[c.parent_id] || []).push(c);
+        }
+    });
+
+    function commentRow(c, isReply) {
         const row = document.createElement("div");
-        row.className = "comment comment-item";
+        row.className = "comment comment-item" + (isReply ? " comment-reply" : "");
         row.dataset.id = c.id;
         row.dataset.body = c.body;
 
@@ -515,6 +546,7 @@ async function loadComments(card) {
         const canDelete = mine || postsContext.isAdmin;
         const name = c.author_name || "Member";
         const likes = Number(c.like_count) || 0;
+        const threadId = c.parent_id || c.id;
 
         row.innerHTML =
             '<a class="post-person" href="member.html?id=' + encodeURIComponent(c.author_id) + '">' +
@@ -525,13 +557,25 @@ async function loadComments(card) {
             ' <span class="comment-text">' + escapeHTML(c.body) + "</span>" +
             (c.edited_at ? ' <span class="meta">(edited)</span>' : "") + "</div>" +
             '<div class="comment-meta"><span>' + timeAgo(c.created_at) + "</span>" +
+            '<button type="button" class="plain-btn comment-reply-btn" data-parent="' + escapeHTML(threadId) +
+            '" data-name="' + escapeHTML(name) + '">Reply</button>' +
             (mine ? '<button type="button" class="plain-btn comment-edit">Edit</button>' : "") +
             (canDelete ? '<button type="button" class="plain-btn comment-delete" data-id="' + escapeHTML(c.id) + '">Delete</button>' : "") +
             "</div></div>" +
             '<button type="button" class="comment-like' + (c.liked ? " liked" : "") + '" aria-label="Like this comment">' +
             '<span class="heart">' + (c.liked ? "\u2665" : "\u2661") + '</span><span class="clc">' + (likes > 0 ? likes : "") + "</span></button>";
 
-        box.appendChild(row);
+        return row;
+    }
+
+    box.innerHTML = "";
+
+    data.filter(function (c) { return !c.parent_id; }).forEach(function (c) {
+        box.appendChild(commentRow(c, false));
+
+        (repliesOf[c.id] || []).forEach(function (reply) {
+            box.appendChild(commentRow(reply, true));
+        });
     });
 }
 
@@ -576,6 +620,8 @@ async function toggleComments(card) {
     box.className = "post-comments";
     box.innerHTML =
         '<div class="comment-list"><p class="meta">Loading...</p></div>' +
+        '<div class="reply-bar" style="display:none;">Replying to <strong class="reply-name"></strong>' +
+        '<button type="button" class="plain-btn reply-cancel">Cancel</button></div>' +
         '<div class="emoji-bar">' + COMMENT_EMOJIS.map(function (e) {
             return '<button type="button" class="emoji-btn">' + e + "</button>";
         }).join("") + "</div>" +
@@ -587,6 +633,13 @@ async function toggleComments(card) {
     await loadComments(card);
 }
 
+function clearReply(card) {
+    delete card.dataset.replyTo;
+
+    const bar = card.querySelector(".reply-bar");
+    if (bar) bar.style.display = "none";
+}
+
 async function sendComment(card) {
     const input = card.querySelector(".comment-input");
     const note = card.querySelector(".comment-note");
@@ -596,7 +649,11 @@ async function sendComment(card) {
 
     note.textContent = "";
 
-    const { error } = await db.rpc("add_comment", { p_post_id: card.dataset.postId, p_body: text });
+    const { error } = await db.rpc("add_comment", {
+        p_post_id: card.dataset.postId,
+        p_body: text,
+        p_parent_id: card.dataset.replyTo || null
+    });
 
     if (error) {
         note.className = "msg error comment-note";
@@ -605,6 +662,7 @@ async function sendComment(card) {
     }
 
     input.value = "";
+    clearReply(card);
     await loadComments(card);
 }
 
@@ -615,6 +673,33 @@ function mountPosts(listEl) {
         const target = event.target;
         const card = target.closest(".post-card");
         if (!card) return;
+
+        const tradeStart = target.closest(".post-trade");
+        if (tradeStart) {
+            tradeStart.disabled = true;
+            const { data, error } = await db.rpc("start_trade_from_post", { p_post_id: tradeStart.dataset.post });
+            tradeStart.disabled = false;
+
+            if (error) { alert(friendlyError(error)); return; }
+
+            window.location.href = "trade.html?id=" + encodeURIComponent(data);
+            return;
+        }
+
+        const statusChange = target.closest(".post-status");
+        if (statusChange) {
+            const next = statusChange.dataset.status;
+            const { error } = await db.rpc("set_post_status", { p_post_id: card.dataset.postId, p_status: next });
+
+            if (error) { alert(friendlyError(error)); return; }
+
+            card.dataset.status = next;
+            statusChange.dataset.status = next === "closed" ? "open" : "closed";
+            statusChange.textContent = next === "closed" ? "Reopen" : "Mark as closed";
+            setPostText(card);
+            showToast(next === "closed" ? "Marked as closed" : "Reopened");
+            return;
+        }
 
         const shareBtn = target.closest(".post-share");
         if (shareBtn) {
@@ -632,6 +717,25 @@ function mountPosts(listEl) {
             counter.textContent = Number(counter.textContent) + (data ? 1 : -1);
             repostBtn.classList.toggle("reposted", data);
             showToast(data ? "Reposted to your profile" : "Repost removed");
+            return;
+        }
+
+        const replyBtn = target.closest(".comment-reply-btn");
+        if (replyBtn) {
+            const input = card.querySelector(".comment-input");
+            const bar = card.querySelector(".reply-bar");
+
+            card.dataset.replyTo = replyBtn.dataset.parent;
+            bar.style.display = "flex";
+            bar.querySelector(".reply-name").textContent = replyBtn.dataset.name;
+
+            input.value = "@" + replyBtn.dataset.name + " ";
+            input.focus();
+            return;
+        }
+
+        if (target.closest(".reply-cancel")) {
+            clearReply(card);
             return;
         }
 

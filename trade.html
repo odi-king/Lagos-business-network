@@ -36,7 +36,7 @@
     <div class="page-head">
         <h1 id="chatTitle">Loading...</h1>
         <p id="chatParties" class="meta"></p>
-        <p><span id="statusBadge" class="badge"></span> <span id="agreedLine" class="meta"></span></p>
+        <p><span id="statusBadge" class="badge"></span> <span id="agreedLine" class="meta"></span> <a id="postLink" class="plain-btn" style="display:none; color: var(--accent);">View the post</a></p>
     </div>
 
     <div class="scam-zone">
@@ -61,6 +61,7 @@
             <button type="submit" class="contact-btn">Send offer</button>
         </form>
 
+        <div id="replyBar" class="reply-bar" style="display:none;"><span>Replying to <strong id="replyName"></strong>: <span id="replySnippet" class="meta"></span></span><button type="button" class="plain-btn" id="replyCancel">Cancel</button></div>
         <form id="chatForm" class="chat-form" style="display:none;">
             <input type="text" id="chatInput" placeholder="Type a message" maxlength="1000" autocomplete="off">
             <button type="submit" id="sendBtn" class="contact-btn">Send</button>
@@ -70,6 +71,7 @@
             <button type="button" id="payBtn" class="contact-btn" style="display:none;">Pay now</button>
             <button type="button" id="deliveredBtn" class="contact-btn" style="display:none;">Mark as delivered</button>
             <button type="button" id="receivedBtn" class="contact-btn" style="display:none;">Confirm received</button>
+            <button type="button" id="sellerDoneBtn" class="contact-btn" style="display:none;">Confirm complete</button>
             <button type="button" id="cancelBtn" class="delete-btn" style="display:none;">Cancel trade</button>
             <button type="button" id="disputeBtn" class="delete-btn" style="display:none;">Open a dispute</button>
             <button type="button" id="reportBtn" class="btn btn-outline">Report a problem</button>
@@ -87,6 +89,7 @@
 <script src="badges.js"></script>
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <script src="paystack-config.js"></script>
+<script src="chat-common.js"></script>
 <script src="trade.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>
