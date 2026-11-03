@@ -46,7 +46,47 @@ async function init() {
         return;
     }
 
-    await Promise.all([loadPeople(), loadSupport(), loadQueue(), loadSettings(), loadGradRequests(), loadGradRules()]);
+    // What is this admin allowed to do?
+    const accessResult = await db.rpc("my_admin_access");
+    const row = accessResult.data && accessResult.data[0];
+
+    // If the admin team file has not been run yet, everyone who was an admin keeps full access
+    const access = accessResult.error || !row
+        ? { is_super: true, title: "Admin", permissions: [] }
+        : row;
+
+    function can(permission) {
+        return access.is_super || access.permissions.indexOf(permission) !== -1;
+    }
+
+    document.querySelectorAll("[data-perm]").forEach(function (box) {
+        const allowed = box.dataset.perm.split(",").some(can);
+        if (!allowed) box.style.display = "none";
+    });
+
+    document.getElementById("adminNote").textContent =
+        "Signed in as " + (access.title || "Admin") + ". " +
+        (access.is_super ? "You have full control of the platform." : "You see only what your role allows.");
+
+    if (access.is_super && !accessResult.error) {
+        const profileLink = document.querySelector('.nav-links a[href="member.html"]');
+        if (profileLink) profileLink.insertAdjacentHTML("beforebegin", '<a href="admins.html">Admin team</a>');
+
+        document.getElementById("adminNote").insertAdjacentHTML("afterend",
+            '<a href="admins.html" class="btn btn-outline" style="margin-top:10px;">Manage the admin team</a>');
+    }
+
+    const jobs = [];
+    if (can("members")) jobs.push(loadPeople());
+    if (can("support")) jobs.push(loadSupport());
+    if (can("finance") || can("marketplace")) jobs.push(loadQueue());
+    if (can("finance")) jobs.push(loadSettings());
+    if (can("education")) {
+        jobs.push(loadGradRequests());
+        jobs.push(loadGradRules());
+    }
+
+    await Promise.all(jobs);
 }
 
 async function loadPeople() {

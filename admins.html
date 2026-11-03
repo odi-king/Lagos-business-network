@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin team - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="admin.html">Admin</a>
+            <a href="admins.html" class="active">Admin team</a>
+            <a href="member.html">Profile</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>Admin team</h1>
+        <p id="teamNote">Appoint admins, give each one only the access they need, and pause or remove them any time.</p>
+    </div>
+
+    <div id="teamBody" style="display:none;">
+        <section class="panel">
+            <h2>Appoint an admin</h2>
+            <p class="meta">The person must already have a LBN account. Search for them by name or email.</p>
+            <input type="text" id="findBox" class="search-box" placeholder="Search by name or email">
+            <div id="findResults"></div>
+
+            <div id="appointBox" style="display:none;">
+                <p id="pickedLine" class="notice"></p>
+                <label class="meta" for="presetSelect">Role</label>
+                <select id="presetSelect">
+                    <option value="finance">Finance</option>
+                    <option value="support">Support</option>
+                    <option value="content">Content</option>
+                    <option value="marketplace">Marketplace</option>
+                    <option value="education">Education</option>
+                    <option value="full">Full admin</option>
+                    <option value="custom">Custom</option>
+                </select>
+                <input type="text" id="roleTitle" placeholder="Role name" maxlength="40">
+                <div id="appointPerms"></div>
+                <input type="text" id="appointNote" placeholder="Private note for yourself (optional)" maxlength="300">
+                <button type="button" id="appointBtn" class="contact-btn">Appoint admin</button>
+                <button type="button" id="appointCancel" class="plain-btn">Cancel</button>
+            </div>
+            <p id="appointMsg" class="msg"></p>
+        </section>
+
+        <section class="panel">
+            <h2>Your admin team</h2>
+            <div id="staffList"><p class="meta">Loading...</p></div>
+        </section>
+
+        <section class="panel">
+            <h2>What each permission allows</h2>
+            <div id="permGuide"></div>
+            <p class="meta">You are the Super Admin. You always have every permission, and only you can manage this team.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Activity log</h2>
+            <div id="auditList"><p class="meta">Loading...</p></div>
+        </section>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="admins.js"></script>
+<script src="appnav.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>

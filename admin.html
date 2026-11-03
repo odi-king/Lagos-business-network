@@ -35,9 +35,9 @@
         <p id="adminNote">Approve lecturers, graduate students and manage access.</p>
     </div>
 
-    <div id="adminStats" class="grid cols-2" style="margin-bottom:16px;"></div>
+    <div id="adminStats" data-perm="members" class="grid cols-2" style="margin-bottom:16px;"></div>
 
-    <section class="panel">
+    <section class="panel" data-perm="members">
         <h2>People</h2>
         <p class="meta">Before approving a lecturer, check that their school email or staff page matches their name and school.</p>
         <div class="filters">
@@ -55,7 +55,7 @@
         <div id="peopleList"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel" data-perm="finance,marketplace">
         <h2>Payments and disputes</h2>
         <p class="meta">Money held by LBN, disputes to decide, and payouts to make. Open the chat to read what both sides said.</p>
         <div class="filters">
@@ -73,7 +73,7 @@
         <div id="queueList"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel" data-perm="finance">
         <h2>Payment settings</h2>
         <p id="paymentsStatus" class="meta"></p>
         <button type="button" id="paymentsToggle" class="btn btn-outline">Loading...</button>
@@ -87,7 +87,7 @@
         <p id="settingsMsg" class="msg"></p>
     </section>
 
-    <section class="panel">
+    <section class="panel" data-perm="education">
         <h2>Graduation requests</h2>
         <p class="meta">Students ask to graduate after finishing lessons and passing assessments. Read the evidence, then approve or decline.</p>
         <div class="filters">
@@ -106,7 +106,7 @@
         <p id="gradRulesMsg" class="msg"></p>
     </section>
 
-    <section class="panel">
+    <section class="panel" data-perm="support">
         <h2>Customer care messages</h2>
         <div class="filters">
             <select id="supportFilter">
