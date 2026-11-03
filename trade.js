@@ -425,9 +425,10 @@ document.getElementById("payBtn").addEventListener("click", function () {
         currency: "NGN",
         ref: "TRD-" + trade.id.slice(0, 8) + "-" + Date.now(),
         metadata: { kind: "trade", trade_id: trade.id },
-        callback: function () {
+        callback: function (response) {
             showNote("Payment received. Confirming it now...", "ok");
-            setTimeout(refresh, 2500);
+            confirmPayment(response.reference).then(function () { refresh(); });
+            setTimeout(refresh, 4000);
         },
         onClose: function () {}
     });

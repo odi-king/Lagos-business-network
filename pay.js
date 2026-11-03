@@ -67,8 +67,10 @@ payBtn.addEventListener("click", function () {
         currency: "NGN",
         ref: "LBN-" + Date.now() + "-" + Math.floor(Math.random() * 1000000),
         metadata: { user_id: currentUser.id },
-        callback: function () {
-            waitForActivation();
+        callback: function (response) {
+            confirmPayment(response.reference).then(function () {
+                waitForActivation();
+            });
         },
         onClose: function () {
             showMessage("Payment window closed.");

@@ -1,5 +1,7 @@
 let me = null;
 let paymentsOn = false;
+let isAdmin = false;
+let paymentsSetupError = false;
 let currentTab = "browse";
 let handouts = [];
 
@@ -71,7 +73,8 @@ async function init() {
         return;
     }
 
-    const profile = await db.from("profiles").select("role").eq("id", me.id).maybeSingle();
+    const profile = await db.from("profiles").select("role, is_admin").eq("id", me.id).maybeSingle();
+    isAdmin = !!(profile.data && profile.data.is_admin);
 
     if (profile.data && profile.data.role === "lecturer") {
         document.getElementById("salesTab").style.display = "";
@@ -79,6 +82,7 @@ async function init() {
 
     const flag = await db.rpc("trade_payments_enabled");
     paymentsOn = !flag.error && flag.data === true;
+    paymentsSetupError = !!flag.error;
 
     const wanted = window.location.hash.replace("#", "");
     if (wanted === "purchases" || wanted === "sales") showTab(wanted);
@@ -126,8 +130,19 @@ async function loadBrowse() {
         } else if (paymentsOn) {
             action = '<button type="button" class="contact-btn buy-btn" data-id="' + escapeHTML(h.id) +
                 '" data-price="' + Number(h.price) + '">Buy for ' + money(h.price) + "</button>";
+        } else if (isAdmin) {
+            // The admin is told exactly what is wrong and can fix it from here
+            const keyMissing = typeof PAYSTACK_PUBLIC_KEY === "undefined" || PAYSTACK_PUBLIC_KEY.indexOf("PASTE") === 0;
+
+            action = paymentsSetupError
+                ? "<p class='notice'>Buying is off because the payment settings are missing. Run supabase-escrow.sql in Supabase.</p>"
+                : keyMissing
+                    ? "<p class='notice'>Buying is off. Put your Paystack public key in paystack-config.js, then turn payments on.</p>" +
+                      '<button type="button" class="contact-btn enable-payments">Turn payments on</button>'
+                    : "<p class='notice'>Buying is switched off, so students see the Buy button as closed. Turn payments on to sell.</p>" +
+                      '<button type="button" class="contact-btn enable-payments">Turn payments on</button>';
         } else {
-            action = "<p class='meta'>Buying opens soon.</p>";
+            action = "<p class='meta'>Buying is not open yet. The LBN team is finishing payment setup.</p>";
         }
 
         card.innerHTML = `
@@ -241,8 +256,22 @@ async function downloadFile(path, name) {
     window.location.href = data.signedUrl;
 }
 
-async function waitForPurchase(id) {
-    toast("Payment received. Getting your file ready...");
+// A clear confirmation after buying, with the download button right there
+function showReceipt(id) {
+    const h = handouts.find(function (x) { return x.id === id; });
+    const box = document.getElementById("receipt");
+    if (!h || !box) return;
+
+    box.innerHTML =
+        '<div class="notice receipt"><strong>Payment confirmed.</strong> "' + escapeHTML(h.title) + '" is yours now. ' +
+        '<button type="button" class="contact-btn download-btn" style="margin-top:10px;" data-path="' + escapeHTML(h.file_path || "") +
+        '" data-name="' + escapeHTML(h.file_name || "") + '">Download now</button></div>';
+}
+
+async function waitForPurchase(id, reference) {
+    toast("Payment received. Confirming it with Paystack...");
+
+    if (reference) await confirmPayment(reference);
 
     for (let i = 0; i < 20; i++) {
         await loadBrowse();
@@ -250,7 +279,8 @@ async function waitForPurchase(id) {
         if (handouts.find(function (h) { return h.id === id && h.owned; })) {
             await loadPurchases();
             showTab("purchases");
-            toast("Your file is ready to download");
+            showReceipt(id);
+            toast("Payment confirmed");
             return;
         }
 
@@ -308,7 +338,7 @@ document.addEventListener("click", async function (event) {
             currency: "NGN",
             ref: "HND-" + id.slice(0, 8) + "-" + Date.now(),
             metadata: { kind: "handout", handout_id: id, buyer_id: me.id },
-            callback: function () { waitForPurchase(id); },
+            callback: function (response) { waitForPurchase(id, response.reference); },
             onClose: function () {}
         }).openIframe();
 
@@ -332,6 +362,23 @@ document.addEventListener("click", async function (event) {
 
         toast(data === "hidden" ? "Hidden. People who bought it keep their copy." : "Removed");
         await loadBrowse();
+        return;
+    }
+
+    const enable = target.closest(".enable-payments");
+    if (enable) {
+        if (!confirm("Turn on payments? Keep your Paystack TEST keys in place until your Paystack account is live.")) return;
+
+        const { error } = await db.rpc("admin_set_setting", { p_key: "payments_enabled", p_value: "true" });
+
+        if (error) {
+            alert(error.message);
+            return;
+        }
+
+        paymentsOn = true;
+        await loadBrowse();
+        toast("Payments are on");
         return;
     }
 
