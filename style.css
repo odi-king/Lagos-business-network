@@ -1160,3 +1160,28 @@ button.settings-row.danger {
 /* ===================== Language picker ===================== */
 .lang-slot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
 .lang-slot select { width: auto; min-width: 160px; margin: 0; }
+
+/* ===================== Business analytics ===================== */
+.kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 12px 0; }
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; min-width: 0; }
+.panel .kpi { background: var(--bg); }
+.kpi-label { font-size: 13px; color: var(--muted); }
+.kpi-value { font-size: 24px; font-weight: 700; margin: 4px 0; word-break: break-word; }
+.kpi-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.kpi-delta { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--card); color: var(--muted); }
+.kpi-delta.up { color: var(--accent); }
+.kpi-delta.down { color: #ff6b6b; }
+.chart-box { margin-top: 8px; }
+.bar-chart { width: 100%; height: auto; display: block; }
+.bar-chart .bar { fill: var(--accent); }
+.bar-chart .axis { fill: var(--muted); font-size: 9px; }
+.bar-chart .axis-line { stroke: var(--line); stroke-width: 1; }
+.funnel-row, .tx-row, .rank-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.funnel-row:first-child, .tx-row:first-child, .rank-row:first-child { border-top: none; }
+.funnel-row strong { text-align: right; }
+.rank-no { width: 28px; height: 28px; border-radius: 50%; background: var(--bg); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-weight: 700; flex: 0 0 auto; }
+.rank-main { flex: 1; min-width: 0; }
+.rank-title { font-weight: 700; color: var(--text); }
+.rank-money, .tx-money { text-align: right; white-space: nowrap; }
+.insight { padding: 10px 12px; margin: 8px 0; border-left: 3px solid var(--accent); background: var(--bg); border-radius: 6px; }
+@media (min-width: 760px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }

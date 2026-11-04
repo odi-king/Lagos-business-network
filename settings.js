@@ -90,6 +90,7 @@ async function init() {
     const parts = [
         section("Your account", [
             row("Edit profile", "member.html?edit=1"),
+            row("Business analytics", "analytics.html"),
             row("Messages", "messages.html"),
             row("Notifications", "notifications.html"),
             row("Change password", "reset.html")

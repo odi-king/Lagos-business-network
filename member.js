@@ -150,6 +150,9 @@ async function renderMember() {
     }
 
     document.getElementById("profileTabs").style.display = "flex";
+
+    // Counts as a visit for the profile owner's analytics
+    if (!isOwn && viewerSession) db.rpc("record_profile_view", { p_profile: memberId }).then(function () {}, function () {});
     await loadPosts(true);
 }
 

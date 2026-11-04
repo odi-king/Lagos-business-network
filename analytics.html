@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Business analytics - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="feed.html">Marketplace</a>
+            <a href="trades.html">My trades</a>
+            <a href="analytics.html" class="active">Analytics</a>
+            <a href="member.html">Profile</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>Business analytics</h1>
+        <p>See how your products, services and profile are doing on LBN. These figures are private to you.</p>
+    </div>
+
+    <div class="chips" id="rangeChips">
+        <button type="button" class="chip" data-days="7">7 days</button>
+        <button type="button" class="chip active" data-days="30">30 days</button>
+        <button type="button" class="chip" data-days="90">90 days</button>
+    </div>
+
+    <p id="note" class="meta">Loading your figures...</p>
+
+    <div id="body" style="display:none;">
+        <div id="insights"></div>
+
+        <div class="kpi-grid" id="kpis"></div>
+
+        <section class="panel">
+            <h2>Trend</h2>
+            <div class="chips" id="metricChips">
+                <button type="button" class="chip active" data-metric="visits">Visits</button>
+                <button type="button" class="chip" data-metric="views">Item views</button>
+                <button type="button" class="chip" data-metric="enquiries">Enquiries</button>
+                <button type="button" class="chip" data-metric="revenue">Revenue</button>
+                <button type="button" class="chip" data-metric="followers">Followers</button>
+                <button type="button" class="chip" data-metric="engagement">Engagement</button>
+            </div>
+            <p id="chartTotal" class="meta"></p>
+            <div id="chartBox" class="chart-box"></div>
+        </section>
+
+        <section class="panel">
+            <h2>From views to sales</h2>
+            <div id="funnel"></div>
+        </section>
+
+        <section class="panel">
+            <h2>Money overview</h2>
+            <div id="money"></div>
+        </section>
+
+        <section class="panel">
+            <h2>Engagement and followers</h2>
+            <div class="kpi-grid" id="engagement"></div>
+        </section>
+
+        <section class="panel">
+            <h2>Best-performing products and services</h2>
+            <div id="topItems"></div>
+        </section>
+
+        <section class="panel" id="handoutPanel" style="display:none;">
+            <h2>Handouts and books</h2>
+            <div id="handouts"></div>
+        </section>
+
+        <section class="panel">
+            <h2>Revenue and transaction history</h2>
+            <button type="button" id="csvBtn" class="btn btn-outline">Download as a spreadsheet (CSV)</button>
+            <div id="history"></div>
+        </section>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="analytics.js"></script>
+<script src="appnav.js"></script>
+<script src="pwa.js"></script>
+<script src="i18n-strings.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>
