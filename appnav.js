@@ -147,7 +147,7 @@
         const bar = document.createElement("div");
         bar.id = "memberBar";
         bar.className = "member-bar" + (days <= 3 ? " urgent" : "");
-        bar.innerHTML = "<span>" + text + ' Pay &#8358;20,000 for a full year to keep your benefits.</span>' +
+        bar.innerHTML = "<span><span>" + text + "</span> <span>Pay \u20A620,000 for a full year to keep your benefits.</span></span>" +
             '<a class="btn btn-primary" href="pay.html">Pay now</a>' +
             (days > 3 ? '<button type="button" class="plain-btn" aria-label="Close">&times;</button>' : "");
 

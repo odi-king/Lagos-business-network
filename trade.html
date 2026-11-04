@@ -54,6 +54,7 @@
         <p id="chatNote" class="msg"></p>
         <p id="closedNotice" class="notice" style="display:none;"></p>
         <p id="deadlineNote" class="notice" style="display:none;"></p>
+        <div id="feeBox" class="fee-box" style="display:none;"></div>
         <p id="payNote" class="meta"></p>
 
         <form id="offerForm" class="offer-form" style="display:none;">
@@ -61,6 +62,7 @@
             <input type="text" id="offerNote" placeholder="Note (optional)" maxlength="200">
             <label class="meta" for="offerDeliverBy">Deliver by (optional)</label>
             <input type="date" id="offerDeliverBy">
+            <p id="offerFeeNote" class="meta"></p>
             <button type="submit" class="contact-btn">Send offer</button>
         </form>
 
@@ -121,5 +123,7 @@
 <script src="trade.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>
+<script src="i18n-strings.js"></script>
+<script src="i18n.js"></script>
 </body>
 </html>

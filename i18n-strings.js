@@ -1,0 +1,195 @@
+// All the translations live in this one file, so anyone who speaks the language can correct or add words.
+// Each row is:  English, Pidgin, Yoruba, Igbo, Hausa, French
+// The English must match the words on the website exactly. {n} and {name} are filled in automatically.
+// Yoruba, Igbo, Hausa and Pidgin should be checked by a native speaker before launch.
+
+var LBN_ROWS = [
+    // Menus
+    ["Dashboard", "Dashboard", "Dashboard", "Dashboard", "Dashboard", "Tableau de bord"],
+    ["Profile", "My profile", "Profáìlì mi", "Profaịlụ m", "Bayanina", "Profil"],
+    ["Marketplace", "Market", "Ọjà", "Ahịa", "Kasuwa", "Marché"],
+    ["Market", "Market", "Ọjà", "Ahịa", "Kasuwa", "Marché"],
+    ["Classes", "Classes", "Àwọn kíláàsì", "Klaasị", "Azuzuwa", "Cours"],
+    ["My trades", "My trades", "Àwọn okòwò mi", "Azụmahịa m", "Cinikina", "Mes échanges"],
+    ["Trades", "Trades", "Okòwò", "Azụmahịa", "Ciniki", "Échanges"],
+    ["Messages", "Messages", "Àwọn ìfiránṣẹ́", "Ozi", "Saƙonni", "Messages"],
+    ["Notifications", "Notifications", "Àwọn ìfitónilétí", "Ọkwa", "Sanarwa", "Notifications"],
+    ["Settings", "Settings", "Ètò", "Ntọala", "Saituna", "Paramètres"],
+    ["Settings and activity", "Settings and activity", "Ètò àti ìgbòkègbodò", "Ntọala na ọrụ", "Saituna da ayyuka", "Paramètres et activité"],
+    ["Log out", "Comot", "Jáde", "Pụọ", "Fita", "Se déconnecter"],
+    ["Log in", "Enter", "Wọlé", "Banye", "Shiga", "Se connecter"],
+    ["Help", "Help", "Ìrànlọ́wọ́", "Enyemaka", "Taimako", "Aide"],
+    ["Contact us", "Talk to us", "Kàn sí wa", "Kpọtụrụ anyị", "Tuntuɓe mu", "Contactez-nous"],
+    ["Home", "Home", "Ilé", "Ụlọ", "Gida", "Accueil"],
+    ["Admin", "Admin", "Alákòóso", "Onye nchịkwa", "Mai gudanarwa", "Administration"],
+    ["Admin team", "Admin team", "Ẹgbẹ́ alákòóso", "Otu nchịkwa", "Ƙungiyar masu gudanarwa", "Équipe d'administration"],
+    ["Me", "Me", "Èmi", "Mụ", "Ni", "Moi"],
+    ["Language", "Language", "Èdè", "Asụsụ", "Harshe", "Langue"],
+    ["Loading...", "E dey load...", "Ń gbé e wá...", "Na-ebugo...", "Ana lodi...", "Chargement..."],
+
+    // Buttons
+    ["Cancel", "Cancel", "Fagilé", "Kagbuo", "Soke", "Annuler"],
+    ["Send", "Send", "Fi ránṣẹ́", "Ziga", "Aika", "Envoyer"],
+    ["Send message", "Send message", "Fi ìfiránṣẹ́ ránṣẹ́", "Ziga ozi", "Aika saƙo", "Envoyer le message"],
+    ["Close", "Close", "Tìpa", "Mechie", "Rufe", "Fermer"],
+    ["Post", "Post", "Tẹ̀ jáde", "Tinye", "Wallafa", "Publier"],
+    ["Post something", "Post something", "Tẹ̀ nǹkan jáde", "Tinye ihe", "Wallafa wani abu", "Publier quelque chose"],
+    ["Follow", "Follow", "Tẹ̀lé", "Soro", "Bi", "Suivre"],
+    ["Following", "Following", "Ń tẹ̀lé", "Na-esoro", "Ana bi", "Abonné"],
+    ["Share", "Share", "Pín", "Kesaa", "Raba", "Partager"],
+    ["Message", "Message", "Ìfiránṣẹ́", "Ozi", "Saƙo", "Message"],
+    ["Reply", "Reply", "Dáhùn", "Zaghachi", "Amsa", "Répondre"],
+    ["Delete", "Delete", "Pa rẹ́", "Hichapụ", "Share", "Supprimer"],
+    ["Edit", "Change am", "Ṣàtúnṣe", "Dezie", "Gyara", "Modifier"],
+    ["Save", "Save am", "Fi pamọ́", "Chekwaa", "Ajiye", "Enregistrer"],
+    ["Report", "Report am", "Ròyìn", "Kọọ", "Kai rahoto", "Signaler"],
+    ["Load more", "Load more", "Gbé púpọ̀ sí i wá", "Bubata ndị ọzọ", "Ƙara ɗauko", "Voir plus"],
+    ["Confirm", "Confirm", "Jẹ́rìí sí i", "Kwenye", "Tabbatar", "Confirmer"],
+    ["Watch", "Watch", "Wò", "Lelee", "Kalla", "Regarder"],
+    ["Download", "Download", "Gbà sílẹ̀", "Budata", "Zazzage", "Télécharger"],
+    ["Pay now", "Pay now", "Sanwó nísinsìnyí", "Kwụọ ugbu a", "Biya yanzu", "Payer maintenant"],
+    ["Pay", "Pay", "Sanwó", "Kwụọ", "Biya", "Payer"],
+    ["Open", "Open", "Ṣí", "Mepee", "Buɗe", "Ouvrir"],
+    ["Edit profile", "Change profile", "Ṣàtúnṣe profáìlì", "Dezie profaịlụ", "Gyara bayani", "Modifier le profil"],
+    ["Share profile", "Share profile", "Pín profáìlì", "Kesaa profaịlụ", "Raba bayani", "Partager le profil"],
+    ["Change password", "Change password", "Yí ọ̀rọ̀ aṣínà padà", "Gbanwee okwuntughe", "Canza kalmar sirri", "Changer le mot de passe"],
+    ["Mark as complete", "Mark as complete", "Fi àmì sí i pé ó ti parí", "Maa akara na emechara", "Yi alama an kammala", "Marquer comme terminé"],
+    ["Ask to graduate", "Ask to graduate", "Béèrè láti kẹ́kọ̀ọ́ yege", "Rịọ ka gụchaa", "Nemi a yaye", "Demander à obtenir son diplôme"],
+
+    // Sign up and log in
+    ["Create an account", "Open account", "Ṣí àkọọ́lẹ̀", "Mepee akaụntụ", "Buɗe asusu", "Créer un compte"],
+    ["Email address", "Email address", "Àdírẹ́sì ímeèlì", "Adreesị email", "Adireshin imel", "Adresse e-mail"],
+    ["Password", "Password", "Ọ̀rọ̀ aṣínà", "Okwuntughe", "Kalmar sirri", "Mot de passe"],
+    ["Full name", "Full name", "Orúkọ kíkún", "Aha zuru ezu", "Cikakken suna", "Nom complet"],
+    ["Forgot password?", "You forget password?", "Ṣé o gbàgbé ọ̀rọ̀ aṣínà?", "Echefuru okwuntughe?", "An manta kalmar sirri?", "Mot de passe oublié ?"],
+    ["New here?", "You be new?", "Ṣé tuntun ni ọ́ níbí?", "Ọ bụ ọhụrụ ebe a?", "Sabon shiga ne?", "Nouveau ici ?"],
+    ["I am a...", "I be...", "Èmi jẹ́...", "Abụ m...", "Ni ...", "Je suis..."],
+    ["Student or Graduate", "Student or Graduate", "Akẹ́kọ̀ọ́ tàbí ẹni tó kẹ́kọ̀ọ́ yege", "Nwa akwụkwọ ma ọ bụ onye gụsịrị akwụkwọ", "Ɗalibi ko wanda ya kammala", "Étudiant ou diplômé"],
+    ["Lecturer or Instructor", "Lecturer or Instructor", "Olùkọ́ tàbí Olùkọ́ni", "Onye nkụzi", "Malami ko Mai koyarwa", "Enseignant ou formateur"],
+    ["Business Owner or Company", "Business Owner or Company", "Olówò tàbí Ilé-iṣẹ́", "Onye nwe azụmahịa ma ọ bụ Ụlọ ọrụ", "Mai kasuwanci ko Kamfani", "Propriétaire d'entreprise ou société"],
+    ["Learn skills, find opportunities, showcase talent and connect with businesses.", "Learn skills, find chance, show wetin you fit do and meet businesses.", "Kọ́ ọgbọ́n, wá àǹfààní, fi ẹ̀bùn rẹ hàn, kí o sì bá àwọn oníṣòwò pàdé.", "Mụta nka, chọta ohere, gosi onyinye gị ma jikọọ azụmahịa.", "Koyi sana'o'i, nemi dama, nuna baiwarka, ka haɗu da ƴan kasuwa.", "Apprenez des compétences, trouvez des opportunités, montrez vos talents et connectez-vous aux entreprises."],
+    ["Teach courses, share knowledge and sell handouts.", "Teach classes, share wetin you sabi and sell handouts.", "Kọ́ni ní àwọn ẹ̀kọ́, pín ìmọ̀, kí o sì ta àwọn ìwé ìkẹ́kọ̀ọ́.", "Kụzie ọmụmụ, kesaa ihe ọmụma ma re akwụkwọ nkuzi.", "Koyar da darussa, raba ilimi, ka sayar da takardun karatu.", "Donnez des cours, partagez vos connaissances et vendez des supports de cours."],
+    ["Promote businesses, sell products and services, and discover talent.", "Promote your business, sell products and services, and find talent.", "Polówó iṣẹ́ òwò, ta ọjà àti iṣẹ́, kí o sì ṣàwárí àwọn ẹ̀bùn.", "Kwalite azụmahịa, re ngwa ahịa na ọrụ, ma chọpụta ndị nwere nkà.", "Tallata kasuwanci, sayar da kaya da ayyuka, ka gano masu hazaka.", "Promouvez votre entreprise, vendez produits et services, et découvrez des talents."],
+
+    // Marketplace
+    ["Welcome. Four easy steps", "Welcome. Four easy steps", "Káàbọ̀. Ìgbésẹ̀ mẹ́rin tó rọrùn", "Nnọọ. Usoro anọ dị mfe", "Barka da zuwa. Matakai huɗu masu sauƙi", "Bienvenue. Quatre étapes simples"],
+    ["Share an update", "Share update", "Pín ìròyìn", "Kesaa ọhụụ", "Raba labari", "Partager une actualité"],
+    ["Just talk to the community", "Just yarn with the community", "Kàn bá àwùjọ sọ̀rọ̀", "Kpaa nkata naanị na obodo", "Yi magana da al'umma kawai", "Parlez simplement à la communauté"],
+    ["Sell a product", "Sell product", "Ta ọjà", "Re ngwa ahịa", "Sayar da kaya", "Vendre un produit"],
+    ["Something you have for sale", "Something wey you get for sell", "Nǹkan tí o fẹ́ tà", "Ihe ị nwere ire", "Abin da kake da shi na siyarwa", "Quelque chose à vendre"],
+    ["Offer a service", "Offer service", "Pèsè iṣẹ́", "Nye ọrụ", "Bayar da hidima", "Proposer un service"],
+    ["Work you can do", "Work wey you fit do", "Iṣẹ́ tí o lè ṣe", "Ọrụ ị nwere ike ime", "Aikin da za ka iya yi", "Un travail que vous pouvez faire"],
+    ["I need a product", "I need product", "Mo nílò ọjà", "Achọrọ m ngwa ahịa", "Ina buƙatar kaya", "Je cherche un produit"],
+    ["Tell people what you want", "Tell people wetin you want", "Sọ fún àwọn ènìyàn ohun tí o fẹ́", "Gwa ndị mmadụ ihe ịchọrọ", "Gaya wa mutane abin da kake so", "Dites ce que vous voulez"],
+    ["I need a service", "I need service", "Mo nílò iṣẹ́", "Achọrọ m ọrụ", "Ina buƙatar hidima", "Je cherche un service"],
+    ["Ask for help with a job", "Ask for help with work", "Béèrè fún ìrànlọ́wọ́ lórí iṣẹ́", "Rịọ enyemaka n'ọrụ", "Nemi taimako da aiki", "Demandez de l'aide pour un travail"],
+    ["Search products and services", "Find products and services", "Wá àwọn ọjà àti iṣẹ́", "Chọọ ngwa ahịa na ọrụ", "Nemi kaya da ayyuka", "Rechercher produits et services"],
+    ["Find members", "Find members", "Wá àwọn ọmọ ẹgbẹ́", "Chọọ ndị otu", "Nemi mambobi", "Trouver des membres"],
+    ["Find members by name", "Find members by name", "Wá àwọn ọmọ ẹgbẹ́ nípa orúkọ", "Chọọ ndị otu site n'aha", "Nemi mambobi da suna", "Trouver des membres par nom"],
+    ["Everyone", "Everybody", "Gbogbo ènìyàn", "Onye ọbụla", "Kowa", "Tout le monde"],
+    ["Everything", "Everything", "Gbogbo nǹkan", "Ihe niile", "Komai", "Tout"],
+    ["For sale", "For sell", "Fún títà", "Maka ire", "Na siyarwa", "À vendre"],
+    ["Services", "Services", "Àwọn iṣẹ́", "Ọrụ", "Ayyuka", "Services"],
+    ["Wanted", "We dey find", "A ń fẹ́", "A chọrọ", "Ana nema", "Recherché"],
+    ["Talent", "Talent", "Àwọn ẹ̀bùn", "Ndị nwere nkà", "Masu hazaka", "Talents"],
+    ["Lecturers", "Lecturers", "Àwọn olùkọ́", "Ndị nkụzi", "Malamai", "Enseignants"],
+    ["Businesses", "Businesses", "Àwọn oníṣòwò", "Azụmahịa", "Kasuwanci", "Entreprises"],
+    ["Chat to buy", "Yarn to buy", "Bá wọn sọ̀rọ̀ láti ra", "Soro ha kparịta ka ị zụta", "Yi magana don saya", "Discuter pour acheter"],
+    ["Chat to offer", "Yarn to offer", "Bá wọn sọ̀rọ̀ láti pèsè", "Soro ha kparịta ka ị nye", "Yi magana don bayarwa", "Discuter pour proposer"],
+    ["Mark as closed", "Mark as closed", "Pa á tì", "Mechie ya", "Rufe shi", "Marquer comme clôturé"],
+    ["Reopen", "Open again", "Tún ṣí", "Meghe ọzọ", "Sake buɗewa", "Rouvrir"],
+    ["Closed", "Closed", "Ti tì", "Emechiri", "A rufe", "Clôturé"],
+
+    // Trades and payments
+    ["Open a dispute", "Open complain", "Ṣí àríyànjiyàn", "Mepee esemokwu", "Buɗe jayayya", "Ouvrir un litige"],
+    ["Evidence", "Proof", "Ẹ̀rí", "Ihe àmà", "Shaida", "Preuves"],
+    ["Dispute", "Dispute", "Àríyànjiyàn", "Esemokwu", "Jayayya", "Litige"],
+    ["Negotiating", "Dem dey yarn price", "Ń ṣe ìfọ̀rọ̀wérọ̀", "Na-ekwurịta", "Ana tattaunawa", "En négociation"],
+    ["Deal agreed", "Deal don set", "A ti fohùn ṣọ̀kan", "E kwekọrịtala", "An amince", "Accord conclu"],
+    ["Paid, held by LBN", "Paid, LBN dey hold am", "A ti sanwó, LBN ń dì í mú", "Akwụọla, LBN na-ejide ya", "An biya, LBN na riƙe da shi", "Payé, conservé par LBN"],
+    ["Done, awaiting confirmation", "Done, dem dey wait confirm", "Ti parí, a ń dúró ìfọwọ́sí", "Emechara, a na-eche nkwenye", "An gama, ana jiran tabbaci", "Terminé, en attente de confirmation"],
+    ["Completed", "E don finish", "Ti parí", "Emechara", "An kammala", "Terminé"],
+    ["Cancelled", "Dem cancel am", "A ti fagilé", "E kagburu", "An soke", "Annulé"],
+    ["Refunded", "Dem return money", "A ti dá owó padà", "E weghachiri ego", "An mayar da kuɗi", "Remboursé"],
+    ["Dispute: money on hold", "Dispute: money dey hold", "Àríyànjiyàn: owó wà ní dídúró", "Esemokwu: ego na-ewere oge", "Jayayya: kuɗi a riƙe", "Litige : argent bloqué"],
+    ["Settled by the LBN team", "LBN team don settle am", "Ẹgbẹ́ LBN ti yanjú rẹ̀", "Otu LBN edozila ya", "Ƙungiyar LBN ta warware", "Réglé par l'équipe LBN"],
+    ["Report a problem", "Report wahala", "Ròyìn ìṣòro", "Kọọ nsogbu", "Kai rahoton matsala", "Signaler un problème"],
+    ["Payment breakdown", "Payment breakdown", "Àlàyé ìsanwó", "Nkọwa ịkwụ ụgwọ", "Bayanin biyan kuɗi", "Détail du paiement"],
+    ["Agreed price", "Price wey una agree", "Iye tí a fohùn sí", "Ọnụ ahịa e kwekọrịtara", "Farashin da aka amince", "Prix convenu"],
+    ["The seller receives", "The seller go receive", "Olùtà yóò gbà", "Onye na-ere ga-anata", "Mai sayarwa zai karɓa", "Le vendeur reçoit"],
+    ["You receive", "You go receive", "Ìwọ yóò gbà", "Ị ga-anata", "Za ka karɓa", "Vous recevez"],
+    ["Confirm your payment", "Confirm your payment", "Jẹ́rìí sí ìsanwó rẹ", "Kwenye ịkwụ ụgwọ gị", "Tabbatar da biyanka", "Confirmez votre paiement"],
+
+    // Learning and library
+    ["Your classes", "Your classes", "Àwọn kíláàsì rẹ", "Klaasị gị", "Azuzuwanka", "Vos cours"],
+    ["Video lessons", "Video lessons", "Àwọn ẹ̀kọ́ fídíò", "Ihe ọmụmụ vidiyo", "Darussan bidiyo", "Leçons vidéo"],
+    ["Live classes", "Live classes", "Àwọn kíláàsì àtààyè", "Klaasị ndụ", "Azuzuwan kai tsaye", "Cours en direct"],
+    ["Handouts and books", "Handouts and books", "Àwọn ìwé ìkẹ́kọ̀ọ́ àti ìwé", "Akwụkwọ nkuzi na akwụkwọ", "Takardun karatu da littattafai", "Supports de cours et livres"],
+    ["My purchases", "My purchases", "Àwọn ohun tí mo rà", "Ihe m zụtara", "Abubuwan da na saya", "Mes achats"],
+    ["My sales", "My sales", "Àwọn títà mi", "Ire m", "Tallace-tallacena", "Mes ventes"],
+    ["Customer care", "Customer care", "Ìtọ́jú oníbàárà", "Nlekọta ndị ahịa", "Kula da abokan ciniki", "Service client"],
+    ["Browse classes", "Check classes", "Wo àwọn kíláàsì", "Lee klaasị", "Duba azuzuwa", "Parcourir les cours"],
+    ["Go to the marketplace", "Go to market", "Lọ sí ọjà", "Gaa n'ahịa", "Je kasuwa", "Aller au marché"],
+    ["Create a class", "Create class", "Ṣẹ̀dá kíláàsì", "Mepụta klaasị", "Ƙirƙiri aji", "Créer un cours"],
+    ["Create class", "Create class", "Ṣẹ̀dá kíláàsì", "Mepụta klaasị", "Ƙirƙiri aji", "Créer le cours"],
+    ["Find a class", "Find class", "Wá kíláàsì", "Chọọ klaasị", "Nemi aji", "Trouver un cours"],
+    ["Upload lesson", "Upload lesson", "Gbé ẹ̀kọ́ sókè", "Bulite ihe ọmụmụ", "Ɗora darasi", "Téléverser la leçon"],
+    ["Add a video lesson", "Add video lesson", "Fi ẹ̀kọ́ fídíò kún un", "Tinye ihe ọmụmụ vidiyo", "Ƙara darasin bidiyo", "Ajouter une leçon vidéo"],
+
+    // Account
+    ["My account", "My account", "Àkọọ́lẹ̀ mi", "Akaụntụ m", "Asusuna", "Mon compte"],
+    ["About Lagos Business Network", "About Lagos Business Network", "Nípa Lagos Business Network", "Maka Lagos Business Network", "Game da Lagos Business Network", "À propos de Lagos Business Network"],
+    ["Payout account", "Payout account", "Àkọọ́lẹ̀ ìgbowó", "Akaụntụ nkwụghachi", "Asusun biyan kuɗi", "Compte de versement"],
+    ["My profile and posts", "My profile and posts", "Profáìlì àti àwọn ìfiránṣẹ́ mi", "Profaịlụ na ndị m tinyere", "Bayanina da rubuce-rubucena", "Mon profil et mes publications"],
+    ["My path to graduation", "My path to graduation", "Ọ̀nà mi sí ìkẹ́kọ̀ọ́ yege", "Ụzọ m ịgụsị akwụkwọ", "Hanyata ta yaye", "Mon parcours vers le diplôme"],
+
+    // Membership
+    ["Pay ₦20,000 for a full year to keep your benefits.", "Pay ₦20,000 for one full year to keep your benefits.", "San ₦20,000 fún ọdún kan kíkún kí o lè máa gbádùn àwọn àǹfààní rẹ.", "Kwụọ ₦20,000 maka otu afọ zuru ezu ka i nọgide na-enweta uru gị.", "Biya ₦20,000 na shekara guda cikakke don ci gaba da amfanin ka.", "Payez 20 000 ₦ pour une année complète afin de garder vos avantages."],
+    ["Your membership has ended.", "Your membership don end.", "Ẹ̀tọ́ ọmọ ẹgbẹ́ rẹ ti parí.", "Ọrụ ịbụ onye otu gị agwụla.", "Zama memba ɗinka ya ƙare.", "Votre adhésion est terminée."],
+    ["Free trial: {n} days left.", "Free trial: {n} days remain.", "Àkókò ọ̀fẹ́: ọjọ́ {n} ló kù.", "Oge efu: ụbọchị {n} fọdụrụ.", "Gwajin kyauta: kwanaki {n} suka rage.", "Essai gratuit : {n} jours restants."],
+    ["Your free trial ends in {n} days.", "Your free trial go end in {n} days.", "Àkókò ọ̀fẹ́ rẹ yóò parí ní ọjọ́ {n}.", "Oge efu gị ga-agwụ n'ụbọchị {n}.", "Gwajin kyautarka zai ƙare cikin kwanaki {n}.", "Votre essai gratuit se termine dans {n} jours."],
+    ["Your free trial ends in {n} day.", "Your free trial go end in {n} day.", "Àkókò ọ̀fẹ́ rẹ yóò parí ní ọjọ́ {n}.", "Oge efu gị ga-agwụ n'ụbọchị {n}.", "Gwajin kyautarka zai ƙare cikin rana {n}.", "Votre essai gratuit se termine dans {n} jour."],
+    ["Your membership ends in {n} days.", "Your membership go end in {n} days.", "Ẹ̀tọ́ ọmọ ẹgbẹ́ rẹ yóò parí ní ọjọ́ {n}.", "Ịbụ onye otu gị ga-agwụ n'ụbọchị {n}.", "Zama memba ɗinka zai ƙare cikin kwanaki {n}.", "Votre adhésion se termine dans {n} jours."],
+    ["Your membership ends in {n} day.", "Your membership go end in {n} day.", "Ẹ̀tọ́ ọmọ ẹgbẹ́ rẹ yóò parí ní ọjọ́ {n}.", "Ịbụ onye otu gị ga-agwụ n'ụbọchị {n}.", "Zama memba ɗinka zai ƙare cikin rana {n}.", "Votre adhésion se termine dans {n} jour."],
+    ["Your first 30 days are free. No payment is needed to start.", "Your first 30 days na free. You no need pay to start.", "Ọjọ́ mẹ́tàlélọ́gbọ̀n àkọ́kọ́ rẹ jẹ́ ọ̀fẹ́. O kò nílò láti sanwó láti bẹ̀rẹ̀.", "Ụbọchị iri atọ mbụ gị bụ n'efu. Ịkwụghị ụgwọ iji malite.", "Kwanaki 30 na farko kyauta ne. Ba sai ka biya don farawa ba.", "Vos 30 premiers jours sont gratuits. Aucun paiement n'est nécessaire pour commencer."],
+
+    // Notifications
+    ["New follower", "New follower", "Olùtẹ̀lé tuntun", "Onye na-esoro ọhụrụ", "Sabon mai bi", "Nouvel abonné"],
+    ["New like", "New like", "Ìfẹ́ràn tuntun", "Ọkpụrụkpụ ọhụrụ", "Sabon so", "Nouveau j'aime"],
+    ["New comment", "New comment", "Ọ̀rọ̀ tuntun", "Nkọwa ọhụrụ", "Sabon sharhi", "Nouveau commentaire"],
+    ["New reply", "New reply", "Ìdáhùn tuntun", "Nzaghachi ọhụrụ", "Sabuwar amsa", "Nouvelle réponse"],
+    ["New offer", "New offer", "Ìfilọ́lẹ̀ tuntun", "Onyinye ọhụrụ", "Sabuwar tayi", "Nouvelle offre"],
+    ["New trade request", "New trade request", "Ìbéèrè okòwò tuntun", "Arịrịọ azụmahịa ọhụrụ", "Sabuwar buƙatar ciniki", "Nouvelle demande d'échange"],
+    ["Live class scheduled", "Live class don dey set", "A ti ṣètò kíláàsì àtààyè", "E hiwere klaasị ndụ", "An tsara aji kai tsaye", "Cours en direct programmé"],
+    ["New assessment result", "New assessment result", "Èsì ìdánwò tuntun", "Nsonaazụ nyocha ọhụrụ", "Sabon sakamakon tantancewa", "Nouveau résultat d'évaluation"],
+    ["You have graduated", "You don graduate", "O ti kẹ́kọ̀ọ́ yege", "Ị gụchala akwụkwọ", "Ka kammala karatu", "Vous êtes diplômé"],
+    ["Your purchase is ready", "Your purchase don ready", "Ohun tí o rà ti ṣetán", "Ihe i zụtara dị njikere", "Abin da ka saya ya shirya", "Votre achat est prêt"],
+    ["Your handout was bought", "Dem buy your handout", "Ẹnìkan ti ra ìwé ìkẹ́kọ̀ọ́ rẹ", "E zụtala akwụkwọ nkuzi gị", "An saya takardar karatunka", "Votre support a été acheté"],
+    ["Graduation request not approved", "Dem no approve your graduation request", "A kò fọwọ́ sí ìbéèrè ìkẹ́kọ̀ọ́ yege rẹ", "E kwenyeghị na arịrịọ ịgụsị akwụkwọ gị", "Ba a amince da buƙatar yayen ka ba", "Demande de diplôme non approuvée"],
+    ["You are a verified lecturer", "You don verify as lecturer", "O jẹ́ olùkọ́ tí a ti fìdí rẹ̀ múlẹ̀", "Ị bụ onye nkụzi e nyochaala", "Kai malami ne da aka tabbatar", "Vous êtes un enseignant vérifié"],
+    ["You are a verified trader", "You don verify as trader", "O jẹ́ oníṣòwò tí a ti fìdí rẹ̀ múlẹ̀", "Ị bụ onye ahịa e nyochaala", "Kai ɗan kasuwa ne da aka tabbatar", "Vous êtes un commerçant vérifié"],
+    ["Your free month has started", "Your free month don start", "Oṣù ọ̀fẹ́ rẹ ti bẹ̀rẹ̀", "Ọnwa efu gị amalitela", "Watanka na kyauta ya fara", "Votre mois gratuit a commencé"],
+    ["Your free trial has ended", "Your free trial don end", "Àkókò ọ̀fẹ́ rẹ ti parí", "Oge efu gị agwụla", "Gwajin kyautarka ya ƙare", "Votre essai gratuit est terminé"],
+    ["Your membership has ended", "Your membership don end", "Ẹ̀tọ́ ọmọ ẹgbẹ́ rẹ ti parí", "Ịbụ onye otu gị agwụla", "Zama memba ɗinka ya ƙare", "Votre adhésion est terminée"],
+    ["Your free trial ends in {n} days", "Your free trial go end in {n} days", "Àkókò ọ̀fẹ́ rẹ yóò parí ní ọjọ́ {n}", "Oge efu gị ga-agwụ n'ụbọchị {n}", "Gwajin kyautarka zai ƙare cikin kwanaki {n}", "Votre essai gratuit se termine dans {n} jours"],
+    ["Your free trial ends in {n} day", "Your free trial go end in {n} day", "Àkókò ọ̀fẹ́ rẹ yóò parí ní ọjọ́ {n}", "Oge efu gị ga-agwụ n'ụbọchị {n}", "Gwajin kyautarka zai ƙare cikin rana {n}", "Votre essai gratuit se termine dans {n} jour"],
+    ["Your membership ends in {n} days", "Your membership go end in {n} days", "Ẹ̀tọ́ ọmọ ẹgbẹ́ rẹ yóò parí ní ọjọ́ {n}", "Ịbụ onye otu gị ga-agwụ n'ụbọchị {n}", "Zama memba ɗinka zai ƙare cikin kwanaki {n}", "Votre adhésion se termine dans {n} jours"],
+    ["Your membership ends in {n} day", "Your membership go end in {n} day", "Ẹ̀tọ́ ọmọ ẹgbẹ́ rẹ yóò parí ní ọjọ́ {n}", "Ịbụ onye otu gị ga-agwụ n'ụbọchị {n}", "Zama memba ɗinka zai ƙare cikin rana {n}", "Votre adhésion se termine dans {n} jour"],
+    ["New message from {name}", "New message from {name}", "Ìfiránṣẹ́ tuntun láti ọ̀dọ̀ {name}", "Ozi ọhụrụ sitere n'aka {name}", "Sabon saƙo daga {name}", "Nouveau message de {name}"],
+    ["Trade update: {name}", "Trade update: {name}", "Ìmúdójúìwọ̀n okòwò: {name}", "Mmelite azụmahịa: {name}", "Sabuntawar ciniki: {name}", "Mise à jour de l'échange : {name}"],
+    ["{name} started following you", "{name} don start to follow you", "{name} ti bẹ̀rẹ̀ sí í tẹ̀lé ọ", "{name} malitela ịsoro gị", "{name} ya fara bin ka", "{name} a commencé à vous suivre"],
+    ["{name} liked your post", "{name} like your post", "{name} fẹ́ràn ohun tí o tẹ̀ jáde", "{name} masịrị ihe i tinyere", "{name} ya so abin da ka wallafa", "{name} a aimé votre publication"]
+];
+
+// Turn the rows into one lookup per language
+var LBN_STRINGS = { pcm: {}, yo: {}, ig: {}, ha: {}, fr: {} };
+
+(function () {
+    var codes = ["pcm", "yo", "ig", "ha", "fr"];
+
+    LBN_ROWS.forEach(function (row) {
+        codes.forEach(function (code, i) {
+            LBN_STRINGS[code][row[0]] = row[i + 1];
+        });
+    });
+})();

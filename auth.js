@@ -158,6 +158,7 @@ authForm.addEventListener("submit", async function (event) {
                     data: {
                         full_name: fullName.value.trim(),
                         role: roleSelect.value,
+                        language: window.LBN_I18N ? LBN_I18N.current() : "en",
                         institution: (roleSelect.value === "lecturer" || roleSelect.value === "business") ? institutionInput.value.trim() : ""
                     }
                 }
