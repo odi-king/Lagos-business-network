@@ -157,13 +157,24 @@ async function loadLessons() {
     lessonList.innerHTML = "";
 
     data.forEach(function (lesson, index) {
-        const embed = toEmbedUrl(lesson.video_url);
+        const direct = !!lesson.video_path;
+        const embed = direct ? null : toEmbedUrl(lesson.video_url);
         const card = document.createElement("div");
         card.className = "business-card";
 
-        const watch = embed
-            ? '<button type="button" class="contact-btn watch-btn" data-embed="' + escapeHTML(embed) + '">Watch</button>'
-            : '<a class="contact-btn" target="_blank" rel="noopener" href="' + escapeHTML(lesson.video_url) + '">Open video</a>';
+        const extension = direct ? (lesson.video_path.split(".").pop() || "mp4") : "";
+        const downloadName = (String(lesson.title).replace(/[^\w\- ]+/g, "").trim() || "lesson") + "." + extension;
+
+        const watch = direct
+            ? '<button type="button" class="contact-btn watch-btn" data-path="' + escapeHTML(lesson.video_path) + '" data-id="' + escapeHTML(lesson.id) + '">Watch</button>'
+            : embed
+                ? '<button type="button" class="contact-btn watch-btn" data-embed="' + escapeHTML(embed) + '">Watch</button>'
+                : '<a class="contact-btn" target="_blank" rel="noopener" href="' + escapeHTML(lesson.video_url) + '">Open video</a>';
+
+        const download = direct && lesson.downloadable !== false
+            ? '<button type="button" class="btn btn-outline download-lesson" data-path="' + escapeHTML(lesson.video_path) +
+              '" data-name="' + escapeHTML(downloadName) + '">Download' + (lesson.file_size ? " (" + Math.max(1, Math.round(lesson.file_size / 1048576)) + " MB)" : "") + "</button>"
+            : "";
 
         const remove = isOwner
             ? '<button type="button" class="delete-btn" data-kind="lessons" data-id="' + escapeHTML(lesson.id) + '">Delete</button>'
@@ -173,6 +184,7 @@ async function loadLessons() {
             <h3>${index + 1}. ${escapeHTML(lesson.title)}</h3>
             <div class="video-slot"></div>
             ${watch}
+            ${download}
             ${completeButton(lesson)}
             ${remove}
         `;
@@ -181,7 +193,7 @@ async function loadLessons() {
     });
 }
 
-lessonList.addEventListener("click", function (event) {
+lessonList.addEventListener("click", async function (event) {
     const button = event.target.closest(".watch-btn");
     if (!button) return;
 
@@ -193,6 +205,57 @@ lessonList.addEventListener("click", function (event) {
         return;
     }
 
+    // An uploaded video plays right here on LBN
+    if (button.dataset.path) {
+        button.disabled = true;
+        button.textContent = "Loading...";
+
+        const signed = await db.storage.from("lesson-videos").createSignedUrl(button.dataset.path, 3600);
+
+        button.disabled = false;
+
+        if (signed.error || !signed.data) {
+            button.textContent = "Watch";
+            alert("Could not open this video. Please try again.");
+            return;
+        }
+
+        const wrap = document.createElement("div");
+        wrap.className = "video-direct";
+
+        const video = document.createElement("video");
+        video.src = signed.data.signedUrl;
+        video.controls = true;
+        video.playsInline = true;
+        video.preload = "metadata";
+
+        // Carry on from where the student stopped
+        const key = "lbn_pos_" + button.dataset.id;
+        let lastSaved = 0;
+
+        video.addEventListener("loadedmetadata", function () {
+            const saved = parseFloat(localStorage.getItem(key));
+            if (saved > 5 && saved < video.duration - 5) video.currentTime = saved;
+        });
+
+        video.addEventListener("timeupdate", function () {
+            if (video.currentTime - lastSaved > 5 || video.currentTime < lastSaved) {
+                lastSaved = video.currentTime;
+                localStorage.setItem(key, String(Math.floor(video.currentTime)));
+            }
+        });
+
+        video.addEventListener("ended", function () {
+            localStorage.removeItem(key);
+        });
+
+        wrap.appendChild(video);
+        slot.appendChild(wrap);
+        button.textContent = "Close video";
+        return;
+    }
+
+    // Older lessons that were added as links still play from their link
     const wrap = document.createElement("div");
     wrap.className = "video-wrap";
 
@@ -205,6 +268,30 @@ lessonList.addEventListener("click", function (event) {
     wrap.appendChild(frame);
     slot.appendChild(wrap);
     button.textContent = "Close video";
+});
+
+// Save the lesson to the phone or computer for offline viewing
+lessonList.addEventListener("click", async function (event) {
+    const button = event.target.closest(".download-lesson");
+    if (!button) return;
+
+    const original = button.textContent;
+    button.disabled = true;
+    button.textContent = "Preparing...";
+
+    const signed = await db.storage.from("lesson-videos").createSignedUrl(button.dataset.path, 3600, {
+        download: button.dataset.name || true
+    });
+
+    button.disabled = false;
+    button.textContent = original;
+
+    if (signed.error || !signed.data) {
+        alert("Could not prepare the download. Please try again.");
+        return;
+    }
+
+    window.location.href = signed.data.signedUrl;
 });
 
 // ---------- Live classes ----------
@@ -287,6 +374,11 @@ async function handleDelete(event) {
         return;
     }
 
+    // An uploaded video is removed from storage too
+    if (button.dataset.kind === "lessons" && data[0].video_path) {
+        await db.storage.from("lesson-videos").remove([data[0].video_path]);
+    }
+
     await Promise.all([loadLessons(), loadLive()]);
 }
 
@@ -295,34 +387,131 @@ liveList.addEventListener("click", handleDelete);
 
 // ---------- Lecturer forms ----------
 
+// ---------- Uploading a video lesson from the phone or computer ----------
+
+const LESSON_MAX_MB = 50; // the free Supabase plan allows 50 MB per file; raise this after upgrading
+document.getElementById("maxMb").textContent = LESSON_MAX_MB;
+
+function uniqueName() {
+    return window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+// Sends the file straight to storage and reports how far it has got
+async function uploadWithProgress(path, file, onProgress) {
+    const { data } = await db.auth.getSession();
+    const token = data.session ? data.session.access_token : "";
+
+    return new Promise(function (resolve, reject) {
+        const xhr = new XMLHttpRequest();
+
+        xhr.open("POST", SUPABASE_URL.trim().replace(/\/$/, "") + "/storage/v1/object/lesson-videos/" +
+            path.split("/").map(encodeURIComponent).join("/"));
+        xhr.setRequestHeader("Authorization", "Bearer " + token);
+        xhr.setRequestHeader("apikey", SUPABASE_KEY.trim());
+        xhr.setRequestHeader("x-upsert", "false");
+
+        xhr.upload.onprogress = function (e) {
+            if (e.lengthComputable) onProgress(e.loaded / e.total);
+        };
+
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                resolve();
+                return;
+            }
+
+            let message = "The upload failed.";
+
+            try { message = JSON.parse(xhr.responseText).message || message; } catch (e) {}
+
+            if (/size|exceed|too large/i.test(message) || xhr.status === 413) {
+                message = "This video is bigger than your storage allows. Pick a shorter or smaller video, or upgrade Supabase for bigger files.";
+            }
+
+            reject(new Error(message));
+        };
+
+        xhr.onerror = function () {
+            reject(new Error("The upload was interrupted. Check your internet and try again."));
+        };
+
+        const form = new FormData();
+        form.append("cacheControl", "3600");
+        form.append("", file);
+        xhr.send(form);
+    });
+}
+
 document.getElementById("lessonForm").addEventListener("submit", async function (event) {
     event.preventDefault();
 
-    const link = document.getElementById("lessonUrl").value.trim();
+    const form = event.target;
+    const file = document.getElementById("lessonFile").files[0];
+    const title = document.getElementById("lessonTitle").value.trim();
 
-    if (!toEmbedUrl(link)) {
-        alert("Please use a YouTube, Vimeo or Google Drive link.");
+    if (!file) {
+        alert("Choose a video from your phone or computer first.");
         return;
     }
 
-    const form = event.target;
-    const button = form.querySelector("button[type='submit']");
+    if (!file.type.startsWith("video/")) {
+        alert("Please choose a video file.");
+        return;
+    }
+
+    if (file.size > LESSON_MAX_MB * 1024 * 1024) {
+        alert("This video is " + Math.round(file.size / 1048576) + " MB. The limit is " + LESSON_MAX_MB + " MB. Choose a shorter video or compress it first.");
+        return;
+    }
+
+    const extension = (file.name.split(".").pop() || "mp4").toLowerCase().replace(/[^a-z0-9]/g, "") || "mp4";
+    const path = currentUser.id + "/" + classId + "/" + uniqueName() + "." + extension;
+
+    const button = document.getElementById("uploadBtn");
+    const progress = document.getElementById("uploadProgress");
+    const bar = document.getElementById("upBar");
+    const text = document.getElementById("upText");
+
     button.disabled = true;
+    progress.style.display = "block";
+    bar.style.width = "0%";
+    text.textContent = "Uploading... 0%";
+
+    try {
+        await uploadWithProgress(path, file, function (fraction) {
+            const percent = Math.round(fraction * 100);
+            bar.style.width = percent + "%";
+            text.textContent = "Uploading... " + percent + "%";
+        });
+    } catch (error) {
+        button.disabled = false;
+        progress.style.display = "none";
+        alert(error.message);
+        return;
+    }
+
+    text.textContent = "Saving the lesson...";
 
     const { error } = await db.from("lessons").insert({
         class_id: classId,
-        title: document.getElementById("lessonTitle").value.trim(),
-        video_url: link
+        title: title,
+        video_path: path,
+        file_name: file.name,
+        file_size: file.size,
+        downloadable: document.getElementById("lessonDownload").checked
     });
 
     button.disabled = false;
+    progress.style.display = "none";
 
     if (error) {
+        await db.storage.from("lesson-videos").remove([path]);
         alert("Could not add the lesson: " + error.message);
         return;
     }
 
     form.reset();
+    document.getElementById("lessonDownload").checked = true;
     await loadLessons();
 });
 
@@ -363,12 +552,17 @@ document.getElementById("liveForm").addEventListener("submit", async function (e
 document.getElementById("deleteClassBtn").addEventListener("click", async function () {
     if (!confirm("Delete this whole class, with all its lessons and live classes?")) return;
 
+    const lessonFiles = await db.from("lessons").select("video_path").eq("class_id", classId);
+
     const { data, error } = await db.from("classes").delete().eq("id", classId).select();
 
     if (error || !data || data.length === 0) {
         alert("Could not delete this class.");
         return;
     }
+
+    const paths = ((lessonFiles && lessonFiles.data) || []).map(function (r) { return r.video_path; }).filter(Boolean);
+    if (paths.length > 0) await db.storage.from("lesson-videos").remove(paths);
 
     window.location.href = "classes.html";
 });

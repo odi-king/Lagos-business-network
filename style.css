@@ -1132,3 +1132,27 @@ button.settings-row.danger {
 .fee-box h4 { margin: 0 0 8px; }
 .fee-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .fee-row.total { border-bottom: none; font-size: 17px; }
+
+/* ===================== Free trial bar ===================== */
+.member-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 16px;
+    background: #10261f;
+    border-bottom: 1px solid #14503f;
+    font-size: 14px;
+    text-align: center;
+}
+.member-bar.urgent { background: #2a1d10; border-bottom-color: #5c4513; }
+.member-bar .btn { padding: 6px 14px; min-height: 36px; }
+.member-bar .plain-btn { font-size: 22px; line-height: 1; }
+
+/* ===================== Direct video lessons ===================== */
+.video-direct video { width: 100%; max-height: 72vh; background: #000; border-radius: 12px; display: block; margin: 10px 0; }
+.up-progress { height: 10px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 10px 0 4px; }
+.up-bar { height: 100%; width: 0; background: var(--accent); transition: width 0.2s; }
+.check-row { display: flex; gap: 10px; align-items: center; margin: 10px 0; }
+.check-row input { width: 22px; height: 22px; flex: 0 0 auto; }

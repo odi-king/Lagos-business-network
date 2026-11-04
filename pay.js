@@ -4,6 +4,7 @@ const PRICE_NAIRA = 20000;
 const payBtn = document.getElementById("payBtn");
 const payMessage = document.getElementById("payMessage");
 let currentUser = null;
+let startPaidUntil = null;
 
 function showMessage(text, type) {
     payMessage.textContent = text;
@@ -26,7 +27,43 @@ async function init() {
 
     currentUser = data.session.user;
 
-    if (await hasActiveMembership(currentUser.id)) {
+    const info = await getMembershipInfo();
+
+    if (info) {
+        if (info.is_admin || (info.active && !info.is_trial && info.days_left > 60)) {
+            window.location.href = "dashboard.html";
+            return;
+        }
+
+        startPaidUntil = info.paid_until;
+
+        const end = info.paid_until
+            ? new Date(info.paid_until).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })
+            : "";
+
+        let text = "";
+
+        if (info.active && info.is_trial) {
+            text = "Your free trial ends on " + end + " (" + info.days_left + " days left). Paying now adds 12 months after it ends, so you lose nothing.";
+        } else if (info.active) {
+            text = "Your membership runs until " + end + ". Renewing adds 12 months after that date.";
+        } else if (info.paid_until) {
+            text = "Your membership ended on " + end + ". Pay to continue.";
+        } else if (trialResult === "device_used") {
+            text = "A free trial has already been used on this device, so please join with a yearly membership.";
+        } else if (trialResult === "email_used") {
+            text = "A free trial was already used with this email address, so please join with a yearly membership.";
+        } else if (trialResult === "confirm_email") {
+            text = "Confirm your email address to start your free month.";
+        }
+
+        const box = document.getElementById("memberStatus");
+        if (text && box) {
+            box.textContent = text;
+            box.style.display = "block";
+        }
+    } else if (await hasActiveMembership(currentUser.id)) {
+        // An older database without the free trial file
         window.location.href = "dashboard.html";
         return;
     }
@@ -41,7 +78,12 @@ async function waitForActivation() {
     showMessage("Payment received. Activating your membership...", "ok");
 
     for (let i = 0; i < 20; i++) {
-        if (await hasActiveMembership(currentUser.id)) {
+        const info = await getMembershipInfo();
+        const done = info
+            ? !!info.paid_until && (!startPaidUntil || new Date(info.paid_until) > new Date(startPaidUntil))
+            : await hasActiveMembership(currentUser.id);
+
+        if (done) {
             window.location.href = "dashboard.html";
             return;
         }

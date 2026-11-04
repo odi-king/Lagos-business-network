@@ -38,6 +38,12 @@
     <div id="adminStats" data-perm="members" class="grid cols-2" style="margin-bottom:16px;"></div>
 
     <section class="panel" data-perm="members">
+        <h2>Free trial watch</h2>
+        <p class="meta">Free trials flagged because many were claimed from the same network. Dismiss it if it is a school or a family, or end the free trial.</p>
+        <div id="trialFlags"><p class="meta">Loading...</p></div>
+    </section>
+
+    <section class="panel" data-perm="members">
         <h2>People</h2>
         <p class="meta">Before approving a lecturer, check that their school email or staff page matches their name and school.</p>
         <div class="filters">
@@ -78,7 +84,7 @@
         <p id="paymentsStatus" class="meta"></p>
         <button type="button" id="paymentsToggle" class="btn btn-outline">Loading...</button>
         <form id="feeForm">
-            <input type="number" id="feePercent" placeholder="Standard fee % (1)" step="0.1" min="0" max="30" required>
+            <input type="number" id="feePercent" placeholder="Standard fee % (2)" step="0.1" min="0" max="30" required>
             <input type="number" id="feePercentLarge" placeholder="Fee % for large transactions (0.5)" step="0.1" min="0" max="30" required>
             <input type="number" id="largeThreshold" placeholder="Large transaction starts at (naira)" min="1000" required>
             <input type="number" id="minFee" placeholder="Smallest fee in naira (0 for none)" min="0" required>

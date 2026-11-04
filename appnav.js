@@ -97,6 +97,73 @@
     window.refreshDm = refreshDm;
     refreshDm();
 
+    // A slim bar when the free trial or membership is close to ending
+    async function showMembershipBanner() {
+        if (typeof db === "undefined" || !db) return;
+        if (/pay\.html$/.test(window.location.pathname)) return;
+
+        let info = null;
+
+        try {
+            const { data, error } = await db.rpc("membership_info");
+            if (error || !data || !data[0]) return;
+            info = data[0];
+        } catch (e) {
+            return;
+        }
+
+        if (info.is_admin) return;
+
+        // Reminders are saved as notifications, at most once a day from here
+        const today = new Date().toISOString().slice(0, 10);
+        if (localStorage.getItem("lbn_remind_day") !== today) {
+            localStorage.setItem("lbn_remind_day", today);
+            db.rpc("check_my_membership").then(function () {
+                if (window.refreshBell) window.refreshBell();
+            }, function () {});
+        }
+
+        const days = info.days_left;
+        let text = "";
+
+        if (info.active && info.is_trial) {
+            text = days <= 7
+                ? "Your free trial ends in " + days + (days === 1 ? " day." : " days.")
+                : "Free trial: " + days + " days left.";
+        } else if (info.active && days !== null && days <= 14) {
+            text = "Your membership ends in " + days + (days === 1 ? " day." : " days.");
+        } else if (!info.active && info.paid_until) {
+            text = "Your membership has ended.";
+        }
+
+        if (!text) return;
+
+        // The bar can be closed for the day, except in the last 3 days
+        if (days > 3 && localStorage.getItem("lbn_bar_closed") === today) return;
+
+        const nav = document.querySelector(".nav");
+        if (!nav || document.getElementById("memberBar")) return;
+
+        const bar = document.createElement("div");
+        bar.id = "memberBar";
+        bar.className = "member-bar" + (days <= 3 ? " urgent" : "");
+        bar.innerHTML = "<span>" + text + ' Pay &#8358;20,000 for a full year to keep your benefits.</span>' +
+            '<a class="btn btn-primary" href="pay.html">Pay now</a>' +
+            (days > 3 ? '<button type="button" class="plain-btn" aria-label="Close">&times;</button>' : "");
+
+        nav.insertAdjacentElement("afterend", bar);
+
+        const close = bar.querySelector("button");
+        if (close) {
+            close.addEventListener("click", function () {
+                localStorage.setItem("lbn_bar_closed", today);
+                bar.remove();
+            });
+        }
+    }
+
+    showMembershipBanner();
+
     window.refreshBell = refreshBell;
     refreshBell();
 

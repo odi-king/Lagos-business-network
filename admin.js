@@ -77,7 +77,10 @@ async function init() {
     }
 
     const jobs = [];
-    if (can("members")) jobs.push(loadPeople());
+    if (can("members")) {
+        jobs.push(loadPeople());
+        jobs.push(loadTrialFlags());
+    }
     if (can("support")) jobs.push(loadSupport());
     if (can("finance") || can("marketplace")) jobs.push(loadQueue());
     if (can("finance")) jobs.push(loadSettings());
@@ -664,3 +667,51 @@ document.getElementById("gradRulesForm").addEventListener("submit", async functi
 });
 
 init();
+
+
+// ---------- Free trial watch ----------
+
+async function loadTrialFlags() {
+    const box = document.getElementById("trialFlags");
+    if (!box) return;
+
+    const { data, error } = await db.rpc("admin_trial_flags");
+
+    if (error) {
+        box.innerHTML = "<p class='meta'>Not set up yet. Run supabase-trial.sql in Supabase.</p>";
+        return;
+    }
+
+    if (data.length === 0) {
+        box.innerHTML = "<p class='meta'>Nothing to review. No suspicious free trials.</p>";
+        return;
+    }
+
+    box.innerHTML = data.map(function (f) {
+        return '<div class="staff-card" data-user="' + escapeHTML(f.user_id) + '"><strong>' + escapeHTML(f.full_name || "Member") + "</strong>" +
+            '<br><span class="meta">' + escapeHTML(f.email) + " &bull; joined " + new Date(f.granted_at).toLocaleDateString() + "</span>" +
+            "<p class='meta'>" + escapeHTML(f.reason || "") + "</p>" +
+            '<div class="staff-actions"><button type="button" class="btn btn-outline trial-dismiss">Dismiss</button>' +
+            '<button type="button" class="plain-btn trial-revoke" style="color:#ff6b6b;">End free trial</button></div></div>';
+    }).join("");
+}
+
+document.getElementById("trialFlags").addEventListener("click", async function (event) {
+    const card = event.target.closest("[data-user]");
+    if (!card) return;
+
+    const revoke = event.target.closest(".trial-revoke");
+    const dismiss = event.target.closest(".trial-dismiss");
+    if (!revoke && !dismiss) return;
+
+    if (revoke && !confirm("End this person's free trial now?")) return;
+
+    const { error } = await db.rpc("admin_review_trial", { p_user: card.dataset.user, p_action: revoke ? "revoke" : "dismiss" });
+
+    if (error) {
+        alert(error.message);
+        return;
+    }
+
+    await loadTrialFlags();
+});

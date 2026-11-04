@@ -51,11 +51,16 @@
     <div id="ownerPanel" style="display:none;">
         <section class="panel" id="addLesson">
             <h2>Add a video lesson</h2>
-            <p class="meta">Upload your video to YouTube (set to Unlisted), Vimeo or Google Drive, then paste the link here.</p>
+            <p class="meta">Choose a video from your phone or computer. MP4 works best on every device. You can upload videos up to <span id="maxMb">50</span> MB.</p>
             <form id="lessonForm">
                 <input type="text" id="lessonTitle" placeholder="Lesson title" required>
-                <input type="url" id="lessonUrl" placeholder="Video link (https://...)" required>
-                <button type="submit" class="contact-btn">Add lesson</button>
+                <input type="file" id="lessonFile" accept="video/mp4,video/quicktime,video/webm,video/*" required>
+                <label class="check-row"><input type="checkbox" id="lessonDownload" checked> <span>Let students download this lesson to watch offline</span></label>
+                <div id="uploadProgress" style="display:none;">
+                    <div class="up-progress"><div class="up-bar" id="upBar"></div></div>
+                    <p id="upText" class="meta"></p>
+                </div>
+                <button type="submit" class="contact-btn" id="uploadBtn">Upload lesson</button>
             </form>
         </section>
 

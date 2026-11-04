@@ -169,7 +169,7 @@ authForm.addEventListener("submit", async function (event) {
                 window.location.href = nextPage();
             } else {
                 setMode("login");
-                showMessage("Account created. Check your email to confirm it, then log in.", "ok");
+                showMessage("Account created. Check your email to confirm it, then log in. Your 30 days of free access are counted from today.", "ok");
             }
         } else {
             const { error } = await db.auth.signInWithPassword({
