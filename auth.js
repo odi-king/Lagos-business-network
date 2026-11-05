@@ -99,6 +99,7 @@ function setMode(newMode) {
     toggleText.textContent = signup ? "Already have an account?" : forgot ? "Remembered it?" : "New here?";
     toggleLink.textContent = signup || forgot ? "Log in" : "Create an account";
     signupFields.style.display = signup ? "flex" : "none";
+    document.getElementById("termsRow").style.display = signup ? "flex" : "none";
     fullName.required = signup;
 
     // The 8-character rule is for new passwords only, so older accounts can still log in
@@ -150,6 +151,10 @@ authForm.addEventListener("submit", async function (event) {
 
             showMessage("If that email has an account, we have sent a link to reset the password. Check your inbox and spam folder.", "ok");
         } else if (mode === "signup") {
+            if (!document.getElementById("termsCheck").checked) {
+                throw new Error("Please tick the box to agree to the Terms of Use and the Privacy Policy.");
+            }
+
             const { data, error } = await db.auth.signUp({
                 email: email,
                 password: password,
@@ -159,6 +164,7 @@ authForm.addEventListener("submit", async function (event) {
                         full_name: fullName.value.trim(),
                         role: roleSelect.value,
                         language: window.LBN_I18N ? LBN_I18N.current() : "en",
+                        terms_accepted_at: new Date().toISOString(),
                         institution: (roleSelect.value === "lecturer" || roleSelect.value === "business") ? institutionInput.value.trim() : ""
                     }
                 }
