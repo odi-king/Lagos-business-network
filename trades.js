@@ -117,13 +117,17 @@ async function init() {
 async function refresh() {
     const result = await db.from("trades").select(TRADE_SELECT).eq("id", tradeId).maybeSingle();
 
-    if (result.error || !result.data) {
-        document.getElementById("chatTitle").textContent = "Trade not found";
-        return;
-    }
+    if (result.error) {
+    tradeList.innerHTML = "<p>Database error: " + escapeHTML(result.error.message) + "</p>";
+    console.error("Trades error:", result.error);
+    return;
+}
 
-    trade = result.data;
-    renderHeader();
+console.log("Trades retrieved from Supabase:", result.data);
+
+trades = result.data || [];
+tradeList.innerHTML = "<p>Trades found: " + trades.length + "</p>";
+render();
 
     const stateKey = trade.status + ":" + (trade.buyer_confirmed_at ? "b" : "") + (trade.seller_confirmed_at ? "s" : "");
 
