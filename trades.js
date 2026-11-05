@@ -117,17 +117,13 @@ async function init() {
 async function refresh() {
     const result = await db.from("trades").select(TRADE_SELECT).eq("id", tradeId).maybeSingle();
 
-    if (result.error) {
-    tradeList.innerHTML = "<p>Database error: " + escapeHTML(result.error.message) + "</p>";
-    console.error("Trades error:", result.error);
-    return;
-}
+    if (result.error || !result.data) {
+        document.getElementById("chatTitle").textContent = "Trade not found";
+        return;
+    }
 
-console.log("Trades retrieved from Supabase:", result.data);
-
-trades = result.data || [];
-tradeList.innerHTML = "<p>Trades found: " + trades.length + "</p>";
-render();
+    trade = result.data;
+    renderHeader();
 
     const stateKey = trade.status + ":" + (trade.buyer_confirmed_at ? "b" : "") + (trade.seller_confirmed_at ? "s" : "");
 
@@ -135,7 +131,6 @@ render();
         applyStatus();
         lastStatus = stateKey;
         updateDisputeUI();
-        updateFeeUI();
     }
 
     const messages = await db
@@ -525,71 +520,7 @@ document.getElementById("reportBtn").addEventListener("click", async function ()
     showNote("Thank you. Your report was sent to the LBN team.", "ok");
 });
 
-// ---------- The LBN fee, shown before anyone pays ----------
-
-let feeSchedule = null;
-let feeQuote = null;
-
-function pctText(value) {
-    return String(Number(value));
-}
-
-function feeNoteText() {
-    if (!feeSchedule) return "";
-
-    return "Chatting and making offers are free. LBN charges " + pctText(feeSchedule.standard_percent) +
-        "% only when the buyer pays (" + pctText(feeSchedule.large_percent) + "% on deals of " + money(feeSchedule.large_threshold) +
-        " or more). The fee is taken from the seller's payment, so the buyer pays no extra.";
-}
-
-function feeRows(q) {
-    const isBuyer = trade.buyer_id === me.id;
-
-    return '<div class="fee-row"><span>Agreed price</span><strong>' + money(q.amount) + "</strong></div>" +
-        '<div class="fee-row"><span>LBN fee (' + pctText(q.percent) + "%" + (q.tier === "large" ? ", large deal rate" : "") +
-        ')</span><strong>- ' + money(q.fee) + "</strong></div>" +
-        '<div class="fee-row total"><span>' + (isBuyer ? "The seller receives" : "You receive") + "</span><strong>" + money(q.seller_amount) + "</strong></div>";
-}
-
-async function updateFeeUI() {
-    if (!trade || !me) return;
-
-    if (!feeSchedule) {
-        const schedule = await db.rpc("fee_schedule");
-        feeSchedule = schedule.data && schedule.data[0] ? schedule.data[0] : null;
-    }
-
-    const note = document.getElementById("offerFeeNote");
-    if (note) note.textContent = feeNoteText();
-
-    const box = document.getElementById("feeBox");
-    const hidden = !trade.agreed_amount || trade.status === "negotiating" || trade.status === "cancelled" || !isParticipant();
-
-    if (hidden) {
-        box.style.display = "none";
-        feeQuote = null;
-        return;
-    }
-
-    const quote = await db.rpc("trade_fee_quote", { p_trade_id: tradeId });
-    feeQuote = quote.data && quote.data[0] ? quote.data[0] : null;
-
-    if (!feeQuote) {
-        box.style.display = "none";
-        return;
-    }
-
-    const isBuyer = trade.buyer_id === me.id;
-
-    box.innerHTML = "<h4>Payment breakdown</h4>" + feeRows(feeQuote) +
-        '<p class="meta">' + (isBuyer
-            ? "You pay " + money(feeQuote.amount) + ". There is no extra charge for you. "
-            : "The buyer pays " + money(feeQuote.amount) + ". ") +
-        "LBN's fee is only charged when payment is made, and it is taken from the seller's side.</p>";
-    box.style.display = "block";
-}
-
-function startPayment() {
+document.getElementById("payBtn").addEventListener("click", function () {
     if (typeof PAYSTACK_PUBLIC_KEY === "undefined" || PAYSTACK_PUBLIC_KEY.indexOf("PASTE") === 0) {
         showNote("Payments are not set up yet. The Paystack key is missing.");
         return;
@@ -616,46 +547,6 @@ function startPayment() {
     });
 
     handler.openIframe();
-}
-
-// The buyer sees exactly what is charged and what the seller receives, then confirms
-document.getElementById("payBtn").addEventListener("click", async function () {
-    await updateFeeUI();
-
-    // If the fee file has not been run yet, payment still works as before
-    if (!feeQuote) {
-        startPayment();
-        return;
-    }
-
-    const old = document.getElementById("payConfirm");
-    if (old) old.remove();
-
-    const sheet = document.createElement("div");
-    sheet.className = "sheet";
-    sheet.id = "payConfirm";
-    sheet.style.display = "flex";
-
-    sheet.innerHTML =
-        '<div class="sheet-card"><div class="sheet-head"><strong>Confirm your payment</strong>' +
-        '<button type="button" class="plain-btn" data-pay="cancel">Cancel</button></div>' +
-        '<div class="fee-box">' + feeRows(feeQuote) + "</div>" +
-        '<p class="meta">You pay <strong>' + money(feeQuote.amount) + "</strong> in total. The LBN fee comes out of the seller's payment, so nothing extra is added for you.</p>" +
-        '<p class="meta">LBN holds the money until you and the seller both confirm, or the LBN team settles a dispute.</p>' +
-        '<button type="button" class="contact-btn" style="width:100%;" data-pay="go">Pay ' + money(feeQuote.amount) + "</button></div>";
-
-    document.body.appendChild(sheet);
-
-    sheet.addEventListener("click", function (event) {
-        const choice = event.target.closest("[data-pay]");
-
-        if (event.target === sheet || (choice && choice.dataset.pay === "cancel")) {
-            sheet.remove();
-        } else if (choice && choice.dataset.pay === "go") {
-            sheet.remove();
-            startPayment();
-        }
-    });
 });
 
 // ---------- Disputes with evidence ----------
