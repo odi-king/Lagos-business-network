@@ -1185,3 +1185,10 @@ button.settings-row.danger {
 .rank-money, .tx-money { text-align: right; white-space: nowrap; }
 .insight { padding: 10px 12px; margin: 8px 0; border-left: 3px solid var(--accent); background: var(--bg); border-radius: 6px; }
 @media (min-width: 760px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* ===================== Account and privacy ===================== */
+.toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); cursor: pointer; }
+.toggle-row input { width: 26px; height: 26px; flex: 0 0 auto; }
+.danger-zone { border-color: #5a2a2a; }
+.danger-zone h3 { margin-top: 18px; }
+.panel select, .panel textarea { margin-bottom: 8px; }

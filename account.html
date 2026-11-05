@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Account and privacy - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="settings.html">Settings</a>
+            <a href="account.html" class="active">Account and privacy</a>
+            <a href="member.html">Profile</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>Account and privacy</h1>
+        <p>Your information is private. You decide who can see it and who can contact you.</p>
+    </div>
+
+    <p id="pageNote" class="meta">Loading...</p>
+
+    <div id="body" style="display:none;">
+
+        <section class="panel" id="deactivatedBox" style="display:none;">
+            <h2>Your account is deactivated</h2>
+            <p>Other members cannot see your profile or posts, or message you.</p>
+            <button type="button" id="reactivateBtn" class="contact-btn">Reactivate my account</button>
+        </section>
+
+        <section class="panel">
+            <h2>Personal information</h2>
+            <form id="infoForm">
+                <label class="meta" for="fullName">Full name</label>
+                <input type="text" id="fullName" maxlength="60" required>
+                <label class="meta" for="bio">About you (shown on your profile)</label>
+                <textarea id="bio" maxlength="200" placeholder="A short line about you or your business"></textarea>
+                <label class="meta" for="phone">Phone number (private)</label>
+                <input type="tel" id="phone" placeholder="08012345678" autocomplete="tel">
+                <label class="meta" for="contactEmail">Contact email (private, can differ from your login email)</label>
+                <input type="email" id="contactEmail" maxlength="120">
+                <p class="meta">Your phone and contact email are never shown unless you allow it under Privacy below.</p>
+                <button type="submit" class="contact-btn">Save my information</button>
+                <a href="member.html?edit=1" class="btn btn-outline">Change my profile photo</a>
+            </form>
+            <p id="infoMsg" class="msg"></p>
+        </section>
+
+        <section class="panel">
+            <h2>Login and security</h2>
+            <p class="meta">Login email: <strong id="loginEmail"></strong><br>Last sign-in: <span id="lastSignIn"></span></p>
+            <form id="passwordForm">
+                <input type="password" id="currentPassword" placeholder="Current password" autocomplete="current-password" required>
+                <input type="password" id="newPassword" placeholder="New password (at least 8 characters)" autocomplete="new-password" minlength="8" required>
+                <input type="password" id="newPassword2" placeholder="New password again" autocomplete="new-password" minlength="8" required>
+                <button type="submit" class="contact-btn">Change my password</button>
+            </form>
+            <p id="passwordMsg" class="msg"></p>
+            <div class="staff-actions">
+                <button type="button" id="signOutOthers" class="btn btn-outline">Sign out of my other devices</button>
+                <button type="button" id="signOutAll" class="btn btn-outline">Sign out everywhere</button>
+            </div>
+            <p id="securityMsg" class="msg"></p>
+        </section>
+
+        <section class="panel">
+            <h2>Privacy</h2>
+            <label class="meta" for="setProfile">Who can see my profile and posts</label>
+            <select id="setProfile">
+                <option value="members">All LBN members</option>
+                <option value="following">Only people I follow</option>
+                <option value="nobody">Nobody (private)</option>
+            </select>
+            <label class="meta" for="setMessage">Who can send me private messages</label>
+            <select id="setMessage">
+                <option value="everyone">All LBN members</option>
+                <option value="following">Only people I follow</option>
+                <option value="nobody">Nobody</option>
+            </select>
+            <label class="meta" for="setContact">Who can see my phone number and contact details</label>
+            <select id="setContact">
+                <option value="nobody">Nobody</option>
+                <option value="following">Only people I follow</option>
+                <option value="everyone">All LBN members</option>
+            </select>
+            <label class="meta" for="setTag">Who can tag me in posts</label>
+            <select id="setTag">
+                <option value="everyone">All LBN members</option>
+                <option value="following">Only people I follow</option>
+                <option value="nobody">Nobody</option>
+            </select>
+            <label class="meta" for="setComment">Who can comment on my posts</label>
+            <select id="setComment">
+                <option value="everyone">All LBN members</option>
+                <option value="following">Only people I follow</option>
+                <option value="nobody">Nobody</option>
+            </select>
+            <label class="toggle-row"><span>Show me in member search<br><span class="meta">Turn off to hide yourself from the Find members search</span></span><input type="checkbox" id="setDiscoverable"></label>
+            <button type="button" id="savePrivacy" class="contact-btn">Save privacy settings</button>
+            <p id="privacyMsg" class="msg"></p>
+            <p class="meta">Tip: for safe payment, keep deals inside the LBN trade chat, even if you share your contact details.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Notifications</h2>
+            <label class="toggle-row"><span>New followers</span><input type="checkbox" id="nFollows"></label>
+            <label class="toggle-row"><span>Likes and reposts</span><input type="checkbox" id="nLikes"></label>
+            <label class="toggle-row"><span>Comments and tags</span><input type="checkbox" id="nComments"></label>
+            <label class="toggle-row"><span>Trade chat messages</span><input type="checkbox" id="nMessages"></label>
+            <label class="toggle-row"><span>New trade requests and offers</span><input type="checkbox" id="nTrades"></label>
+            <button type="button" id="saveNotify" class="contact-btn">Save notification settings</button>
+            <p id="notifyMsg" class="msg"></p>
+            <p class="meta">Payment, dispute and membership notices are always sent, because they protect your money and access.</p>
+        </section>
+
+        <section class="panel">
+            <h2>Blocked accounts</h2>
+            <p class="meta">Blocked members cannot message you, follow you, tag you or comment on your posts.</p>
+            <div id="blockedList"><p class="meta">Loading...</p></div>
+            <input type="text" id="blockSearch" class="search-box" placeholder="Find a member to block">
+            <div id="blockResults"></div>
+        </section>
+
+        <section class="panel">
+            <h2>Your data</h2>
+            <p class="meta">Download a copy of your personal information, posts, comments, messages you sent, trades and settings.</p>
+            <button type="button" id="exportBtn" class="btn btn-outline">Download my data</button>
+            <p id="exportMsg" class="msg"></p>
+        </section>
+
+        <section class="panel danger-zone">
+            <h2>Deactivate or delete my account</h2>
+
+            <h3>Deactivate for now</h3>
+            <p class="meta">Hide your profile and posts and stop messages. Nothing is deleted. You can reactivate whenever you log in.</p>
+            <button type="button" id="deactivateBtn" class="btn btn-outline">Deactivate my account</button>
+            <p id="deactivateMsg" class="msg"></p>
+
+            <h3>Delete permanently</h3>
+            <div id="blockers"></div>
+            <p class="meta">This removes your profile, posts, comments, followers, messages you sent and uploaded files, and closes your login for good. It cannot be undone. Records of trades and payments are kept for accounting, and will show "Deleted member".</p>
+            <input type="password" id="deletePassword" placeholder="Your password" autocomplete="current-password">
+            <input type="text" id="deleteConfirm" placeholder="Type DELETE to confirm" autocomplete="off">
+            <button type="button" id="deleteBtn" class="delete-btn">Delete my account forever</button>
+            <p id="deleteMsg" class="msg"></p>
+        </section>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="account.js"></script>
+<script src="appnav.js"></script>
+<script src="pwa.js"></script>
+<script src="i18n-strings.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>

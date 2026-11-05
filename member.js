@@ -93,7 +93,34 @@ async function init() {
         return;
     }
 
-    profileBox.innerHTML = "<h1>Member not found</h1><p class='meta'>This profile does not exist.</p>";
+    const access = await db.rpc("profile_access", { p_id: memberId });
+    const state = access.data;
+
+    profileBox.innerHTML = state === "private"
+        ? "<h1>This profile is private</h1><p class='meta'>This member has chosen who can see their profile.</p>"
+        : state === "unavailable"
+            ? "<h1>Profile not available</h1><p class='meta'>This profile is not available right now.</p>"
+            : "<h1>Member not found</h1><p class='meta'>This profile does not exist.</p>";
+}
+
+// Phone and email appear only when the member allowed it
+async function loadContact() {
+    if (isOwn) return;
+
+    const { data, error } = await db.rpc("member_contact", { p_user: memberId });
+    if (error || !data || !data[0] || (!data[0].phone && !data[0].contact_email)) return;
+
+    let box = document.getElementById("contactBox");
+
+    if (!box) {
+        profileBox.insertAdjacentHTML("afterend", '<div id="contactBox" class="notice"></div>');
+        box = document.getElementById("contactBox");
+    }
+
+    box.innerHTML = "<strong>Contact details</strong><br>" +
+        (data[0].phone ? 'Phone: <a href="tel:' + escapeHTML(data[0].phone) + '">' + escapeHTML(data[0].phone) + "</a><br>" : "") +
+        (data[0].contact_email ? 'Email: <a href="mailto:' + escapeHTML(data[0].contact_email) + '">' + escapeHTML(data[0].contact_email) + "</a><br>" : "") +
+        "<span class='meta'>Shared by this member. For safe payment, keep deals inside the LBN trade chat.</span>";
 }
 
 function statsHTML(clickable) {
@@ -150,6 +177,8 @@ async function renderMember() {
     }
 
     document.getElementById("profileTabs").style.display = "flex";
+
+    loadContact();
 
     // Counts as a visit for the profile owner's analytics
     if (!isOwn && viewerSession) db.rpc("record_profile_view", { p_profile: memberId }).then(function () {}, function () {});

@@ -164,6 +164,33 @@
 
     showMembershipBanner();
 
+    async function showDeactivatedBar() {
+        if (typeof db === "undefined" || !db) return;
+
+        try {
+            const { data, error } = await db.rpc("my_account_state");
+            if (error || data !== "deactivated") return;
+
+            const nav = document.querySelector(".nav");
+            if (!nav || document.getElementById("deactivatedBar")) return;
+
+            const bar = document.createElement("div");
+            bar.id = "deactivatedBar";
+            bar.className = "member-bar urgent";
+            bar.innerHTML = "<span>Your account is deactivated, so other members cannot see you.</span>" +
+                '<button type="button" class="btn btn-primary">Reactivate</button>';
+
+            nav.insertAdjacentElement("afterend", bar);
+
+            bar.querySelector("button").addEventListener("click", async function () {
+                await db.rpc("reactivate_my_account");
+                bar.remove();
+            });
+        } catch (e) {}
+    }
+
+    showDeactivatedBar();
+
     window.refreshBell = refreshBell;
     refreshBell();
 
