@@ -83,7 +83,10 @@ async function init() {
     }
     if (can("support")) jobs.push(loadSupport());
     if (can("finance") || can("marketplace")) jobs.push(loadQueue());
-    if (can("finance")) jobs.push(loadSettings());
+    if (can("finance")) {
+        jobs.push(loadSettings());
+        jobs.push(loadReadiness());
+    }
     if (can("education")) {
         jobs.push(loadGradRequests());
         jobs.push(loadGradRules());
@@ -715,3 +718,130 @@ document.getElementById("trialFlags").addEventListener("click", async function (
 
     await loadTrialFlags();
 });
+
+
+// ---------- Go-live readiness ----------
+
+const MANUAL_STEPS = [
+    "Paystack account is activated for live payments",
+    "Live secret key (sk_live_...) is saved in Supabase as PAYSTACK_SECRET_KEY",
+    "Live public key (pk_live_...) is in paystack-config.js and pushed",
+    "Live webhook URL is set in Paystack",
+    "A small real payment was tested for a membership, a trade and a handout",
+    "A refund was tested in the Paystack dashboard",
+    "Settlement bank account in Paystack is correct",
+    "Supabase is on the Pro plan with backups",
+    "Domain and email sender are verified",
+    "A Nigerian lawyer has read the Terms, Privacy and Refunds pages",
+    "The business is registered with CAC"
+];
+
+function readinessRow(state, title, text) {
+    return '<div class="rd-row"><span class="rd-dot rd-' + state + '"></span><div><strong>' + escapeHTML(title) +
+        '</strong><div class="meta">' + escapeHTML(text) + "</div></div></div>";
+}
+
+async function loadReadiness() {
+    const box = document.getElementById("readiness");
+    if (!box) return;
+
+    const { data, error } = await db.rpc("admin_readiness");
+
+    if (error) {
+        box.innerHTML = "<p class='meta'>Not set up yet. Run supabase-readiness.sql in Supabase.</p>";
+        return;
+    }
+
+    const rows = [];
+    const set = data.settings || {};
+
+    // The public key tells us whether this site takes test or real payments
+    const key = typeof PAYSTACK_PUBLIC_KEY === "undefined" ? "" : String(PAYSTACK_PUBLIC_KEY);
+
+    if (key.indexOf("pk_live_") === 0) rows.push(readinessRow("ok", "Paystack key", "LIVE. The site takes real payments."));
+    else if (key.indexOf("pk_test_") === 0) rows.push(readinessRow("warn", "Paystack key", "TEST. No real money moves. Switch to the live key when you launch."));
+    else rows.push(readinessRow("bad", "Paystack key", "Missing. Put your Paystack public key in paystack-config.js."));
+
+    rows.push(set.payments_enabled === "true"
+        ? readinessRow("ok", "Payments switch", "ON. Buyers can pay.")
+        : readinessRow("warn", "Payments switch", "OFF. Turn it on under Payment settings when you are ready."));
+
+    const feesOk = ["fee_percent", "fee_percent_large", "large_threshold", "min_fee"].every(function (k) { return set[k] !== undefined && set[k] !== ""; });
+    rows.push(feesOk
+        ? readinessRow("ok", "LBN fee", "Standard " + set.fee_percent + "%, large deals " + set.fee_percent_large + "% from \u20A6" + Number(set.large_threshold).toLocaleString() + ", smallest fee \u20A6" + Number(set.min_fee).toLocaleString() + ".")
+        : readinessRow("bad", "LBN fee", "Fee settings are missing. Run supabase-fees.sql."));
+
+    // Is the payment-checking function deployed?
+    try {
+        const ping = await db.functions.invoke("paystack-verify", { body: {} });
+        const status = ping.error && ping.error.context ? ping.error.context.status : 200;
+        rows.push(status === 404
+            ? readinessRow("bad", "Payment checking function", "Not found. Deploy paystack-verify in Supabase Edge Functions.")
+            : readinessRow("ok", "Payment checking function", "Deployed and answering."));
+    } catch (e) {
+        rows.push(readinessRow("bad", "Payment checking function", "Could not reach it. Deploy paystack-verify in Supabase Edge Functions."));
+    }
+
+    const paid = Number(data.paid_members) + Number(data.paid_trades) + Number(data.handout_sales);
+    const lastDates = [data.last_membership_payment, data.last_trade_payment, data.last_handout_payment].filter(Boolean).sort();
+    rows.push(paid > 0
+        ? readinessRow("ok", "Payments received", paid + " payment(s) recorded. Latest: " + new Date(lastDates[lastDates.length - 1]).toLocaleString() + ".")
+        : readinessRow("warn", "Payments received", "No payment has been recorded yet. Do a test payment for a membership, a trade and a handout."));
+
+    const emailFailed = Number(data.email_failed_24h), emailSent = Number(data.email_sent_24h);
+    rows.push(emailFailed > 0
+        ? readinessRow("bad", "Update emails", emailFailed + " email(s) failed in the last 24 hours. Check the email_queue error column.")
+        : emailSent > 0
+            ? readinessRow("ok", "Update emails", emailSent + " sent in the last 24 hours.")
+            : readinessRow("warn", "Update emails", "No email sent in the last 24 hours. Follow EMAIL-SETUP.md and send a test."));
+
+    rows.push(Number(data.payouts_due) > 0
+        ? readinessRow("warn", "Payouts waiting", data.payouts_due + " payout(s) are due to sellers and lecturers. Pay them and mark them done.")
+        : readinessRow("ok", "Payouts waiting", "Nothing waiting."));
+
+    rows.push(Number(data.refunds_due) > 0
+        ? readinessRow("warn", "Refunds waiting", data.refunds_due + " refund(s) are due to buyers. Refund them in Paystack and mark them done.")
+        : readinessRow("ok", "Refunds waiting", "Nothing waiting."));
+
+    rows.push(Number(data.open_disputes) > 0
+        ? readinessRow("warn", "Open disputes", data.open_disputes + " dispute(s) need a decision.")
+        : readinessRow("ok", "Open disputes", "None."));
+
+    rows.push(Number(data.sellers_missing_bank) > 0
+        ? readinessRow("bad", "Sellers without bank details", data.sellers_missing_bank + " seller(s) are owed money but have not added a payout account.")
+        : readinessRow("ok", "Sellers without bank details", "None."));
+
+    // Are the legal pages still marked as drafts?
+    const drafts = [];
+    for (const page of ["terms.html", "privacy.html", "refunds.html"]) {
+        try {
+            const res = await fetch(page, { cache: "no-store" });
+            const html = res.ok ? await res.text() : "";
+            if (!res.ok) drafts.push(page + " (missing)");
+            else if (html.indexOf("draft-note") !== -1) drafts.push(page);
+        } catch (e) {
+            drafts.push(page);
+        }
+    }
+    rows.push(drafts.length === 0
+        ? readinessRow("ok", "Legal pages", "Terms, Privacy and Refunds are published.")
+        : readinessRow("warn", "Legal pages", "Still marked as draft or missing: " + drafts.join(", ") + "."));
+
+    box.innerHTML = rows.join("");
+
+    // Steps that only you can confirm
+    const saved = JSON.parse(localStorage.getItem("lbn_golive") || "{}");
+    const manual = document.getElementById("manualChecks");
+
+    manual.innerHTML = MANUAL_STEPS.map(function (step, i) {
+        return '<label class="toggle-row"><span>' + escapeHTML(step) + '</span><input type="checkbox" data-step="' + i + '"' + (saved[i] ? " checked" : "") + "></label>";
+    }).join("");
+
+    manual.onchange = function (event) {
+        const box2 = event.target.closest("[data-step]");
+        if (!box2) return;
+
+        saved[box2.dataset.step] = box2.checked;
+        localStorage.setItem("lbn_golive", JSON.stringify(saved));
+    };
+}

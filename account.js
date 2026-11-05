@@ -176,6 +176,7 @@ async function loadSettings() {
     document.getElementById("nComments").checked = !!data.notify_comments;
     document.getElementById("nMessages").checked = !!data.notify_messages;
     document.getElementById("nTrades").checked = !!data.notify_trades;
+    document.getElementById("nEmail").checked = data.notify_email !== false;
 }
 
 document.getElementById("savePrivacy").addEventListener("click", async function () {
@@ -200,7 +201,8 @@ document.getElementById("saveNotify").addEventListener("click", async function (
             notify_likes: document.getElementById("nLikes").checked,
             notify_comments: document.getElementById("nComments").checked,
             notify_messages: document.getElementById("nMessages").checked,
-            notify_trades: document.getElementById("nTrades").checked
+            notify_trades: document.getElementById("nTrades").checked,
+            notify_email: document.getElementById("nEmail").checked
         }
     });
 

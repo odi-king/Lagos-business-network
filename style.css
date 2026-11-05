@@ -1201,3 +1201,11 @@ button.settings-row.danger {
 .draft-note { border-style: dashed; }
 .legal-links { margin-top: 8px; font-size: 14px; }
 .legal-links a { color: var(--accent); }
+
+/* ===================== Go-live readiness ===================== */
+.rd-row { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.rd-row:first-child { border-top: none; }
+.rd-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 6px; flex: 0 0 auto; }
+.rd-ok { background: var(--accent); }
+.rd-warn { background: #f2c14e; }
+.rd-bad { background: #ff6b6b; }

@@ -636,6 +636,8 @@ document.getElementById("payBtn").addEventListener("click", async function () {
         '<div class="sheet-card"><div class="sheet-head"><strong>Confirm your payment</strong>' +
         '<button type="button" class="plain-btn" data-pay="cancel">Cancel</button></div>' +
         '<div class="fee-box">' + feeRows(feeQuote) + "</div>" +
+        (typeof PAYSTACK_PUBLIC_KEY !== "undefined" && String(PAYSTACK_PUBLIC_KEY).indexOf("pk_test_") === 0
+            ? '<p class="notice">Test mode: no real money is charged.</p>' : "") +
         '<p class="meta">You pay <strong>' + money(feeQuote.amount) + "</strong> in total. The LBN fee comes out of the seller's payment, so nothing extra is added for you.</p>" +
         '<p class="meta">LBN holds the money until you and the seller both confirm, or the LBN team settles a dispute.</p>' +
         '<button type="button" class="contact-btn" style="width:100%;" data-pay="go">Pay ' + money(feeQuote.amount) + "</button></div>";
