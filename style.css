@@ -1209,3 +1209,16 @@ button.settings-row.danger {
 .rd-ok { background: var(--accent); }
 .rd-warn { background: #f2c14e; }
 .rd-bad { background: #ff6b6b; }
+
+/* ===================== Reviews and ratings ===================== */
+.rating-chip { font-size: 13px; color: #f2c14e; font-weight: 700; white-space: nowrap; }
+.stars { color: #f2c14e; letter-spacing: 2px; }
+.star-row { display: flex; gap: 6px; margin: 10px 0; }
+.star-btn { background: none; border: none; font-size: 36px; line-height: 1; color: #f2c14e; cursor: pointer; padding: 4px; min-height: 48px; min-width: 48px; }
+.rep-head { display: flex; align-items: center; gap: 14px; }
+.rep-score { font-size: 44px; font-weight: 800; }
+.bar-row { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 4px 0; }
+.bar-track { flex: 1; height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar-fill { height: 100%; background: #f2c14e; }
+.review { padding: 12px 0; border-top: 1px solid var(--line); }
+.review-reply { background: var(--bg); border-left: 3px solid var(--accent); padding: 8px 10px; border-radius: 6px; }

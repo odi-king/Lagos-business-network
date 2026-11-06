@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin team - Lagos Business Network</title>
+    <title>Admin - Lagos Business Network</title>
     <link rel="stylesheet" href="style.css">
     <meta name="theme-color" content="#0b1220">
     <meta name="robots" content="noindex, nofollow">
@@ -22,8 +22,7 @@
         <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
         <div class="nav-links">
             <a href="dashboard.html">Dashboard</a>
-            <a href="admin.html">Admin</a>
-            <a href="admins.html" class="active">Admin team</a>
+            <a href="admin.html" class="active">Admin</a>
             <a href="member.html">Profile</a>
             <a href="#" id="logoutBtn">Log out</a>
         </div>
@@ -32,67 +31,117 @@
 
 <main class="container">
     <div class="page-head">
-        <h1>Admin team</h1>
-        <p id="teamNote">Appoint admins, give each one only the access they need, and pause or remove them any time.</p>
+        <h1>Admin</h1>
+        <p id="adminNote">Approve lecturers, graduate students and manage access.</p>
     </div>
 
-    <div id="teamBody" style="display:none;">
-        <section class="panel">
-            <h2>Appoint an admin</h2>
-            <p class="meta">The person must already have a LBN account. Search for them by name or email.</p>
-            <input type="text" id="findBox" class="search-box" placeholder="Search by name or email">
-            <div id="findResults"></div>
+    <div id="adminStats" data-perm="members" class="grid cols-2" style="margin-bottom:16px;"></div>
 
-            <div id="appointBox" style="display:none;">
-                <p id="pickedLine" class="notice"></p>
-                <label class="meta" for="presetSelect">Role</label>
-                <select id="presetSelect">
-                    <option value="finance">Finance</option>
-                    <option value="support">Support</option>
-                    <option value="content">Content</option>
-                    <option value="marketplace">Marketplace</option>
-                    <option value="education">Education</option>
-                    <option value="full">Full admin</option>
-                    <option value="custom">Custom</option>
-                </select>
-                <input type="text" id="roleTitle" placeholder="Role name" maxlength="40">
-                <div id="appointPerms"></div>
-                <input type="text" id="appointNote" placeholder="Private note for yourself (optional)" maxlength="300">
-                <button type="button" id="appointBtn" class="contact-btn">Appoint admin</button>
-                <button type="button" id="appointCancel" class="plain-btn">Cancel</button>
-            </div>
-            <p id="appointMsg" class="msg"></p>
-        </section>
+    <section class="panel" data-perm="marketplace,content">
+        <h2>Reported reviews</h2>
+        <p class="meta">Members can report reviews they think are unfair. Hide a review that is abusive, fake or breaks the rules. Keep it if it is honest, even if it is negative.</p>
+        <div id="reviewReports"><p class="meta">Loading...</p></div>
+    </section>
 
-        <section class="panel">
-            <h2>Your admin team</h2>
-            <div id="staffList"><p class="meta">Loading...</p></div>
-        </section>
+    <section class="panel" data-perm="finance">
+        <h2>Go-live readiness</h2>
+        <p class="meta">Checks your payment setup. Green is ready, orange needs a look, red must be fixed before real money moves.</p>
+        <div id="readiness"><p class="meta">Checking...</p></div>
+        <h3>Do these by hand</h3>
+        <div id="manualChecks"></div>
+    </section>
 
-        <section class="panel">
-            <h2>Two-step login for admins</h2>
-            <p class="meta">Admins can move money and see private details, so they should log in with a code from an authenticator app as well as a password.</p>
-            <p id="mfaState" class="meta">Checking...</p>
-            <div id="mfaList"></div>
-            <button type="button" id="mfaToggle" class="contact-btn">Require two-step login for all admins</button>
-            <p id="mfaToggleMsg" class="msg"></p>
-        </section>
+    <section class="panel" data-perm="members">
+        <h2>Free trial watch</h2>
+        <p class="meta">Free trials flagged because many were claimed from the same network. Dismiss it if it is a school or a family, or end the free trial.</p>
+        <div id="trialFlags"><p class="meta">Loading...</p></div>
+    </section>
 
-        <section class="panel">
-            <h2>What each permission allows</h2>
-            <div id="permGuide"></div>
-            <p class="meta">You are the Super Admin. You always have every permission, and only you can manage this team.</p>
-        </section>
+    <section class="panel" data-perm="members">
+        <h2>People</h2>
+        <p class="meta">Before approving a lecturer, check that their school email or staff page matches their name and school.</p>
+        <div class="filters">
+            <input type="text" id="adminSearch" placeholder="Search by name, email or school">
+            <select id="adminFilter">
+                <option value="waiting">Waiting for approval (lecturers and businesses)</option>
+                <option value="all">Everyone</option>
+                <option value="lecturers">Lecturers</option>
+                <option value="businesses">Businesses</option>
+                <option value="students">Students</option>
+                <option value="graduates">Graduates</option>
+                <option value="unpaid">Not paid</option>
+            </select>
+        </div>
+        <div id="peopleList"></div>
+    </section>
 
-        <section class="panel">
-            <h2>Activity log</h2>
-            <div id="auditList"><p class="meta">Loading...</p></div>
-        </section>
-    </div>
+    <section class="panel" data-perm="finance,marketplace">
+        <h2>Payments and disputes</h2>
+        <p class="meta">Money held by LBN, disputes to decide, and payouts to make. Open the chat to read what both sides said.</p>
+        <div class="filters">
+            <select id="queueFilter">
+                <option value="action">Needs my action</option>
+                <option value="dispute">Disputes</option>
+                <option value="payout_due">Sellers to pay</option>
+                <option value="refund_due">Buyers to refund</option>
+                <option value="handout_payout">Lecturers to pay (handouts)</option>
+                <option value="unmatched_payment">Payments that did not match</option>
+                <option value="awaiting_confirmation">Waiting for the buyer</option>
+                <option value="all">Everything</option>
+            </select>
+        </div>
+        <div id="queueList"></div>
+    </section>
+
+    <section class="panel" data-perm="finance">
+        <h2>Payment settings</h2>
+        <p id="paymentsStatus" class="meta"></p>
+        <button type="button" id="paymentsToggle" class="btn btn-outline">Loading...</button>
+        <form id="feeForm">
+            <input type="number" id="feePercent" placeholder="Standard fee % (2)" step="0.1" min="0" max="30" required>
+            <input type="number" id="feePercentLarge" placeholder="Fee % for large transactions (0.5)" step="0.1" min="0" max="30" required>
+            <input type="number" id="largeThreshold" placeholder="Large transaction starts at (naira)" min="1000" required>
+            <input type="number" id="minFee" placeholder="Smallest fee in naira (0 for none)" min="0" required>
+            <input type="number" id="handoutFee" placeholder="Fee % on handout sales" step="0.1" min="0" max="50">
+            <button type="submit" class="contact-btn">Save fees</button>
+        </form>
+        <p id="settingsMsg" class="msg"></p>
+    </section>
+
+    <section class="panel" data-perm="education">
+        <h2>Graduation requests</h2>
+        <p class="meta">Students ask to graduate after finishing lessons and passing assessments. Read the evidence, then approve or decline.</p>
+        <div class="filters">
+            <select id="gradFilter">
+                <option value="pending">Waiting for review</option>
+                <option value="all">All requests</option>
+            </select>
+        </div>
+        <div id="gradList"></div>
+        <h3>Starting requirements</h3>
+        <form id="gradRulesForm">
+            <input type="number" id="ruleLessons" min="0" max="100" placeholder="Lessons a student must complete" required>
+            <input type="number" id="ruleAssessments" min="0" max="100" placeholder="Assessments a student must pass" required>
+            <button type="submit" class="contact-btn">Save requirements</button>
+        </form>
+        <p id="gradRulesMsg" class="msg"></p>
+    </section>
+
+    <section class="panel" data-perm="support">
+        <h2>Customer care messages</h2>
+        <div class="filters">
+            <select id="supportFilter">
+                <option value="open">Open</option>
+                <option value="resolved">Resolved</option>
+                <option value="all">All</option>
+            </select>
+        </div>
+        <div id="supportList"></div>
+    </section>
 </main>
 
 <footer class="footer">
-    <div class="container">&copy; 2026 Lagos Business Network
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a>
         <div class="legal-links"><a href="terms.html">Terms of Use</a> &bull; <a href="privacy.html">Privacy Policy</a> &bull; <a href="refunds.html">Refunds and Disputes</a></div>
     </div>
 </footer>
@@ -100,7 +149,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="mfa.js"></script>
-<script src="admins.js"></script>
+<script src="admin.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>
 <script src="i18n-strings.js"></script>

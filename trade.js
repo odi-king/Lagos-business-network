@@ -132,6 +132,8 @@ async function refresh() {
         lastStatus = stateKey;
         updateDisputeUI();
         updateFeeUI();
+        loadReview();
+        loadPartnerRating();
     }
 
     const messages = await db
@@ -910,3 +912,103 @@ document.getElementById("logoutBtn").addEventListener("click", async function (e
 });
 
 init();
+
+
+// ---------- Reviews ----------
+
+let reviewStars = 0;
+
+async function loadPartnerRating() {
+    const chip = document.getElementById("partnerRating");
+    if (!chip || !trade || !me || trade.buyer_id !== me.id) return;
+
+    const { data } = await db.rpc("member_ratings", { p_users: [trade.seller_id] });
+    const r = data && data[0];
+
+    chip.textContent = "Seller: " + (r && r.review_count > 0 ? ratingLine(r.avg_rating, r.review_count) : "no reviews yet");
+}
+
+async function loadReview() {
+    const panel = document.getElementById("reviewPanel");
+    if (!panel) return;
+
+    const closed = trade && (trade.status === "completed" || trade.status === "settled");
+
+    if (!closed || !me || !isParticipant()) {
+        panel.style.display = "none";
+        return;
+    }
+
+    const { data, error } = await db.rpc("my_trade_review", { p_trade_id: tradeId });
+    const r = data && data[0];
+
+    if (error || !r) {
+        panel.style.display = "none";
+        return;
+    }
+
+    const other = trade.buyer_id === me.id ? "the seller" : "the buyer";
+    const body = document.getElementById("reviewBody");
+    let html = "";
+
+    if (r.can_review) {
+        reviewStars = 0;
+        html = '<p>How was your trade with ' + other + "?</p>" +
+            '<div class="star-row" id="starRow">' +
+            [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" class="star-btn" data-v="' + n + '" aria-label="' + n + ' stars">\u2606</button>'; }).join("") +
+            "</div>" +
+            '<textarea id="reviewComment" maxlength="500" placeholder="Say a little about it (required for 1 or 2 stars)"></textarea>' +
+            '<button type="button" id="reviewSubmit" class="contact-btn">Send my review</button>' +
+            '<p class="meta">Your review is public on ' + other + "'s profile. Please be fair and honest. Do not share phone numbers or links.</p>";
+    } else if (r.mine_rating) {
+        html = "<p>You rated " + other + ' <span class="stars">' + starText(r.mine_rating) + "</span></p>" +
+            (r.mine_comment ? "<p>" + escapeHTML(r.mine_comment) + "</p>" : "") +
+            (r.theirs_reply ? "<p class='meta'>Their reply: " + escapeHTML(r.theirs_reply) + "</p>" : "");
+    } else {
+        html = "<p class='meta'>The time to review this trade has ended.</p>";
+    }
+
+    if (r.theirs_rating) {
+        html += '<hr><p>' + (trade.buyer_id === me.id ? "The seller" : "The buyer") + ' rated you <span class="stars">' + starText(r.theirs_rating) + "</span></p>" +
+            (r.theirs_comment ? "<p>" + escapeHTML(r.theirs_comment) + "</p>" : "");
+    }
+
+    body.innerHTML = html;
+    panel.style.display = "block";
+}
+
+document.getElementById("reviewBody").addEventListener("click", async function (event) {
+    const star = event.target.closest(".star-btn");
+
+    if (star) {
+        reviewStars = parseInt(star.dataset.v, 10);
+
+        document.querySelectorAll("#starRow .star-btn").forEach(function (b) {
+            const on = parseInt(b.dataset.v, 10) <= reviewStars;
+            b.textContent = on ? "\u2605" : "\u2606";
+            b.classList.toggle("on", on);
+        });
+        return;
+    }
+
+    if (event.target.closest("#reviewSubmit")) {
+        const msg = document.getElementById("reviewMsg");
+
+        if (reviewStars < 1) {
+            msg.textContent = "Tap the stars to choose a rating.";
+            msg.className = "msg error";
+            return;
+        }
+
+        const { error } = await db.rpc("submit_review", {
+            p_trade_id: tradeId,
+            p_rating: reviewStars,
+            p_comment: document.getElementById("reviewComment").value
+        });
+
+        msg.textContent = error ? error.message : "Thank you for your review.";
+        msg.className = "msg " + (error ? "error" : "ok");
+
+        if (!error) await loadReview();
+    }
+});

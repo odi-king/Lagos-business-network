@@ -179,6 +179,7 @@ async function renderMember() {
     document.getElementById("profileTabs").style.display = "flex";
 
     loadContact();
+    loadReputation();
 
     // Counts as a visit for the profile owner's analytics
     if (!isOwn && viewerSession) db.rpc("record_profile_view", { p_profile: memberId }).then(function () {}, function () {});
@@ -525,3 +526,98 @@ document.getElementById("logoutBtn").addEventListener("click", async function (e
 });
 
 init();
+
+
+// ---------- Rating and reviews ----------
+
+let reviewsBefore = null;
+
+async function loadReputation() {
+    const { data, error } = await db.rpc("member_reputation", { p_user: memberId });
+    const r = data && data[0];
+
+    if (error || !r) return;
+
+    const tabs = document.getElementById("profileTabs");
+    if (!tabs || document.getElementById("reviewsBox")) return;
+
+    const since = r.member_since ? new Date(r.member_since).toLocaleDateString(undefined, { month: "short", year: "numeric" }) : "";
+    const total = r.seller_count;
+
+    if (!isOwn && total === 0 && r.completed_sales === 0) return;
+
+    const bars = [5, 4, 3, 2, 1].map(function (n) {
+        const count = [0, r.one, r.two, r.three, r.four, r.five][n];
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+        return '<div class="bar-row"><span>' + n + '\u2605</span><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div><span class="meta">' + count + "</span></div>";
+    }).join("");
+
+    tabs.insertAdjacentHTML("beforebegin",
+        '<section class="panel" id="reviewsBox">' +
+        '<div class="rep-head"><div class="rep-score">' + (total > 0 ? Number(r.seller_avg).toFixed(1) : "-") + '</div><div><div class="stars">' +
+        starText(r.seller_avg) + "</div><div class='meta'>" + ratingLine(r.seller_avg, total) + "</div></div></div>" +
+        "<p class='meta'>" + r.completed_sales + " completed sale(s)" + (since ? " &bull; Member since " + since : "") +
+        (r.buyer_count > 0 ? " &bull; As a buyer: " + ratingLine(r.buyer_avg, r.buyer_count) : "") + "</p>" +
+        (total > 0 ? bars + '<button type="button" class="btn btn-outline" id="showReviews">Show reviews</button><div id="reviewList"></div>'
+                   : "<p class='meta'>No reviews yet. Reviews appear after completed trades.</p>") +
+        "</section>");
+
+    const button = document.getElementById("showReviews");
+    if (button) button.addEventListener("click", function () { reviewsBefore = null; document.getElementById("reviewList").innerHTML = ""; loadReviews(); button.style.display = "none"; });
+}
+
+async function loadReviews() {
+    const list = document.getElementById("reviewList");
+    const { data, error } = await db.rpc("member_reviews", { p_user: memberId, p_limit: 10, p_before: reviewsBefore });
+
+    if (error) {
+        list.insertAdjacentHTML("beforeend", "<p class='meta'>Could not load reviews.</p>");
+        return;
+    }
+
+    data.forEach(function (rv) {
+        list.insertAdjacentHTML("beforeend",
+            '<div class="review" data-id="' + escapeHTML(rv.id) + '"><div><span class="stars">' + starText(rv.rating) + "</span> " +
+            '<a class="post-author" href="member.html?id=' + encodeURIComponent(rv.reviewer_id) + '">' + escapeHTML(rv.reviewer_name || "Member") + "</a>" +
+            (rv.paid ? ' <span class="badge verified">Paid through LBN</span>' : "") + "</div>" +
+            "<div class='meta'>" + escapeHTML(rv.item || "") + " &bull; " + new Date(rv.created_at).toLocaleDateString() + "</div>" +
+            (rv.comment ? "<p>" + escapeHTML(rv.comment) + "</p>" : "") +
+            (rv.reply ? '<p class="review-reply"><strong>Reply:</strong> ' + escapeHTML(rv.reply) + "</p>" : "") +
+            (isOwn ? '<div class="staff-actions">' + (rv.reply ? "" : '<button type="button" class="plain-btn review-reply-btn">Reply</button>') +
+                '<button type="button" class="plain-btn review-report-btn">Report</button></div>' : "") +
+            "</div>");
+    });
+
+    if (data.length > 0) reviewsBefore = data[data.length - 1].created_at;
+
+    const more = document.getElementById("moreReviews");
+    if (more) more.remove();
+
+    if (data.length === 10) {
+        list.insertAdjacentHTML("beforeend", '<button type="button" class="btn btn-outline" id="moreReviews">Load more reviews</button>');
+        document.getElementById("moreReviews").addEventListener("click", loadReviews);
+    }
+}
+
+document.addEventListener("click", async function (event) {
+    const row = event.target.closest(".review");
+    if (!row) return;
+
+    if (event.target.closest(".review-reply-btn")) {
+        const text = prompt("Write a short, polite reply. It will be public. You can reply once.");
+        if (!text) return;
+
+        const { error } = await db.rpc("reply_to_review", { p_review_id: row.dataset.id, p_reply: text });
+        if (error) { alert(error.message); return; }
+
+        reviewsBefore = null;
+        document.getElementById("reviewList").innerHTML = "";
+        await loadReviews();
+    } else if (event.target.closest(".review-report-btn")) {
+        const reason = prompt("Why is this review unfair or against the rules? The LBN team will look at it.");
+        if (!reason) return;
+
+        const { error } = await db.rpc("report_review", { p_review_id: row.dataset.id, p_reason: reason });
+        alert(error ? error.message : "Thank you. The LBN team will review it.");
+    }
+});

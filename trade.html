@@ -36,7 +36,7 @@
     <div class="page-head">
         <h1 id="chatTitle">Loading...</h1>
         <p id="chatParties" class="meta"></p>
-        <p><span id="statusBadge" class="badge"></span> <span id="agreedLine" class="meta"></span> <a id="postLink" class="plain-btn" style="display:none; color: var(--accent);">View the post</a></p>
+        <p><span id="statusBadge" class="badge"></span> <span id="agreedLine" class="meta"></span> <span id="partnerRating" class="rating-chip"></span> <a id="postLink" class="plain-btn" style="display:none; color: var(--accent);">View the post</a></p>
     </div>
 
     <div class="scam-zone">
@@ -83,6 +83,12 @@
         </div>
     </section>
 
+    <section class="panel" id="reviewPanel" style="display:none;">
+        <h2>Rate this trade</h2>
+        <div id="reviewBody"></div>
+        <p id="reviewMsg" class="msg"></p>
+    </section>
+
     <section class="panel" id="disputePanel" style="display:none;">
         <h2>Dispute</h2>
         <div id="disputeSummary"></div>
@@ -121,6 +127,7 @@
 <script src="badges.js"></script>
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <script src="paystack-config.js"></script>
+<script src="reviews.js"></script>
 <script src="chat-common.js"></script>
 <script src="trade.js"></script>
 <script src="appnav.js"></script>

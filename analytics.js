@@ -182,6 +182,7 @@ function render() {
         }).join("");
 
     renderInsights();
+    showRatingKpi();
 }
 
 // Plain-language tips, worked out from the numbers above
@@ -299,3 +300,16 @@ async function init() {
 }
 
 init();
+
+
+async function showRatingKpi() {
+    const session = (await db.auth.getSession()).data.session;
+    if (!session) return;
+
+    const { data } = await db.rpc("member_reputation", { p_user: session.user.id });
+    const r = data && data[0];
+    if (!r) return;
+
+    document.getElementById("kpis").insertAdjacentHTML("beforeend",
+        kpi("Your rating", r.seller_count > 0 ? "\u2605 " + Number(r.seller_avg).toFixed(1) : "-", num(r.seller_count) + " review(s)"));
+}

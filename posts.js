@@ -354,7 +354,7 @@ function renderPostCard(p, media) {
                 ${avatarHTML(name, p.author_avatar, "avatar-sm")}
             </a>
             <div class="post-who">
-                <a class="post-author" href="member.html?id=${encodeURIComponent(p.author_id)}">${escapeHTML(name)}</a>${badgeHTML(personFromPost(p))}
+                <a class="post-author" href="member.html?id=${encodeURIComponent(p.author_id)}">${escapeHTML(name)}</a>${badgeHTML(personFromPost(p))} <span class="rating-chip" data-author="${escapeHTML(p.author_id)}"></span>
                 <div class="post-time"></div>
             </div>
             ${followButton(p.author_id, p.following)}
@@ -505,6 +505,37 @@ async function appendPosts(listEl, posts) {
         const card = renderPostCard(p, media);
         listEl.appendChild(card);
         observeView(card);
+    });
+
+    decorateRatings(listEl);
+}
+
+// Shows a seller's star rating next to their name, using one request for all the cards
+const ratingCache = {};
+
+async function decorateRatings(root) {
+    const chips = Array.prototype.slice.call(root.querySelectorAll(".rating-chip:not([data-done])"));
+    const need = [];
+
+    chips.forEach(function (chip) {
+        const id = chip.dataset.author;
+        if (id && !(id in ratingCache) && need.indexOf(id) === -1) need.push(id);
+    });
+
+    if (need.length > 0) {
+        const { data } = await db.rpc("member_ratings", { p_users: need.slice(0, 50) });
+
+        need.forEach(function (id) { ratingCache[id] = null; });
+        (data || []).forEach(function (r) { ratingCache[r.user_id] = r; });
+    }
+
+    chips.forEach(function (chip) {
+        chip.dataset.done = "1";
+        const r = ratingCache[chip.dataset.author];
+
+        if (r && r.review_count > 0) {
+            chip.innerHTML = "\u2605 " + Number(r.avg_rating).toFixed(1) + ' <span class="meta">(' + r.review_count + ")</span>";
+        }
     });
 }
 
