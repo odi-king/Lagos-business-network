@@ -185,6 +185,12 @@ authForm.addEventListener("submit", async function (event) {
             });
 
             if (error) throw error;
+
+            if (await needsMfa()) {
+                await showMfaStep();
+                return;
+            }
+
             window.location.href = nextPage();
         }
     } catch (error) {
@@ -196,9 +202,63 @@ authForm.addEventListener("submit", async function (event) {
 
 // Already logged in? Go straight to the marketplace
 if (typeof db !== "undefined" && db) {
-    db.auth.getSession().then(function (result) {
+    db.auth.getSession().then(async function (result) {
         if (result.data.session) {
+            if (await needsMfa()) {
+                await showMfaStep();
+                return;
+            }
+
             window.location.href = nextPage();
         }
     });
 }
+
+
+// ---------- Two-step login ----------
+
+let mfaFactorId = null;
+
+async function needsMfa() {
+    try {
+        const { data } = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+        return !!data && data.nextLevel === "aal2" && data.currentLevel !== "aal2";
+    } catch (error) {
+        return false;
+    }
+}
+
+async function showMfaStep() {
+    const factors = await db.auth.mfa.listFactors();
+    const totp = factors.data && factors.data.totp && factors.data.totp[0];
+
+    if (!totp) {
+        window.location.href = nextPage();
+        return;
+    }
+
+    mfaFactorId = totp.id;
+    authForm.style.display = "none";
+    toggleText.parentElement.style.display = "none";
+    document.getElementById("mfaBox").style.display = "block";
+    document.getElementById("mfaCode").focus();
+}
+
+document.getElementById("mfaForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const code = document.getElementById("mfaCode").value.trim();
+    const { error } = await db.auth.mfa.challengeAndVerify({ factorId: mfaFactorId, code: code });
+
+    if (error) {
+        showMessage("That code is not right. Check the code in your app and try again.", "error");
+        return;
+    }
+
+    window.location.href = nextPage();
+});
+
+document.getElementById("mfaCancel").addEventListener("click", async function () {
+    await db.auth.signOut();
+    window.location.href = "auth.html";
+});

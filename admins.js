@@ -55,6 +55,8 @@ function setMessage(text, ok) {
 }
 
 async function init() {
+    if (typeof requireAal2 === "function" && !(await requireAal2())) return;
+
     if (!db) {
         document.getElementById("teamNote").textContent = "Supabase is not connected yet. Check supabase-config.js.";
         return;
@@ -88,7 +90,7 @@ async function init() {
     }).join("");
 
     applyPreset("finance");
-    await Promise.all([loadStaff(), loadAudit()]);
+    await Promise.all([loadStaff(), loadAudit(), loadMfaPanel()]);
 }
 
 // ---------- Appoint ----------
@@ -334,3 +336,53 @@ document.getElementById("logoutBtn").addEventListener("click", async function (e
 });
 
 init();
+
+
+// ---------- Two-step login for admins ----------
+
+let mfaRequired = false;
+
+async function loadMfaPanel() {
+    const status = await db.rpc("mfa_status");
+    const overview = await db.rpc("admin_mfa_overview");
+
+    if (status.error || !status.data || !status.data[0]) {
+        document.getElementById("mfaState").textContent = "Not set up yet. Run supabase-mfa.sql in Supabase.";
+        document.getElementById("mfaToggle").style.display = "none";
+        return;
+    }
+
+    mfaRequired = !!status.data[0].required;
+    const mine = !!status.data[0].has_factor;
+
+    document.getElementById("mfaState").textContent = mfaRequired
+        ? "Required: every admin must log in with a code."
+        : "Not required yet. Admins who turned it on use it, others do not need it.";
+
+    const rows = overview.data || [];
+    document.getElementById("mfaList").innerHTML = rows.map(function (r) {
+        return '<p class="funnel-row"><span>' + escapeHTML(r.full_name || "Admin") + "</span><strong>" + (r.has_factor ? "On" : "Off") + "</strong></p>";
+    }).join("");
+
+    const button = document.getElementById("mfaToggle");
+    button.textContent = mfaRequired ? "Stop requiring two-step login" : "Require two-step login for all admins";
+
+    if (!mfaRequired && !mine) {
+        document.getElementById("mfaToggleMsg").textContent = "First turn on your own two-step login in Settings, Account and privacy.";
+        document.getElementById("mfaToggleMsg").className = "msg error";
+    }
+}
+
+document.getElementById("mfaToggle").addEventListener("click", async function () {
+    const turnOn = !mfaRequired;
+
+    if (turnOn && !confirm("Every admin will need an authenticator app to use admin powers. Admins who have not set it up will be locked out of admin tools until they do. Continue?")) return;
+
+    const { error } = await db.rpc("set_require_admin_mfa", { p_on: turnOn });
+    const box = document.getElementById("mfaToggleMsg");
+
+    box.textContent = error ? error.message : turnOn ? "Done. Two-step login is now required." : "Done. It is no longer required.";
+    box.className = "msg " + (error ? "error" : "ok");
+
+    await loadMfaPanel();
+});

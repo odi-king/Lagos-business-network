@@ -33,6 +33,8 @@ function row(label, value) {
 }
 
 async function init() {
+    if (typeof requireAal2 === "function" && !(await requireAal2())) return;
+
     if (!db) {
         document.getElementById("pageNote").textContent = "Supabase is not connected yet. Check supabase-config.js.";
         return;

@@ -74,6 +74,19 @@
                 <button type="submit" class="contact-btn">Change my password</button>
             </form>
             <p id="passwordMsg" class="msg"></p>
+            <h3>Two-step login</h3>
+            <p class="meta" id="mfaStatus">Checking...</p>
+            <div id="mfaSetup" style="display:none;">
+                <p class="meta">Scan this code with an authenticator app (Google Authenticator, Microsoft Authenticator or Authy). If you cannot scan, type the key instead.</p>
+                <div id="mfaQr"></div>
+                <p class="meta">Key: <code id="mfaSecret"></code></p>
+                <input type="text" id="mfaVerifyCode" inputmode="numeric" maxlength="6" placeholder="6-digit code from the app" autocomplete="one-time-code">
+                <button type="button" id="mfaConfirm" class="contact-btn">Turn on</button>
+                <button type="button" id="mfaCancelSetup" class="plain-btn">Cancel</button>
+            </div>
+            <button type="button" id="mfaEnable" class="btn btn-outline" style="display:none;">Turn on two-step login</button>
+            <button type="button" id="mfaDisable" class="btn btn-outline" style="display:none;">Turn off two-step login</button>
+            <p id="mfaMsg" class="msg"></p>
             <div class="staff-actions">
                 <button type="button" id="signOutOthers" class="btn btn-outline">Sign out of my other devices</button>
                 <button type="button" id="signOutAll" class="btn btn-outline">Sign out everywhere</button>

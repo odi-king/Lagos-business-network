@@ -47,7 +47,7 @@ async function init() {
     document.getElementById("loginEmail").textContent = myEmail;
     document.getElementById("lastSignIn").textContent = me.last_sign_in_at ? new Date(me.last_sign_in_at).toLocaleString() : "Now";
 
-    await Promise.all([loadInfo(), loadSettings(), loadBlocked(), loadBlockers(), loadState()]);
+    await Promise.all([loadInfo(), loadSettings(), loadBlocked(), loadBlockers(), loadState(), loadMfa()]);
 
     note.style.display = "none";
     document.getElementById("body").style.display = "block";
@@ -405,6 +405,93 @@ document.getElementById("logoutBtn").addEventListener("click", async function (e
     event.preventDefault();
     if (db) await db.auth.signOut();
     window.location.href = "auth.html";
+});
+
+// ---------- Two-step login ----------
+
+let enrollingFactor = null;
+
+async function loadMfa() {
+    const { data } = await db.auth.mfa.listFactors();
+    const totp = data && data.totp && data.totp[0];
+
+    document.getElementById("mfaStatus").textContent = totp
+        ? "Two-step login is ON. You need a code from your app each time you log in."
+        : "Two-step login is OFF. Turn it on for extra safety. It is strongly recommended for admins.";
+
+    document.getElementById("mfaEnable").style.display = totp ? "none" : "";
+    document.getElementById("mfaDisable").style.display = totp ? "" : "none";
+    document.getElementById("mfaSetup").style.display = "none";
+}
+
+document.getElementById("mfaEnable").addEventListener("click", async function () {
+    say("mfaMsg", "", true);
+
+    // Clear any half-finished setup first
+    const all = await db.auth.mfa.listFactors();
+    for (const f of (all.data && all.data.all) || []) {
+        if (f.status === "unverified") await db.auth.mfa.unenroll({ factorId: f.id });
+    }
+
+    const { data, error } = await db.auth.mfa.enroll({ factorType: "totp", friendlyName: "LBN " + Date.now() });
+
+    if (error) {
+        say("mfaMsg", error.message, false);
+        return;
+    }
+
+    enrollingFactor = data.id;
+    document.getElementById("mfaQr").innerHTML = '<img src="' + data.totp.qr_code + '" alt="QR code" style="width:200px;height:200px;background:#fff;padding:8px;border-radius:8px;">';
+    document.getElementById("mfaSecret").textContent = data.totp.secret;
+    document.getElementById("mfaSetup").style.display = "block";
+    document.getElementById("mfaEnable").style.display = "none";
+});
+
+document.getElementById("mfaConfirm").addEventListener("click", async function () {
+    const code = document.getElementById("mfaVerifyCode").value.trim();
+    const challenge = await db.auth.mfa.challenge({ factorId: enrollingFactor });
+
+    if (challenge.error) {
+        say("mfaMsg", challenge.error.message, false);
+        return;
+    }
+
+    const verify = await db.auth.mfa.verify({ factorId: enrollingFactor, challengeId: challenge.data.id, code: code });
+
+    if (verify.error) {
+        say("mfaMsg", "That code is not right. Check the app and try again.", false);
+        return;
+    }
+
+    say("mfaMsg", "Two-step login is now on.", true);
+    document.getElementById("mfaVerifyCode").value = "";
+    await loadMfa();
+});
+
+document.getElementById("mfaCancelSetup").addEventListener("click", async function () {
+    if (enrollingFactor) await db.auth.mfa.unenroll({ factorId: enrollingFactor });
+    enrollingFactor = null;
+    await loadMfa();
+});
+
+document.getElementById("mfaDisable").addEventListener("click", async function () {
+    const { data } = await db.auth.mfa.listFactors();
+    const totp = data && data.totp && data.totp[0];
+    if (!totp) return;
+
+    const code = prompt("Enter the 6-digit code from your app to turn off two-step login.");
+    if (!code) return;
+
+    const check = await db.auth.mfa.challengeAndVerify({ factorId: totp.id, code: code.trim() });
+
+    if (check.error) {
+        say("mfaMsg", "That code is not right.", false);
+        return;
+    }
+
+    const removed = await db.auth.mfa.unenroll({ factorId: totp.id });
+    say("mfaMsg", removed.error ? removed.error.message : "Two-step login is off.", !removed.error);
+    await loadMfa();
 });
 
 init();

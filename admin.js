@@ -18,6 +18,8 @@ function isPaid(person) {
 }
 
 async function init() {
+    if (typeof requireAal2 === "function" && !(await requireAal2())) return;
+
     if (!db) {
         peopleList.innerHTML = "<p>Supabase is not connected yet. Check supabase-config.js.</p>";
         return;

@@ -70,6 +70,15 @@
         </section>
 
         <section class="panel">
+            <h2>Two-step login for admins</h2>
+            <p class="meta">Admins can move money and see private details, so they should log in with a code from an authenticator app as well as a password.</p>
+            <p id="mfaState" class="meta">Checking...</p>
+            <div id="mfaList"></div>
+            <button type="button" id="mfaToggle" class="contact-btn">Require two-step login for all admins</button>
+            <p id="mfaToggleMsg" class="msg"></p>
+        </section>
+
+        <section class="panel">
             <h2>What each permission allows</h2>
             <div id="permGuide"></div>
             <p class="meta">You are the Super Admin. You always have every permission, and only you can manage this team.</p>
@@ -90,6 +99,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
+<script src="mfa.js"></script>
 <script src="admins.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>
