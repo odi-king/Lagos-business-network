@@ -84,6 +84,7 @@ async function init() {
         jobs.push(loadTrialFlags());
     }
     if (can("support")) jobs.push(loadSupport());
+    if (can("marketplace") || can("content")) jobs.push(loadReviewReports());
     if (can("finance") || can("marketplace")) jobs.push(loadQueue());
     if (can("finance")) {
         jobs.push(loadSettings());
@@ -847,3 +848,78 @@ async function loadReadiness() {
         localStorage.setItem("lbn_golive", JSON.stringify(saved));
     };
 }
+
+
+// ---------- Reported reviews ----------
+
+async function loadReviewReports() {
+    const box = document.getElementById("reviewReports");
+    if (!box) return;
+
+    const { data, error } = await db.rpc("admin_reported_reviews");
+
+    if (error) {
+        box.innerHTML = "<p class='meta'>Not set up yet. Run supabase-reviews.sql in Supabase.</p>";
+        return;
+    }
+
+    box.innerHTML = data.length === 0 ? "<p class='meta'>No reported reviews.</p>" : data.map(function (r) {
+        return '<div class="staff-card" data-review="' + escapeHTML(r.id) + '"><strong>' + "\u2605".repeat(r.rating) + "</strong> " +
+            escapeHTML(r.reviewer_name || "Member") + " about " + escapeHTML(r.reviewee_name || "Member") +
+            '<div class="meta">' + escapeHTML(r.item || "") + "</div>" +
+            "<p>" + escapeHTML(r.comment || "(no comment)") + "</p>" +
+            "<p class='meta'>Reason for the report: " + escapeHTML(r.report_reason || "") + "</p>" +
+            '<div class="staff-actions"><button type="button" class="btn btn-outline review-keep">Keep it</button>' +
+            '<button type="button" class="plain-btn review-hide" style="color:#ff6b6b;">Hide it</button></div></div>';
+    }).join("");
+}
+
+document.getElementById("reviewReports").addEventListener("click", async function (event) {
+    const card = event.target.closest("[data-review]");
+    if (!card) return;
+
+    const hide = event.target.closest(".review-hide");
+    const keep = event.target.closest(".review-keep");
+    if (!hide && !keep) return;
+
+    const { error } = await db.rpc("admin_review_action", { p_review_id: card.dataset.review, p_action: hide ? "hide" : "keep" });
+
+    if (error) {
+        alert(error.message);
+        return;
+    }
+
+    await loadReviewReports();
+});
+
+
+// ---------- Recover a payment ----------
+
+document.getElementById("recoverBtn").addEventListener("click", async function () {
+    const reference = document.getElementById("recoverRef").value.trim();
+    const msg = document.getElementById("recoverMsg");
+
+    if (!reference) {
+        msg.textContent = "Paste a Paystack reference first.";
+        msg.className = "msg error";
+        return;
+    }
+
+    msg.textContent = "Checking with Paystack...";
+    msg.className = "msg";
+
+    const { data, error } = await db.functions.invoke("paystack-verify", { body: { reference: reference } });
+
+    let text = data && data.result ? "Done: " + data.result + "." : "";
+
+    if (error) {
+        text = error.message;
+
+        if (error.context && typeof error.context.json === "function") {
+            try { text = (await error.context.json()).error || text; } catch (e) {}
+        }
+    }
+
+    msg.textContent = text || "No answer. Is the paystack-verify function deployed?";
+    msg.className = "msg " + (error ? "error" : "ok");
+});

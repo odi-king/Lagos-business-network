@@ -1222,3 +1222,11 @@ button.settings-row.danger {
 .bar-fill { height: 100%; background: #f2c14e; }
 .review { padding: 12px 0; border-top: 1px solid var(--line); }
 .review-reply { background: var(--bg); border-left: 3px solid var(--accent); padding: 8px 10px; border-radius: 6px; }
+
+/* ===================== Trade steps ===================== */
+.steps { display: flex; gap: 6px; margin: 12px 0; overflow-x: auto; padding-bottom: 4px; }
+.step { flex: 1 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); text-align: center; min-width: 64px; }
+.step-dot { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.step.done { color: var(--text); }
+.step.done .step-dot { background: var(--accent); border-color: var(--accent); color: var(--accent-dark); }
+.step.next .step-dot { border-color: var(--accent); color: var(--accent); }

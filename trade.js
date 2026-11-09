@@ -134,6 +134,8 @@ async function refresh() {
         updateFeeUI();
         loadReview();
         loadPartnerRating();
+        renderSteps();
+        renderMoneyState();
     }
 
     const messages = await db
@@ -220,6 +222,9 @@ function applyStatus() {
 
     document.getElementById("deliveredBtn").textContent = isService() ? "Service done" : "Mark as delivered";
     document.getElementById("receivedBtn").textContent = "I am satisfied: confirm complete";
+
+    document.getElementById("checkPayBtn").style.display =
+        status === "agreed" && isBuyer && paymentsEnabled && localStorage.getItem("lbn_pay_" + tradeId) ? "" : "none";
 
     const payNote = document.getElementById("payNote");
 
@@ -606,9 +611,8 @@ function startPayment() {
         ref: "TRD-" + trade.id.slice(0, 8) + "-" + Date.now(),
         metadata: { kind: "trade", trade_id: trade.id },
         callback: function (response) {
-            showNote("Payment received. Confirming it now...", "ok");
-            confirmPayment(response.reference).then(function () { refresh(); });
-            setTimeout(refresh, 4000);
+            localStorage.setItem("lbn_pay_" + tradeId, response.reference);
+            verifyPayment(response.reference, 1);
         },
         onClose: function () {}
     });
@@ -1012,3 +1016,102 @@ document.getElementById("reviewBody").addEventListener("click", async function (
         if (!error) await loadReview();
     }
 });
+
+
+// ---------- Confirming a payment (with retries) ----------
+
+async function verifyPayment(reference, attempt) {
+    showNote("Payment received. Confirming it with Paystack (try " + attempt + " of 6)...", "ok");
+
+    const result = await confirmPayment(reference);
+    await refresh();
+
+    if (trade && trade.status !== "agreed") {
+        localStorage.removeItem("lbn_pay_" + tradeId);
+        showNote("Payment confirmed. LBN is holding the money until you confirm the trade is complete.", "ok");
+        return;
+    }
+
+    if (attempt < 6) {
+        setTimeout(function () { verifyPayment(reference, attempt + 1); }, 4000);
+        return;
+    }
+
+    showNote("We could not confirm your payment yet. Your money is safe. Tap Check my payment in a minute, or contact us with this reference: " +
+        reference + (result && result.message ? " (" + result.message + ")" : ""), "error");
+}
+
+document.getElementById("checkPayBtn").addEventListener("click", function () {
+    let reference = localStorage.getItem("lbn_pay_" + tradeId);
+
+    if (!reference) {
+        reference = prompt("Enter the payment reference from Paystack. It starts with TRD-");
+        if (!reference) return;
+    }
+
+    verifyPayment(reference.trim(), 1);
+});
+
+// ---------- Live updates for both people ----------
+
+try {
+    db.channel("trade-live-" + tradeId)
+        .on("postgres_changes", { event: "*", schema: "public", table: "trades", filter: "id=eq." + tradeId }, function () { refresh(); })
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "trade_messages", filter: "trade_id=eq." + tradeId }, function () { refresh(); })
+        .subscribe();
+} catch (error) {}
+
+// ---------- Where is the trade? A simple step tracker ----------
+
+function renderSteps() {
+    const box = document.getElementById("tradeSteps");
+    if (!box || !trade) return;
+
+    const status = trade.status;
+
+    if (status === "negotiating" || status === "cancelled" || status === "refunded") {
+        box.style.display = "none";
+        return;
+    }
+
+    // How far along is it? 1 agreed, 2 paid, 3 delivered, 4 both confirmed, 5 reviews
+    let reached = status === "agreed" ? 1 : status === "paid" ? 2 : status === "delivered" ? 3 : status === "disputed" ? (trade.paid_at ? 2 : 1) : 5;
+    const bothConfirmed = status === "completed" || status === "settled";
+    const labels = ["Deal agreed", "Paid, held by LBN", "Delivered", "Both confirm", "Review"];
+
+    box.innerHTML = labels.map(function (label, i) {
+        const n = i + 1;
+        const cls = n <= reached && !(n === 5 && !bothConfirmed) ? "done" : n === reached + 1 ? "next" : "";
+        return '<div class="step ' + cls + '"><span class="step-dot">' + (cls === "done" ? "\u2713" : n) + "</span><span>" + label + "</span></div>";
+    }).join("");
+
+    box.style.display = "flex";
+}
+
+// What happens to the money, in plain words
+function renderMoneyState() {
+    const box = document.getElementById("moneyState");
+    if (!box || !trade || !me || !isParticipant()) return;
+
+    const isSeller = trade.seller_id === me.id;
+    const isBuyer = trade.buyer_id === me.id;
+    const naira = function (n) { return "\u20A6" + Number(n || 0).toLocaleString(); };
+    let text = "";
+
+    if ((trade.status === "paid" || trade.status === "delivered") && trade.paid_at) {
+        text = isSeller
+            ? naira(trade.seller_amount) + " is being held by LBN for you. You receive it after you and the buyer both confirm the trade is complete."
+            : "Your " + naira(trade.agreed_amount) + " is held safely by LBN until you confirm the trade is complete.";
+    } else if ((trade.status === "completed" || trade.status === "settled") && isSeller && trade.payout_status === "due") {
+        text = "Trade complete. LBN is paying " + naira(trade.seller_amount) + " to your bank account. You get a notification when it is sent. Make sure your bank details are saved in your Dashboard.";
+    } else if ((trade.status === "completed" || trade.status === "settled") && isSeller && trade.payout_status === "paid") {
+        text = "LBN has paid " + naira(trade.seller_amount) + " to your bank account.";
+    } else if ((trade.status === "refunded" || trade.status === "settled") && isBuyer && trade.refund_status === "due") {
+        text = "Your refund of " + naira(trade.refund_amount || trade.agreed_amount) + " is being processed. You get a notification when it is sent.";
+    } else if ((trade.status === "refunded" || trade.status === "settled") && isBuyer && trade.refund_status === "done") {
+        text = "LBN has refunded " + naira(trade.refund_amount || trade.agreed_amount) + " to you.";
+    }
+
+    box.textContent = text;
+    box.style.display = text ? "block" : "none";
+}

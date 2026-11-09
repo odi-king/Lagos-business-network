@@ -37,6 +37,20 @@
 
     <div id="adminStats" data-perm="members" class="grid cols-2" style="margin-bottom:16px;"></div>
 
+    <section class="panel" data-perm="marketplace,content">
+        <h2>Reported reviews</h2>
+        <p class="meta">Members can report reviews they think are unfair. Hide a review that is abusive, fake or breaks the rules. Keep it if it is honest, even if it is negative.</p>
+        <div id="reviewReports"><p class="meta">Loading...</p></div>
+    </section>
+
+    <section class="panel" data-perm="finance">
+        <h2>Recover a payment</h2>
+        <p class="meta">If a buyer says they paid but the site still shows unpaid, paste the Paystack reference here (Paystack, Transactions, the reference column). LBN checks it directly with Paystack and records it.</p>
+        <input type="text" id="recoverRef" placeholder="Paystack reference, for example TRD-1a2b3c4d-1730000000000">
+        <button type="button" id="recoverBtn" class="contact-btn">Check and record this payment</button>
+        <p id="recoverMsg" class="msg"></p>
+    </section>
+
     <section class="panel" data-perm="finance">
         <h2>Go-live readiness</h2>
         <p class="meta">Checks your payment setup. Green is ready, orange needs a look, red must be fixed before real money moves.</p>
