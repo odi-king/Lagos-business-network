@@ -280,6 +280,8 @@ async function appendGrid(posts) {
         const tile = document.createElement("a");
         tile.className = "grid-tile";
         tile.href = "post.html?id=" + encodeURIComponent(p.id);
+        tile.dataset.id = p.id;
+        gridPosts.push(p);
 
         let inner;
 
@@ -310,6 +312,7 @@ async function loadPosts(reset) {
         memberPosts.innerHTML = "";
         memberPosts.className = "profile-grid" + (currentTab === "reels" ? " reels-grid" : "");
         lastCreated = null;
+        gridPosts = [];
         memberNote.textContent = "";
     }
 
@@ -620,4 +623,140 @@ document.addEventListener("click", async function (event) {
         const { error } = await db.rpc("report_review", { p_review_id: row.dataset.id, p_reason: reason });
         alert(error ? error.message : "Thank you. The LBN team will review it.");
     }
+});
+
+
+// ---------- Open a post right here, and move to the next one ----------
+
+let gridPosts = [];
+let viewerIndex = -1;
+let viewerLoading = false;
+
+function buildViewer() {
+    if (document.getElementById("viewer")) return;
+
+    document.body.insertAdjacentHTML("beforeend",
+        '<div id="viewer" class="viewer" style="display:none;" role="dialog" aria-modal="true">' +
+        '<div class="viewer-top"><button type="button" id="viewerClose" class="plain-btn viewer-close" aria-label="Close">&times;</button>' +
+        '<span id="viewerCount" class="meta"></span></div>' +
+        '<div id="viewerBody" class="viewer-body"></div>' +
+        '<div class="viewer-bar"><button type="button" id="viewerPrev" class="btn btn-outline">&larr; Previous</button>' +
+        '<button type="button" id="viewerNext" class="btn btn-outline">Next &rarr;</button></div></div>');
+
+    mountPosts(document.getElementById("viewerBody"));
+
+    document.getElementById("viewerClose").addEventListener("click", function () { history.back(); });
+    document.getElementById("viewerPrev").addEventListener("click", function () { showViewerPost(viewerIndex - 1); });
+    document.getElementById("viewerNext").addEventListener("click", function () { showViewerPost(viewerIndex + 1); });
+
+    // Swipe left or right on a phone
+    let startX = 0, startY = 0, ignore = false;
+    const body = document.getElementById("viewerBody");
+
+    body.addEventListener("touchstart", function (e) {
+        ignore = !!e.target.closest("video, input, textarea, button, a, .comment-list");
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    body.addEventListener("touchend", function (e) {
+        if (ignore) return;
+
+        const dx = e.changedTouches[0].clientX - startX;
+        const dy = e.changedTouches[0].clientY - startY;
+
+        if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            showViewerPost(viewerIndex + (dx < 0 ? 1 : -1));
+        }
+    }, { passive: true });
+
+    // Deleting the post you are looking at moves on to the next one
+    new MutationObserver(function () {
+        if (viewerIndex < 0 || body.querySelector(".post-card")) return;
+
+        const gone = gridPosts[viewerIndex];
+        if (!gone) return;
+
+        const tile = memberPosts.querySelector('[data-id="' + gone.id + '"]');
+        if (tile) tile.remove();
+
+        gridPosts.splice(viewerIndex, 1);
+
+        if (gridPosts.length === 0) history.back();
+        else showViewerPost(Math.min(viewerIndex, gridPosts.length - 1));
+    }).observe(body, { childList: true });
+
+    document.addEventListener("keydown", function (e) {
+        if (document.getElementById("viewer").style.display === "none") return;
+        if (e.target.closest && e.target.closest("input, textarea")) return;
+
+        if (e.key === "Escape") history.back();
+        if (e.key === "ArrowRight") showViewerPost(viewerIndex + 1);
+        if (e.key === "ArrowLeft") showViewerPost(viewerIndex - 1);
+    });
+
+    // The phone's Back button closes the viewer instead of leaving the profile
+    window.addEventListener("popstate", function () {
+        if (document.getElementById("viewer").style.display !== "none") closeViewer();
+    });
+}
+
+async function showViewerPost(index) {
+    if (index < 0 || index >= gridPosts.length) return;
+
+    viewerIndex = index;
+
+    const body = document.getElementById("viewerBody");
+    body.innerHTML = "";
+    await appendPosts(body, [gridPosts[index]]);
+    body.scrollTop = 0;
+
+    const more = memberMore.style.display !== "none";
+
+    document.getElementById("viewerCount").textContent = (index + 1) + " of " + gridPosts.length + (more ? "+" : "");
+    document.getElementById("viewerPrev").disabled = index === 0;
+    document.getElementById("viewerNext").disabled = index === gridPosts.length - 1 && !more;
+
+    // Near the end: fetch more so swiping never stops
+    if (index >= gridPosts.length - 2 && more && !viewerLoading) {
+        viewerLoading = true;
+        await loadPosts(false);
+        viewerLoading = false;
+        document.getElementById("viewerCount").textContent = (viewerIndex + 1) + " of " + gridPosts.length + (memberMore.style.display !== "none" ? "+" : "");
+        document.getElementById("viewerNext").disabled = viewerIndex === gridPosts.length - 1 && memberMore.style.display === "none";
+    }
+}
+
+function openViewer(index) {
+    buildViewer();
+
+    document.getElementById("viewer").style.display = "flex";
+    document.body.style.overflow = "hidden";
+    history.pushState({ lbnViewer: true }, "");
+
+    showViewerPost(index);
+}
+
+function closeViewer() {
+    const viewer = document.getElementById("viewer");
+    if (!viewer) return;
+
+    viewer.style.display = "none";
+    document.body.style.overflow = "";
+    document.getElementById("viewerBody").innerHTML = "";
+    viewerIndex = -1;
+}
+
+memberPosts.addEventListener("click", function (event) {
+    const tile = event.target.closest(".grid-tile");
+    if (!tile) return;
+
+    // Opening in a new tab still works with a modified click
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1) return;
+
+    const index = gridPosts.findIndex(function (p) { return p.id === tile.dataset.id; });
+    if (index < 0) return;
+
+    event.preventDefault();
+    openViewer(index);
 });

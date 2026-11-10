@@ -9,7 +9,9 @@
         { code: "yo", name: "Yorùbá" },
         { code: "ig", name: "Igbo" },
         { code: "ha", name: "Hausa" },
-        { code: "fr", name: "Français" }
+        { code: "fr", name: "Français" },
+        { code: "es", name: "Español" },
+        { code: "zh", name: "中文" }
     ];
 
     var SKIP = "script, style, textarea, code, pre, [data-no-translate], .post-text, .post-caption, .post-author, " +

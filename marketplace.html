@@ -77,9 +77,20 @@
 
     <section class="panel">
         <h2>Business videos</h2>
-        <p class="meta">Show the business you run so people can find you and trade with you. Upload your video to YouTube (Unlisted), Vimeo or Google Drive and paste the link.</p>
+        <p class="meta">
+            Show the business you run so people can find you and trade with you.
+            Select a video directly from your phone gallery or computer.
+        </p>
+
         <form id="videoForm">
-            <input type="text" id="videoTitle" placeholder="Video title" required>
+            <input
+                type="text"
+                id="videoTitle"
+                placeholder="Video title"
+                maxlength="100"
+                required
+            >
+
             <select id="videoCategory" required>
                 <option value="" disabled selected>Select category</option>
                 <option value="Food">Food</option>
@@ -88,10 +99,41 @@
                 <option value="Services">Services</option>
                 <option value="Other">Other</option>
             </select>
-            <input type="url" id="videoUrl" placeholder="Video link (https://...)" required>
-            <textarea id="videoDesc" placeholder="What does your business do?"></textarea>
-            <button type="submit" class="contact-btn">Add video</button>
+
+            <label for="videoFile">Choose business video</label>
+            <input
+                type="file"
+                id="videoFile"
+                accept="video/mp4,video/webm,video/quicktime"
+                required
+            >
+
+            <p class="meta">
+                Supported formats: MP4, WebM and MOV. Your video will be uploaded to LBN.
+            </p>
+
+            <div id="videoPreviewContainer" style="display:none;">
+                <p class="meta">Video preview</p>
+                <video
+                    id="videoPreview"
+                    controls
+                    playsinline
+                    preload="metadata"
+                    style="width:100%; max-width:500px; border-radius:12px;"
+                ></video>
+            </div>
+
+            <textarea
+                id="videoDesc"
+                placeholder="What does your business do?"
+                maxlength="1000"
+            ></textarea>
+
+            <button type="submit" class="contact-btn">
+                Upload business video
+            </button>
         </form>
+
         <div id="videoList"></div>
     </section>
 </main>
@@ -111,6 +153,46 @@
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>
 <script src="i18n-strings.js"></script>
+<script src="i18n-strings-extra.js"></script>
 <script src="i18n.js"></script>
+
+<script>
+const videoFileInput = document.getElementById("videoFile");
+const videoPreview = document.getElementById("videoPreview");
+const videoPreviewContainer = document.getElementById("videoPreviewContainer");
+
+let videoPreviewUrl = null;
+
+videoFileInput.addEventListener("change", function () {
+    const file = this.files[0];
+
+    if (videoPreviewUrl) {
+        URL.revokeObjectURL(videoPreviewUrl);
+        videoPreviewUrl = null;
+    }
+
+    videoPreviewContainer.style.display = "none";
+    videoPreview.removeAttribute("src");
+
+    if (!file) return;
+
+    const allowedTypes = [
+        "video/mp4",
+        "video/webm",
+        "video/quicktime"
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+        alert("Please select an MP4, WebM or MOV video.");
+        this.value = "";
+        return;
+    }
+
+    videoPreviewUrl = URL.createObjectURL(file);
+    videoPreview.src = videoPreviewUrl;
+    videoPreviewContainer.style.display = "block";
+});
+</script>
+
 </body>
-</html>
+</html

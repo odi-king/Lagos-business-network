@@ -85,7 +85,19 @@ async function confirmPayment(reference) {
     try {
         const { data, error } = await db.functions.invoke("paystack-verify", { body: { reference: reference } });
 
-        if (error) return { ok: false, message: error.message };
+        if (error) {
+            // The function answers with a clear reason. Show that, not the generic web error.
+            let message = error.message;
+
+            if (error.context && typeof error.context.json === "function") {
+                try {
+                    const body = await error.context.json();
+                    if (body && body.error) message = body.error;
+                } catch (e) {}
+            }
+
+            return { ok: false, message: message };
+        }
         if (data && data.error) return { ok: false, message: data.error };
 
         return { ok: true, message: "" };

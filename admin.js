@@ -774,13 +774,24 @@ async function loadReadiness() {
         ? readinessRow("ok", "LBN fee", "Standard " + set.fee_percent + "%, large deals " + set.fee_percent_large + "% from \u20A6" + Number(set.large_threshold).toLocaleString() + ", smallest fee \u20A6" + Number(set.min_fee).toLocaleString() + ".")
         : readinessRow("bad", "LBN fee", "Fee settings are missing. Run supabase-fees.sql."));
 
-    // Is the payment-checking function deployed?
+    // Is the payment-checking function deployed, and does it have the secret key?
     try {
-        const ping = await db.functions.invoke("paystack-verify", { body: {} });
+        const ping = await db.functions.invoke("paystack-verify", { body: { reference: "__check__" } });
         const status = ping.error && ping.error.context ? ping.error.context.status : 200;
-        rows.push(status === 404
-            ? readinessRow("bad", "Payment checking function", "Not found. Deploy paystack-verify in Supabase Edge Functions.")
-            : readinessRow("ok", "Payment checking function", "Deployed and answering."));
+        const check = ping.data && ping.data.check;
+
+        if (status === 404) {
+            rows.push(readinessRow("bad", "Payment checking function", "Not found. Deploy paystack-verify in Supabase Edge Functions."));
+        } else if (!check) {
+            rows.push(readinessRow("warn", "Payment checking function", "It answered, but with an old version. Deploy the newest paystack-verify.ts."));
+        } else if (!check.secret_set) {
+            rows.push(readinessRow("bad", "Paystack secret key in Supabase", "NOT SET. In Supabase, Edge Functions, Secrets, add PAYSTACK_SECRET_KEY (it starts with sk_test_ or sk_live_). Until then no payment can be confirmed."));
+        } else {
+            const pub = key.indexOf("pk_live_") === 0 ? "live" : key.indexOf("pk_test_") === 0 ? "test" : "none";
+            rows.push(pub !== "none" && check.mode !== pub
+                ? readinessRow("bad", "Paystack keys do not match", "The public key is " + pub.toUpperCase() + " but the secret key is " + check.mode.toUpperCase() + ". Use two test keys, or two live keys.")
+                : readinessRow("ok", "Paystack secret key in Supabase", "Set (" + check.mode.toUpperCase() + "). The payment checking function is working."));
+        }
     } catch (e) {
         rows.push(readinessRow("bad", "Payment checking function", "Could not reach it. Deploy paystack-verify in Supabase Edge Functions."));
     }
