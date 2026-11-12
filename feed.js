@@ -30,10 +30,29 @@ function showPostNote(text, type) {
 }
 
 async function init() {
-    const member = await requireMarketplaceMember();
+    const member = await requireSocialMember();
     if (!member) return;
 
     me = member.user;
+
+    // Students who have not graduated use the community now. The marketplace opens when they graduate.
+    if (!member.marketOpen) {
+        const waiting = member.profile && (member.profile.role === "lecturer" || member.profile.role === "business");
+
+        const lock = document.getElementById("marketLock");
+        lock.textContent = waiting
+            ? "Your account is waiting for approval. Until then you can post lifestyle updates, follow people and send messages. The marketplace opens when you are approved."
+            : "The marketplace opens when you graduate. Until then you can share lifestyle posts, follow people, comment and send messages.";
+        lock.style.display = "block";
+
+        document.querySelectorAll("#intentGrid .intent-card[data-intent]").forEach(function (card) {
+            if (card.dataset.intent) card.classList.add("locked");
+        });
+
+        document.querySelectorAll("#filterChips .chip").forEach(function (chip) {
+            if (["selling", "services", "wanted"].indexOf(chip.dataset.filter) !== -1) chip.style.display = "none";
+        });
+    }
 
     const tips = document.getElementById("tips");
     if (tips && localStorage.getItem("tipsClosed") !== "yes") {
@@ -188,6 +207,10 @@ function applyIntent(intent, type) {
 document.getElementById("intentGrid").addEventListener("click", function (event) {
     const card = event.target.closest(".intent-card");
     if (!card) return;
+    if (card.classList.contains("locked")) {
+        showPostNote("The marketplace opens when you graduate. You can share a lifestyle post now.", "error");
+        return;
+    }
 
     applyIntent(card.dataset.intent, card.dataset.type);
 });

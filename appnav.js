@@ -22,7 +22,7 @@
 
     // ----- Bottom menu -----
     const tabs = [
-        { href: "feed.html", label: "Market", icon: "market", pages: ["feed.html", "marketplace.html", "library.html", "post.html"] },
+        { href: "feed.html", label: "Home", icon: "market", pages: ["feed.html", "marketplace.html", "library.html", "post.html"] },
         { href: "reels.html", label: "Reels", icon: "reels", pages: ["reels.html"] },
         { href: "classes.html", label: "Classes", icon: "classes", pages: ["classes.html", "class.html", "live.html"] },
         { href: "trades.html", label: "Trades", icon: "trades", pages: ["trades.html", "trade.html"] },

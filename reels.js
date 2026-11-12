@@ -10,7 +10,7 @@ let moreObserver = null;
 const reelTimers = new Map();
 
 async function init() {
-    const member = await requireMarketplaceMember();
+    const member = await requireSocialMember();
     if (!member) return;
 
     await loadMore();

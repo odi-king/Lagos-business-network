@@ -1240,3 +1240,7 @@ button.settings-row.danger {
 .viewer-bar .btn { flex: 1; }
 .viewer-bar .btn:disabled { opacity: 0.35; }
 .grid-tile { cursor: pointer; }
+
+/* ===================== Community and marketplace levels ===================== */
+.intent-card.locked { opacity: 0.4; cursor: not-allowed; }
+.market-badge.social { background: #1b2440; color: #8fb4ff; border: 1px solid #2c3a66; }

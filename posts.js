@@ -389,6 +389,10 @@ function setPostText(card) {
 
     const intent = card.dataset.intent;
 
+    if (!intent) {
+        html += '<div class="market-head"><span class="market-badge social">Lifestyle</span></div>';
+    }
+
     if (intent) {
         const service = card.dataset.itemType === "service";
         const label = intent === "need" ? (service ? "Needs a service" : "Wanted") : (service ? "Service" : "For sale");
@@ -959,4 +963,45 @@ function showToast(text) {
         toast.classList.remove("show");
         setTimeout(function () { toast.remove(); }, 300);
     }, 2400);
+}
+
+
+// The community (feed, lifestyle posts, messages, reels) needs an active membership.
+// The marketplace inside it opens only for graduates, approved lecturers and approved businesses.
+async function requireSocialMember() {
+    const main = document.querySelector("main");
+
+    if (!db) {
+        main.innerHTML = "<p class='meta'>Supabase is not connected yet. Check supabase-config.js.</p>";
+        return null;
+    }
+
+    const { data } = await db.auth.getSession();
+
+    if (!data.session) {
+        const here = window.location.pathname.split("/").pop() + window.location.search;
+        window.location.href = "auth.html?next=" + encodeURIComponent(here);
+        return null;
+    }
+
+    const user = data.session.user;
+
+    if (!(await hasActiveMembership(user.id))) {
+        window.location.href = "pay.html";
+        return null;
+    }
+
+    const result = await db.from("profiles").select("role, approved, graduated, is_admin").eq("id", user.id).single();
+    const profile = result.data || {};
+
+    const marketOpen = !!(
+        profile.is_admin ||
+        (profile.role === "lecturer" && profile.approved) ||
+        (profile.role === "student" && profile.graduated) ||
+        (profile.role === "business" && profile.approved)
+    );
+
+    postsContext.marketOpen = marketOpen;
+
+    return { user: user, profile: profile, marketOpen: marketOpen };
 }

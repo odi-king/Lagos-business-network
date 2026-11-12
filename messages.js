@@ -127,7 +127,7 @@ function listen() {
 }
 
 async function init() {
-    const member = await requireMarketplaceMember();
+    const member = await requireSocialMember();
     if (!member) return;
 
     await loadConversations();
