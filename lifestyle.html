@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lifestyle - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="lifestyle.html" class="active">Lifestyle</a>
+            <a href="feed.html">Marketplace</a>
+            <a href="reels.html">Reels</a>
+            <a href="classes.html">Classes</a>
+            <a href="member.html">Profile</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container feed-page">
+    <div class="feed-top">
+        <h1>Lifestyle</h1>
+        <p class="meta">Share your life with the community: thoughts, photos, videos, achievements and travel. Follow people and chat with them.</p>
+    </div>
+
+    <details class="composer" id="composer">
+        <summary>Share something</summary>
+        <form id="postForm">
+            <textarea id="postCaption" placeholder="What is on your mind?" maxlength="1000"></textarea>
+            <input type="text" id="tagSearch" placeholder="Tag people (optional)" autocomplete="off">
+            <div id="tagResults"></div>
+            <div id="tagChips" class="chips"></div>
+            <input type="file" id="postMedia" accept="image/*,video/*" style="display:none;">
+            <button type="button" id="pickMedia" class="media-tile">
+                <span class="media-plus">+</span>
+                <span>Add a photo or video from your phone</span>
+                <span class="meta">Videos can be up to 90 seconds</span>
+            </button>
+            <div id="mediaPreview" class="media-preview" style="display:none;"></div>
+            <button type="submit" id="postBtn" class="contact-btn">Post</button>
+        </form>
+        <p id="postNote" class="msg"></p>
+    </details>
+
+    <input type="text" id="searchBox" class="search-box" placeholder="Search lifestyle posts">
+
+    <div class="tabs">
+        <button type="button" class="tab-btn active" data-mode="all">Everyone</button>
+        <button type="button" class="tab-btn" data-mode="following">Following</button>
+    </div>
+
+    <div id="feedList"></div>
+    <p id="feedNote" class="meta"></p>
+    <button type="button" id="loadMore" class="btn btn-outline" style="display:none; margin-top:14px;">Load more</button>
+
+    <details class="composer" id="membersBox" style="margin-top:20px;">
+        <summary>Find members</summary>
+        <input type="text" id="memberSearch" class="search-box" placeholder="Find members by name">
+        <div class="chips" id="roleChips">
+            <button type="button" class="chip active" data-role="">Everyone</button>
+            <button type="button" class="chip" data-role="student">Talent</button>
+            <button type="button" class="chip" data-role="lecturer">Lecturers</button>
+            <button type="button" class="chip" data-role="business">Businesses</button>
+        </div>
+        <div id="memberResults"></div>
+    </details>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a>
+        <div class="legal-links"><a href="terms.html">Terms of Use</a> &bull; <a href="privacy.html">Privacy Policy</a> &bull; <a href="refunds.html">Refunds and Disputes</a></div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="membership.js"></script>
+<script src="badges.js"></script>
+<script src="video-utils.js"></script>
+<script src="reviews.js"></script>
+<script src="posts.js"></script>
+<script src="share.js"></script>
+<script src="lifestyle.js"></script>
+<script src="appnav.js"></script>
+<script src="pwa.js"></script>
+<script src="i18n-strings.js"></script>
+<script src="i18n-strings-extra.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>
