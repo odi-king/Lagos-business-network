@@ -1244,3 +1244,15 @@ button.settings-row.danger {
 /* ===================== Community and marketplace levels ===================== */
 .intent-card.locked { opacity: 0.4; cursor: not-allowed; }
 .market-badge.social { background: #1b2440; color: #8fb4ff; border: 1px solid #2c3a66; }
+
+/* ===================== Lifestyle, Market menu, Reels filters ===================== */
+.subnav { display: flex; gap: 8px; margin: 14px 0 6px; overflow-x: auto; }
+.subnav-link { padding: 9px 16px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); white-space: nowrap; font-weight: 600; }
+.subnav-link.active { background: var(--accent); border-color: var(--accent); color: var(--accent-dark); }
+.lock-card { text-align: center; margin-top: 30px; }
+.lock-card .btn { margin: 6px 4px; }
+.reels-chips { position: fixed; top: calc(76px + env(safe-area-inset-top, 0px)); left: 0; right: 0; z-index: 30; display: flex; gap: 8px; justify-content: center; padding: 8px; pointer-events: none; }
+.reels-chips .chip { pointer-events: auto; background: rgba(8, 12, 22, 0.7); }
+.reels-chips .chip.active { background: var(--accent); color: var(--accent-dark); }
+img.reel-image { object-fit: contain; background: #000; }
+.reel-image ~ .reel-actions .reel-sound { display: none; }

@@ -12,6 +12,7 @@
         me: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
         bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
         menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+        lifestyle: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/>',
         send: '<path d="M22 3L11 14"/><path d="M22 3l-7 19-4-8-8-4z"/>'
     };
 
@@ -22,11 +23,11 @@
 
     // ----- Bottom menu -----
     const tabs = [
-        { href: "feed.html", label: "Home", icon: "market", pages: ["feed.html", "marketplace.html", "library.html", "post.html"] },
+        { href: "lifestyle.html", label: "Lifestyle", icon: "lifestyle", pages: ["lifestyle.html", "post.html"] },
+        { href: "feed.html", label: "Market", icon: "market", pages: ["feed.html", "marketplace.html", "trades.html", "trade.html", "analytics.html"] },
         { href: "reels.html", label: "Reels", icon: "reels", pages: ["reels.html"] },
-        { href: "classes.html", label: "Classes", icon: "classes", pages: ["classes.html", "class.html", "live.html"] },
-        { href: "trades.html", label: "Trades", icon: "trades", pages: ["trades.html", "trade.html"] },
-        { href: "member.html", label: "Me", icon: "me", pages: ["member.html", "dashboard.html", "admin.html", "settings.html", "notifications.html", "messages.html", "chat.html"] }
+        { href: "classes.html", label: "Classes", icon: "classes", pages: ["classes.html", "class.html", "live.html", "library.html"] },
+        { href: "member.html", label: "Me", icon: "me", pages: ["member.html", "dashboard.html", "admin.html", "admins.html", "settings.html", "notifications.html", "messages.html", "chat.html", "account.html", "dispute.html"] }
     ];
 
     const bar = document.createElement("nav");

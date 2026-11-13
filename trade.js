@@ -76,6 +76,8 @@ function isParticipant() {
 }
 
 async function init() {
+    if (typeof marketGate === "function" && !(await marketGate())) return;
+
     if (!db) {
         document.getElementById("chatTitle").textContent = "Supabase is not connected yet.";
         return;

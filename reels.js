@@ -1,6 +1,7 @@
 let lastCreated = null;
 let loadingMore = false;
 let finished = false;
+let reelsKind = "all";
 
 const reelsEl = document.getElementById("reels");
 const reelsNote = document.getElementById("reelsNote");
@@ -13,8 +14,27 @@ async function init() {
     const member = await requireSocialMember();
     if (!member) return;
 
+    // Marketplace pictures and videos are only offered to people who can use the marketplace
+    if (member.marketOpen) document.getElementById("marketChip").style.display = "";
+
     await loadMore();
 }
+
+document.getElementById("reelsChips").addEventListener("click", function (event) {
+    const chip = event.target.closest(".chip");
+    if (!chip) return;
+
+    document.querySelectorAll("#reelsChips .chip").forEach(function (c) { c.classList.remove("active"); });
+    chip.classList.add("active");
+
+    reelsKind = chip.dataset.kind;
+    reelsEl.innerHTML = "";
+    reelsNote.textContent = "";
+    lastCreated = null;
+    finished = false;
+    reelTimers.clear();
+    loadMore();
+});
 
 async function loadMore() {
     if (loadingMore || finished) return;
@@ -23,7 +43,15 @@ async function loadMore() {
     let posts;
 
     try {
-        posts = await fetchPosts("all", null, lastCreated, true);
+        const result = await db.rpc("reels_posts", { p_kind: reelsKind, p_limit: 8, p_before: lastCreated });
+
+        if (result.error) {
+            // The database update is not installed yet: fall back to videos only
+            if (!/could not find the function|schema cache/i.test(result.error.message)) throw result.error;
+            posts = await fetchPosts("all", null, lastCreated, true);
+        } else {
+            posts = result.data;
+        }
     } catch (error) {
         reelsNote.textContent = "Could not load videos. " + error.message;
         loadingMore = false;
@@ -35,7 +63,7 @@ async function loadMore() {
 
         if (!lastCreated) {
             reelsEl.innerHTML = "";
-            reelsNote.textContent = "No videos yet. Post a video from your phone on the Marketplace page.";
+            reelsNote.textContent = "Nothing here yet. Post a photo or a video on the Lifestyle page.";
         }
 
         loadingMore = false;
@@ -45,9 +73,12 @@ async function loadMore() {
     const media = await signMedia(posts);
 
     posts.forEach(function (p, index) {
-        if (!media.videos[p.video_path]) return;
+        const isVideo = !!(p.video_path && media.videos[p.video_path]);
+        const isImage = !isVideo && !!(p.image_path && media.images[p.image_path]);
 
-        const reel = renderReel(p, media.videos[p.video_path]);
+        if (!isVideo && !isImage) return;
+
+        const reel = renderReel(p, isVideo ? media.videos[p.video_path] : media.images[p.image_path], isImage ? "image" : "video");
         reelsEl.appendChild(reel);
         watchReel(reel);
 
@@ -58,12 +89,12 @@ async function loadMore() {
     });
 
     lastCreated = posts[posts.length - 1].created_at;
-    if (posts.length < 10) finished = true;
+    if (posts.length < 8) finished = true;
 
     loadingMore = false;
 }
 
-function renderReel(p, src) {
+function renderReel(p, src, kind) {
     const own = p.author_id === postsContext.meId;
     const name = p.author_name || "Member";
     const section = document.createElement("section");
@@ -85,9 +116,10 @@ function renderReel(p, src) {
         : "";
 
     section.innerHTML = `
-        <video class="reel-video" src="${escapeHTML(src)}" loop muted playsinline preload="metadata"></video>
+        ${kind === "image" ? '<img class="reel-video reel-image" src="' + escapeHTML(src) + '" alt="">' : '<video class="reel-video" src="' + escapeHTML(src) + '" loop muted playsinline preload="metadata"></video>'}
         <div class="reel-shade"></div>
         <div class="reel-info">
+            ${p.intent ? '<span class="market-badge offer">' + (p.intent === "need" ? "Wanted" : p.item_type === "service" ? "Service" : "For sale") + "</span>" : '<span class="market-badge social">Lifestyle</span>'}
             <div class="reel-author">
                 <a class="post-person" href="member.html?id=${encodeURIComponent(p.author_id)}">${avatarHTML(name, p.author_avatar, "avatar-sm")}</a>
                 <a class="post-author" href="member.html?id=${encodeURIComponent(p.author_id)}">${escapeHTML(name)}</a>${badgeHTML(personFromPost(p))}
@@ -118,7 +150,7 @@ function watchReel(reel) {
                 const video = reel.querySelector(".reel-video");
 
                 if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {
-                    const attempt = video.play();
+                    const attempt = video.play ? video.play() : null;
                     if (attempt && attempt.catch) attempt.catch(function () {});
 
                     if (reel.dataset.authorId !== postsContext.meId && !reelTimers.has(reel)) {
@@ -127,7 +159,7 @@ function watchReel(reel) {
                         }, 1500));
                     }
                 } else {
-                    video.pause();
+                    (video.pause && video.pause());
 
                     if (reelTimers.has(reel) && reel.dataset.counted !== "yes") {
                         clearTimeout(reelTimers.get(reel));
@@ -218,7 +250,7 @@ reelsEl.addEventListener("click", async function (event) {
         if (video.paused) {
             video.play().catch(function () {});
         } else {
-            video.pause();
+            (video.pause && video.pause());
         }
     }
 });

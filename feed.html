@@ -34,9 +34,9 @@
 
 <main class="container feed-page">
     <div class="feed-top">
-        <h1>Feed</h1>
-        <p class="meta">Lifestyle posts from the community, and the marketplace to buy, sell and offer services.</p>
-        <p id="marketLock" class="notice" style="display:none;"></p>
+        <div id="marketNav"></div>
+        <h1>Marketplace</h1>
+        <p class="meta">Buy, sell and offer services. Tap a post to chat and trade safely.</p>
     </div>
 
     <div class="tips" id="tips" style="display:none;">
@@ -55,8 +55,7 @@
         <p class="meta">Do not put phone numbers or links in posts. Buyers and sellers talk in the trade chat on LBN.</p>
         <form id="postForm">
             <div class="intent-grid" id="intentGrid">
-                <button type="button" class="intent-card wide selected" data-intent="" data-type=""><strong>Lifestyle / Social post</strong><span>Thoughts, photos, videos, achievements, travel</span></button>
-                <button type="button" class="intent-card" data-intent="offer" data-type="product"><strong>Sell a product</strong><span>Something you have for sale</span></button>
+                                <button type="button" class="intent-card selected" data-intent="offer" data-type="product"><strong>Sell a product</strong><span>Something you have for sale</span></button>
                 <button type="button" class="intent-card" data-intent="offer" data-type="service"><strong>Offer a service</strong><span>Work you can do</span></button>
                 <button type="button" class="intent-card" data-intent="need" data-type="product"><strong>I need a product</strong><span>Tell people what you want</span></button>
                 <button type="button" class="intent-card" data-intent="need" data-type="service"><strong>I need a service</strong><span>Ask for help with a job</span></button>
@@ -84,8 +83,7 @@
     <input type="text" id="marketSearch" class="search-box" placeholder="Search products and services">
 
     <div class="chips" id="filterChips">
-        <button type="button" class="chip active" data-filter="all">Everything</button>
-        <button type="button" class="chip" data-filter="lifestyle">Lifestyle</button>
+        <button type="button" class="chip active" data-filter="market">All</button>
         <button type="button" class="chip" data-filter="selling">For sale</button>
         <button type="button" class="chip" data-filter="services">Services</button>
         <button type="button" class="chip" data-filter="wanted">Wanted</button>
@@ -127,6 +125,7 @@
 <script src="reviews.js"></script>
 <script src="posts.js"></script>
 <script src="share.js"></script>
+<script src="marketnav.js"></script>
 <script src="feed.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>

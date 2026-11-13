@@ -26,6 +26,8 @@ function escapeHTML(text) {
 }
 
 async function init() {
+    if (typeof marketGate === "function" && !(await marketGate())) return;
+
     if (!db) {
         tradeList.innerHTML = "<p>Supabase is not connected yet. Check supabase-config.js.</p>";
         return;

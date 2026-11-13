@@ -1,12 +1,12 @@
 let me = null;
 let feedMode = "all";
-let marketFilter = "all";
+let marketFilter = "market";
 let searchText = "";
 let lastCreated = null;
 let marketAvailable = true;
 
-let postIntent = "";
-let postItemType = "";
+let postIntent = "offer";
+let postItemType = "product";
 let taggedPeople = [];
 let mediaFile = null;
 let previewUrl = null;
@@ -19,6 +19,7 @@ const postNote = document.getElementById("postNote");
 
 const EMPTY_TEXT = {
     all: "No posts yet. Be the first to post.",
+    market: "Nothing has been posted in the marketplace yet. Be the first.",
     selling: "Nothing is for sale yet.",
     services: "Nobody is offering a service yet.",
     wanted: "Nobody has asked for anything yet."
@@ -32,6 +33,12 @@ function showPostNote(text, type) {
 async function init() {
     const member = await requireSocialMember();
     if (!member) return;
+
+    // The marketplace is closed to anyone without marketplace access
+    if (!member.marketOpen) {
+        showMarketLock(member.profile);
+        return;
+    }
 
     me = member.user;
 
@@ -60,6 +67,7 @@ async function init() {
     }
 
     mountPosts(feedList);
+    applyIntent("offer", "product");
     await loadMyListings();
     await loadFeed(true);
 }
@@ -456,7 +464,7 @@ postForm.addEventListener("submit", async function (event) {
 
     postForm.reset();
     clearMedia();
-    applyIntent("", "");
+    applyIntent("offer", "product");
     taggedPeople = [];
     renderTagChips();
     button.disabled = false;
