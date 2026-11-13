@@ -1256,3 +1256,118 @@ button.settings-row.danger {
 .reels-chips .chip.active { background: var(--accent); color: var(--accent-dark); }
 img.reel-image { object-fit: contain; background: #000; }
 .reel-image ~ .reel-actions .reel-sound { display: none; }
+
+/* LBN marketplace navigation */
+.lbn-market-nav {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    margin: 0 0 24px;
+    flex-wrap: wrap;
+}
+
+.lbn-market-link {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    text-decoration: none;
+    color: var(--text, #f8fafc);
+    border-radius: 14px;
+    transition: 0.2s ease;
+}
+
+.lbn-market-link.browse-link {
+    padding: 13px 18px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.10);
+}
+
+.lbn-market-link.featured {
+    flex: 1 1 220px;
+    min-width: 0;
+    padding: 15px 17px;
+    background: rgba(34,211,160,0.09);
+    border: 1px solid rgba(34,211,160,0.55);
+}
+
+.lbn-market-link:hover,
+.lbn-market-link.active {
+    background: rgba(34,211,160,0.16);
+    border-color: #22d3a0;
+    transform: translateY(-1px);
+}
+
+.lbn-market-icon {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    background: rgba(34,211,160,0.13);
+    color: #22d3a0;
+}
+
+.lbn-market-icon svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.lbn-market-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.lbn-market-text strong {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.lbn-market-text small {
+    font-size: 12px;
+    color: var(--muted, #aab4c5);
+}
+
+.lbn-market-arrow {
+    margin-left: auto;
+    color: #22d3a0;
+    font-size: 20px;
+}
+
+@media (max-width: 600px) {
+    .lbn-market-nav {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+    }
+
+    .lbn-market-link.browse-link {
+        grid-column: 1 / -1;
+    }
+
+    .lbn-market-link.featured {
+        padding: 12px 10px;
+        gap: 8px;
+    }
+
+    .lbn-market-icon {
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
+    }
+
+    .lbn-market-text strong {
+        font-size: 12px;
+    }
+
+    .lbn-market-text small {
+        font-size: 10px;
+    }
+}
