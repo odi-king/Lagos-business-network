@@ -34,6 +34,9 @@
         <form id="authForm">
             <div id="signupFields" style="display:none; flex-direction:column; gap:10px;">
                 <input type="text" id="fullName" placeholder="Full name" autocomplete="name">
+                <input type="text" id="username" placeholder="Choose a username, for example daniel_k" maxlength="20" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
+                <p id="usernameHint" class="msg" style="margin:0;"></p>
+                <p class="meta" style="margin:0;">Your @username is unique and shown on your profile. Use 3 to 20 letters, numbers or underscores. You can change it later, once every 14 days.</p>
                 <div class="role-picker">
                     <div class="role-title">I am a...</div>
                     <button type="button" class="role-card selected" data-role="student" aria-pressed="true">

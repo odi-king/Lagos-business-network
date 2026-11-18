@@ -16,6 +16,8 @@ const authTitle = document.getElementById("authTitle");
 const authForm = document.getElementById("authForm");
 const signupFields = document.getElementById("signupFields");
 const fullName = document.getElementById("fullName");
+const usernameInput = document.getElementById("username");
+const usernameHint = document.getElementById("usernameHint");
 const roleSelect = document.getElementById("role");
 const institutionInput = document.getElementById("institution");
 const lecturerNote = document.getElementById("lecturerNote");
@@ -155,6 +157,20 @@ authForm.addEventListener("submit", async function (event) {
                 throw new Error("Please tick the box to agree to the Terms of Use and the Privacy Policy.");
             }
 
+            // The @username must be well formed and free
+            const wantedName = usernameInput.value.trim().toLowerCase();
+
+            if (!/^[a-z0-9_]{3,20}$/.test(wantedName)) {
+                throw new Error("Choose a username with 3 to 20 letters, numbers or underscores.");
+            }
+
+            const nameCheck = await db.rpc("username_available", { p_name: wantedName });
+
+            // If the database file for usernames is not installed yet, signing up still works
+            if (!nameCheck.error && nameCheck.data !== true) {
+                throw new Error("That username is taken or not allowed. Please choose another.");
+            }
+
             const { data, error } = await db.auth.signUp({
                 email: email,
                 password: password,
@@ -163,6 +179,7 @@ authForm.addEventListener("submit", async function (event) {
                     data: {
                         full_name: fullName.value.trim(),
                         role: roleSelect.value,
+                        username: usernameInput.value.trim().toLowerCase(),
                         language: window.LBN_I18N ? LBN_I18N.current() : "en",
                         terms_accepted_at: new Date().toISOString(),
                         institution: (roleSelect.value === "lecturer" || roleSelect.value === "business") ? institutionInput.value.trim() : ""
@@ -261,4 +278,63 @@ document.getElementById("mfaForm").addEventListener("submit", async function (ev
 document.getElementById("mfaCancel").addEventListener("click", async function () {
     await db.auth.signOut();
     window.location.href = "auth.html";
+});
+
+
+// ---------- Choosing a username ----------
+
+let usernameTimer = null;
+let usernameTouched = false;
+
+function showUsernameHint(text, type) {
+    usernameHint.textContent = text;
+    usernameHint.className = "msg " + (type || "");
+}
+
+function usernameFromName(name) {
+    const slug = String(name || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 14);
+    return slug.length >= 3 ? slug : "";
+}
+
+async function checkUsername() {
+    const value = usernameInput.value.trim().toLowerCase();
+
+    if (!value) {
+        showUsernameHint("");
+        return;
+    }
+
+    if (!/^[a-z0-9_]{3,20}$/.test(value)) {
+        showUsernameHint("Use 3 to 20 letters, numbers or underscores (_).", "error");
+        return;
+    }
+
+    const { data, error } = await db.rpc("username_available", { p_name: value });
+
+    if (error) {
+        showUsernameHint("");
+        return;
+    }
+
+    showUsernameHint(data === true ? "@" + value + " is available" : "@" + value + " is taken or not allowed. Try " + value + "1", data === true ? "ok" : "error");
+}
+
+usernameInput.addEventListener("input", function () {
+    usernameTouched = true;
+
+    // Only letters, numbers and underscores, always lowercase
+    const clean = usernameInput.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+    if (clean !== usernameInput.value) usernameInput.value = clean;
+
+    clearTimeout(usernameTimer);
+    usernameTimer = setTimeout(checkUsername, 400);
+});
+
+// A first suggestion made from the name, until the person types their own
+fullName.addEventListener("input", function () {
+    if (usernameTouched) return;
+
+    usernameInput.value = usernameFromName(fullName.value);
+    clearTimeout(usernameTimer);
+    usernameTimer = setTimeout(checkUsername, 400);
 });
