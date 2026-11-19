@@ -56,11 +56,12 @@ async function init() {
 // ---------- Personal information ----------
 
 async function loadInfo() {
-    const profile = await db.from("profiles").select("full_name, bio").eq("id", me.id).maybeSingle();
+    const profile = await db.from("profiles").select("full_name, bio, username, username_changed_at").eq("id", me.id).maybeSingle();
 
     if (profile.data) {
         document.getElementById("fullName").value = profile.data.full_name || "";
         document.getElementById("bio").value = profile.data.bio || "";
+        renderUsername(profile.data);
     }
 
     const priv = await db.rpc("my_private");
@@ -492,6 +493,106 @@ document.getElementById("mfaDisable").addEventListener("click", async function (
     const removed = await db.auth.mfa.unenroll({ factorId: totp.id });
     say("mfaMsg", removed.error ? removed.error.message : "Two-step login is off.", !removed.error);
     await loadMfa();
+});
+
+// ---------- Changing the username ----------
+
+const USERNAME_WAIT_DAYS = 14;
+let currentUsername = "";
+let usernameTimerAccount = null;
+
+function renderUsername(row) {
+    currentUsername = (row && row.username) || "";
+    document.getElementById("currentUsername").textContent = currentUsername ? "@" + currentUsername : "not set yet";
+
+    const rule = document.getElementById("usernameRule");
+    const save = document.getElementById("usernameSave");
+    const input = document.getElementById("newUsername");
+
+    let nextChange = null;
+
+    if (row && row.username_changed_at) {
+        nextChange = new Date(new Date(row.username_changed_at).getTime() + USERNAME_WAIT_DAYS * 86400000);
+    }
+
+    if (nextChange && nextChange > new Date()) {
+        rule.textContent = "You changed your username recently. You can change it again after " +
+            nextChange.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }) + ".";
+        save.disabled = true;
+        input.disabled = true;
+    } else {
+        rule.textContent = "Usernames are lowercase, 3 to 20 letters, numbers or underscores. You can change yours once every " +
+            USERNAME_WAIT_DAYS + " days. Your old username is kept for 30 days so nobody else can take it. Your trades, messages and reviews are never affected.";
+        save.disabled = false;
+        input.disabled = false;
+    }
+}
+
+function showNewUsernameHint(text, type) {
+    const box = document.getElementById("newUsernameHint");
+    box.textContent = text;
+    box.className = "msg " + (type || "");
+}
+
+async function checkNewUsername() {
+    const value = document.getElementById("newUsername").value.trim().toLowerCase();
+
+    if (!value || value === currentUsername) {
+        showNewUsernameHint("");
+        return;
+    }
+
+    if (!/^[a-z0-9_]{3,20}$/.test(value)) {
+        showNewUsernameHint("Use 3 to 20 letters, numbers or underscores (_).", "error");
+        return;
+    }
+
+    const { data, error } = await db.rpc("username_available", { p_name: value });
+
+    if (error) {
+        showNewUsernameHint("");
+        return;
+    }
+
+    showNewUsernameHint(data === true ? "@" + value + " is available" : "@" + value + " is taken or not allowed", data === true ? "ok" : "error");
+}
+
+document.getElementById("newUsername").addEventListener("input", function (event) {
+    const clean = event.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+    if (clean !== event.target.value) event.target.value = clean;
+
+    clearTimeout(usernameTimerAccount);
+    usernameTimerAccount = setTimeout(checkNewUsername, 400);
+});
+
+document.getElementById("usernameForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const wanted = document.getElementById("newUsername").value.trim().toLowerCase();
+
+    if (!wanted) {
+        say("usernameMsg", "Type the username you want.", false);
+        return;
+    }
+
+    if (wanted === currentUsername) {
+        say("usernameMsg", "That is already your username.", false);
+        return;
+    }
+
+    if (!confirm("Change your username to @" + wanted + "? You will not be able to change it again for " + USERNAME_WAIT_DAYS + " days.")) return;
+
+    const { data, error } = await db.rpc("set_my_username", { p_name: wanted });
+
+    if (error) {
+        say("usernameMsg", friendly(error), false);
+        return;
+    }
+
+    say("usernameMsg", "Done. Your username is now @" + data + ".", true);
+    document.getElementById("newUsername").value = "";
+    showNewUsernameHint("");
+    renderUsername({ username: data, username_changed_at: new Date().toISOString() });
 });
 
 init();

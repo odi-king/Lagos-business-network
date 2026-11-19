@@ -47,6 +47,19 @@
         </section>
 
         <section class="panel">
+            <h2>Username</h2>
+            <p>Your username: <strong id="currentUsername">...</strong></p>
+            <form id="usernameForm">
+                <label class="meta" for="newUsername">New username</label>
+                <input type="text" id="newUsername" maxlength="20" placeholder="For example daniel_k" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
+                <p id="newUsernameHint" class="msg" style="margin:0;"></p>
+                <button type="submit" id="usernameSave" class="contact-btn">Change username</button>
+            </form>
+            <p id="usernameRule" class="meta"></p>
+            <p id="usernameMsg" class="msg"></p>
+        </section>
+
+        <section class="panel">
             <h2>Personal information</h2>
             <form id="infoForm">
                 <label class="meta" for="fullName">Full name</label>
