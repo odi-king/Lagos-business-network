@@ -96,6 +96,9 @@ async function init() {
             row("Notifications", "notifications.html"),
             row("Change password", "reset.html")
         ]),
+        section("Invite and earn", [
+            row("Invite friends and earn", "referrals.html")
+        ]),
         section("Your activity", [
             row("My profile and posts", "member.html"),
             row("Dashboard", "dashboard.html")

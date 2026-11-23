@@ -25,6 +25,7 @@ async function ensureTrial(userId) {
 
     if (saved) {
         trialResult = saved;
+        await applySavedReferral();
         return;
     }
 
@@ -36,6 +37,21 @@ async function ensureTrial(userId) {
             // "confirm_email" can change later, so it is not remembered
             if (data !== "confirm_email") sessionStorage.setItem(key, data);
         }
+    } catch (error) {}
+
+    await applySavedReferral();
+}
+
+// If this person came through a referral link, record it once. Safe to call again.
+async function applySavedReferral() {
+    try {
+        const code = localStorage.getItem("lbn_ref");
+        if (!code) return;
+
+        const { data, error } = await db.rpc("apply_referral", { p_code: code });
+
+        // Keep the code only if the database is not ready yet; otherwise the answer is final
+        if (!error && typeof data === "string" && data !== "login") localStorage.removeItem("lbn_ref");
     } catch (error) {}
 }
 

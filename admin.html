@@ -56,6 +56,24 @@
     </section>
 
     <section class="panel" data-perm="finance">
+        <h2>Referrals and withdrawals</h2>
+        <p class="meta">Members earn N500 when someone they invited pays for a yearly subscription. Pay approved withdrawals by bank transfer once a month, then mark them Paid.</p>
+        <div id="referralStats" class="grid cols-2"></div>
+        <h3>Referrals to check</h3>
+        <p class="meta">Same phone, same network or same email as the person who invited them. Clear it if it is a real friend; void it if it looks like a trick.</p>
+        <div id="referralFlagged"><p class="meta">Loading...</p></div>
+        <h3>Withdrawal requests</h3>
+        <select id="payoutFilter">
+            <option value="requested">Waiting</option>
+            <option value="approved">Approved</option>
+            <option value="paid">Paid</option>
+            <option value="rejected">Rejected</option>
+            <option value="all">Everything</option>
+        </select>
+        <div id="payoutList"><p class="meta">Loading...</p></div>
+    </section>
+
+    <section class="panel" data-perm="finance">
         <h2>Recover a payment</h2>
         <p class="meta">If a buyer says they paid but the site still shows unpaid, paste the Paystack reference here (Paystack, Transactions, the reference column). LBN checks it directly with Paystack and records it.</p>
         <input type="text" id="recoverRef" placeholder="Paystack reference, for example TRD-1a2b3c4d-1730000000000">

@@ -90,6 +90,7 @@ async function init() {
     if (can("finance")) {
         jobs.push(loadSettings());
         jobs.push(loadReadiness());
+        jobs.push(loadReferrals());
     }
     if (can("education")) {
         jobs.push(loadGradRequests());
@@ -983,4 +984,109 @@ document.getElementById("recoverBtn").addEventListener("click", async function (
 
     msg.textContent = text || "No answer. Is the paystack-verify function deployed?";
     msg.className = "msg " + (error ? "error" : "ok");
+});
+
+
+// ---------- Referrals and withdrawals ----------
+
+function nairaFromKobo(kobo) {
+    return "\u20A6" + (Number(kobo || 0) / 100).toLocaleString();
+}
+
+async function loadReferrals() {
+    const stats = document.getElementById("referralStats");
+    if (!stats) return;
+
+    const overview = await db.rpc("admin_referral_overview");
+
+    if (overview.error) {
+        stats.innerHTML = "<p class='meta'>Not set up yet. Run supabase-referrals.sql in Supabase.</p>";
+        return;
+    }
+
+    const o = overview.data;
+    const items = [
+        { label: "Signed up through links", value: o.signed_up },
+        { label: "Paid a yearly subscription", value: o.subscribed },
+        { label: "Bonus on hold", value: nairaFromKobo(o.on_hold_kobo) },
+        { label: "Owed to members now", value: nairaFromKobo(o.owed_kobo) },
+        { label: "Already paid out", value: nairaFromKobo(o.paid_kobo) },
+        { label: "Waiting to be checked", value: o.flagged }
+    ];
+
+    stats.innerHTML = items.map(function (i) {
+        return '<div class="card"><div class="meta">' + escapeHTML(i.label) + "</div><strong>" + escapeHTML(i.value) + "</strong></div>";
+    }).join("");
+
+    const flagged = await db.rpc("admin_referral_flagged");
+    const fbox = document.getElementById("referralFlagged");
+
+    fbox.innerHTML = flagged.error || flagged.data.length === 0 ? "<p class='meta'>Nothing to check.</p>" : flagged.data.map(function (r) {
+        return '<div class="staff-card" data-referral="' + escapeHTML(r.id) + '">' +
+            "<strong>" + escapeHTML(r.referrer_name) + " invited " + escapeHTML(r.referred_name) + "</strong>" +
+            '<div class="meta">' + escapeHTML(r.flag_reason || "") + " &bull; " + escapeHTML(new Date(r.created_at).toLocaleDateString()) + "</div>" +
+            '<div class="staff-actions">' +
+            '<button type="button" class="btn btn-outline ref-act" data-action="clear">Clear (real friend)</button>' +
+            '<button type="button" class="btn btn-outline ref-act" data-action="void">Void (no bonus)</button>' +
+            "</div></div>";
+    }).join("");
+
+    await loadPayouts();
+}
+
+async function loadPayouts() {
+    const box = document.getElementById("payoutList");
+    const { data, error } = await db.rpc("admin_payout_list", { p_status: document.getElementById("payoutFilter").value });
+
+    if (error) {
+        box.innerHTML = "<p class='meta'>Could not load. " + escapeHTML(error.message) + "</p>";
+        return;
+    }
+
+    box.innerHTML = data.length === 0 ? "<p class='meta'>Nothing here.</p>" : data.map(function (p) {
+        const open = p.status === "requested" || p.status === "approved";
+
+        return '<div class="staff-card" data-payout="' + escapeHTML(p.id) + '">' +
+            "<strong>" + escapeHTML(p.member_name) + " &bull; " + nairaFromKobo(p.amount_kobo) + "</strong>" +
+            '<div class="meta">' + escapeHTML(p.bank_name) + " &bull; " + escapeHTML(p.account_number) + " &bull; " + escapeHTML(p.account_name) +
+            " &bull; " + escapeHTML(new Date(p.requested_at).toLocaleDateString()) + " &bull; " + escapeHTML(p.status) +
+            (p.payment_note ? " &bull; " + escapeHTML(p.payment_note) : "") + "</div>" +
+            (open ? '<div class="staff-actions">' +
+                (p.status === "requested" ? '<button type="button" class="btn btn-outline pay-act" data-status="approved">Approve</button>' : "") +
+                '<button type="button" class="btn btn-outline pay-act" data-status="paid">Mark paid</button>' +
+                '<button type="button" class="btn btn-outline pay-act" data-status="rejected">Reject</button>' +
+                "</div>" : "") +
+            "</div>";
+    }).join("");
+}
+
+document.getElementById("payoutFilter").addEventListener("change", loadPayouts);
+
+document.getElementById("referralFlagged").addEventListener("click", async function (event) {
+    const button = event.target.closest(".ref-act");
+    const card = event.target.closest("[data-referral]");
+    if (!button || !card) return;
+
+    const { error } = await db.rpc("admin_referral_decide", { p_id: card.dataset.referral, p_action: button.dataset.action });
+    if (error) { alert(error.message); return; }
+    await loadReferrals();
+});
+
+document.getElementById("payoutList").addEventListener("click", async function (event) {
+    const button = event.target.closest(".pay-act");
+    const card = event.target.closest("[data-payout]");
+    if (!button || !card) return;
+
+    let note = "";
+
+    if (button.dataset.status === "paid") {
+        note = prompt("Payment note (for example the transfer reference):", "") || "";
+    } else if (button.dataset.status === "rejected") {
+        note = prompt("Reason for the member:", "");
+        if (note === null) return;
+    }
+
+    const { error } = await db.rpc("admin_payout_set", { p_id: card.dataset.payout, p_status: button.dataset.status, p_note: note });
+    if (error) { alert(error.message); return; }
+    await loadReferrals();
 });

@@ -3,6 +3,18 @@ const SITE_URL = "https://odi-king.github.io/Lagos-business-network/";
 
 let mode = "login";
 
+// A referral link looks like auth.html?ref=ABC12345. Keep the code until this person has signed up.
+(function saveReferral() {
+    try {
+        const code = (new URLSearchParams(window.location.search).get("ref") || "").toUpperCase();
+        if (/^[A-Z0-9]{6,12}$/.test(code)) localStorage.setItem("lbn_ref", code);
+    } catch (e) {}
+})();
+
+function savedReferral() {
+    try { return localStorage.getItem("lbn_ref") || ""; } catch (e) { return ""; }
+}
+
 // After logging in, go to the page the person wanted (only pages on this site)
 function nextPage() {
     const wanted = new URLSearchParams(window.location.search).get("next");
@@ -182,6 +194,7 @@ authForm.addEventListener("submit", async function (event) {
                         username: usernameInput.value.trim().toLowerCase(),
                         language: window.LBN_I18N ? LBN_I18N.current() : "en",
                         terms_accepted_at: new Date().toISOString(),
+                        referral_code: savedReferral(),
                         institution: (roleSelect.value === "lecturer" || roleSelect.value === "business") ? institutionInput.value.trim() : ""
                     }
                 }
@@ -338,3 +351,19 @@ fullName.addEventListener("input", function () {
     clearTimeout(usernameTimer);
     usernameTimer = setTimeout(checkUsername, 400);
 });
+
+// "You were invited by Daniel" on the sign up page
+(async function showInviter() {
+    const code = savedReferral();
+    if (!code || typeof db === "undefined" || !db) return;
+
+    try {
+        const { data } = await db.rpc("referral_inviter", { p_code: code });
+        if (data && typeof data === "string") {
+            const note = document.createElement("p");
+            note.className = "notice";
+            note.textContent = data + " invited you. Sign up to get your first month free.";
+            authForm.parentNode.insertBefore(note, authForm);
+        }
+    } catch (e) {}
+})();
