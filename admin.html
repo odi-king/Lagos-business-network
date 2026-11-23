@@ -37,6 +37,18 @@
 
     <div id="adminStats" data-perm="members" class="grid cols-2" style="margin-bottom:16px;"></div>
 
+    <section class="panel" data-perm="support">
+        <h2>Member feedback</h2>
+        <p class="meta">What members like and what confuses them, sent from the Feedback button on every page.</p>
+        <select id="feedbackFilter">
+            <option value="new">New</option>
+            <option value="read">Read</option>
+            <option value="done">Done</option>
+            <option value="all">Everything</option>
+        </select>
+        <div id="feedbackList"><p class="meta">Loading...</p></div>
+    </section>
+
     <section class="panel" data-perm="marketplace,content">
         <h2>Reported reviews</h2>
         <p class="meta">Members can report reviews they think are unfair. Hide a review that is abusive, fake or breaks the rules. Keep it if it is honest, even if it is negative.</p>

@@ -84,6 +84,7 @@ async function init() {
         jobs.push(loadTrialFlags());
     }
     if (can("support")) jobs.push(loadSupport());
+    if (can("support")) jobs.push(loadFeedback());
     if (can("marketplace") || can("content")) jobs.push(loadReviewReports());
     if (can("finance") || can("marketplace")) jobs.push(loadQueue());
     if (can("finance")) {
@@ -901,6 +902,55 @@ document.getElementById("reviewReports").addEventListener("click", async functio
     }
 
     await loadReviewReports();
+});
+
+
+// ---------- Member feedback ----------
+
+async function loadFeedback() {
+    const box = document.getElementById("feedbackList");
+    if (!box) return;
+
+    const { data, error } = await db.rpc("admin_feedback_list", { p_status: document.getElementById("feedbackFilter").value });
+
+    if (error) {
+        box.innerHTML = "<p class='meta'>Not set up yet. Run supabase-feedback.sql in Supabase.</p>";
+        return;
+    }
+
+    box.innerHTML = data.length === 0 ? "<p class='meta'>Nothing here.</p>" : data.map(function (f) {
+        const who = f.member_name
+            ? escapeHTML(f.member_name) + (f.member_username ? " @" + escapeHTML(f.member_username) : "")
+            : "A visitor who was not logged in";
+
+        return '<div class="staff-card" data-feedback="' + escapeHTML(f.id) + '">' +
+            "<strong>" + who + "</strong>" +
+            '<div class="meta">' + escapeHTML(new Date(f.created_at).toLocaleString()) + " &bull; page: " + escapeHTML(f.page || "") + " &bull; " + escapeHTML(f.status) + "</div>" +
+            (f.likes ? "<p><strong>Likes:</strong> " + escapeHTML(f.likes) + "</p>" : "") +
+            (f.problems ? "<p><strong>Not working or confusing:</strong> " + escapeHTML(f.problems) + "</p>" : "") +
+            (f.contact ? "<p class='meta'>Reply to: " + escapeHTML(f.contact) + "</p>" : "") +
+            '<div class="staff-actions">' +
+            (f.status !== "read" ? '<button type="button" class="btn btn-outline fb-set" data-status="read">Mark read</button>' : "") +
+            (f.status !== "done" ? '<button type="button" class="btn btn-outline fb-set" data-status="done">Mark done</button>' : "") +
+            "</div></div>";
+    }).join("");
+}
+
+document.getElementById("feedbackFilter").addEventListener("change", loadFeedback);
+
+document.getElementById("feedbackList").addEventListener("click", async function (event) {
+    const button = event.target.closest(".fb-set");
+    const card = event.target.closest("[data-feedback]");
+    if (!button || !card) return;
+
+    const { error } = await db.rpc("admin_feedback_set", { p_id: card.dataset.feedback, p_status: button.dataset.status });
+
+    if (error) {
+        alert(error.message);
+        return;
+    }
+
+    await loadFeedback();
 });
 
 
