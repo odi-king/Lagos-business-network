@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ambassador Management - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="classes.html">Classes</a>
+            <a href="feed.html">Marketplace</a>
+            <a href="reels.html">Reels</a>
+            <a href="trades.html">My trades</a>
+            <a href="member.html">Profile</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>Ambassador Management</h1>
+        <p class="meta">School Ambassador programme: applications, trials, appointments and school positions.</p>
+    </div>
+    <p id="ambMsg" class="msg"></p>
+
+    <div class="filters" id="ambTabs">
+        <button type="button" class="btn btn-outline amb-tab" data-tab="applications">Applications</button>
+        <button type="button" class="btn btn-outline amb-tab" data-tab="appointments">Ambassadors</button>
+        <button type="button" class="btn btn-outline amb-tab" data-tab="schools">Schools and positions</button>
+    </div>
+
+    <section class="panel" id="tab-applications">
+        <h2>Applications</h2>
+        <select id="appFilter">
+            <option value="submitted">New</option>
+            <option value="reviewing">Under review</option>
+            <option value="trial">On trial</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="rejected">Rejected</option>
+            <option value="all">Everything</option>
+        </select>
+        <div id="appList"><p class="meta">Loading...</p></div>
+    </section>
+
+    <section class="panel" id="tab-appointments" style="display:none;">
+        <h2>Ambassadors</h2>
+        <select id="ambFilter">
+            <option value="live">Current (trial, confirmed, suspended)</option>
+            <option value="all">Everyone, including past</option>
+        </select>
+        <div id="ambList"><p class="meta">Loading...</p></div>
+    </section>
+
+    <section class="panel" id="tab-schools" style="display:none;">
+        <h2>Schools and positions</h2>
+        <p class="meta">Every school has 6 Business Owner, 5 Student and 4 Lecturer places. Only the Super Admin can add extra places.</p>
+        <form id="schoolForm">
+            <input type="text" id="schoolName" maxlength="120" placeholder="School name" required>
+            <input type="text" id="schoolCountry" maxlength="60" placeholder="Country" value="Nigeria">
+            <button type="submit" class="contact-btn">Add school</button>
+        </form>
+        <div id="schoolList"><p class="meta">Loading...</p></div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a>
+        <div class="legal-links"><a href="terms.html">Terms of Use</a> &bull; <a href="privacy.html">Privacy Policy</a> &bull; <a href="refunds.html">Refunds and Disputes</a></div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="ambassador-admin.js"></script>
+<script src="appnav.js"></script>
+<script src="pwa.js"></script>
+<script src="feedback.js"></script>
+<script src="i18n-strings.js"></script>
+<script src="i18n-strings-extra.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>

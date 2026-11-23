@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Become an LBN Ambassador - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="description" content="Become a Lagos Business Network ambassador. See open places at participating schools and apply.">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="auth.html">Log in</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>LBN Ambassador Recruitment</h1>
+        <p class="meta">Represent Lagos Business Network at your school or business community.</p>
+    </div>
+
+    <section class="panel">
+        <h2>What ambassadors receive</h2>
+        <ul>
+            <li>A monthly stipend of &#8358;70,000</li>
+            <li>An extra &#8358;500 for every person you bring in who buys a subscription</li>
+            <li>An Ambassador badge on your profile</li>
+            <li>An official certificate you can add to your CV</li>
+            <li>An official 12-month appointment</li>
+        </ul>
+    </section>
+
+    <section class="panel">
+        <h2>How it works</h2>
+        <ol>
+            <li>Apply using the form. You need a referee who can vouch for you.</li>
+            <li>Our team screens every application. Applications are subject to screening and final management approval.</li>
+            <li>If you are selected you start a <strong>two-week trial</strong>.</li>
+            <li>After a successful trial and final approval you become a confirmed ambassador for 12 months.</li>
+            <li>Appointments are never renewed automatically. Every renewal depends on review and performance.</li>
+        </ol>
+        <p class="meta">Each participating school has up to 15 places: 6 Business Owners, 5 Students and 4 Lecturers.</p>
+        <a href="ambassador-apply.html" class="contact-btn" id="applyNow">Apply Now</a>
+    </section>
+
+    <section class="panel">
+        <h2>Open places</h2>
+        <p class="meta">Updated live. Places held by someone on trial are shown as reserved.</p>
+        <div id="vacancyList"><p class="meta">Loading...</p></div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a>
+        <div class="legal-links"><a href="terms.html">Terms of Use</a> &bull; <a href="privacy.html">Privacy Policy</a> &bull; <a href="refunds.html">Refunds and Disputes</a></div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="ambassadors.js"></script>
+<script src="pwa.js"></script>
+<script src="feedback.js"></script>
+<script src="i18n-strings.js"></script>
+<script src="i18n-strings-extra.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>
