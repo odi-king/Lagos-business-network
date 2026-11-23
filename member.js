@@ -165,6 +165,22 @@ function statsHTML(clickable) {
         "</div>";
 }
 
+// One short line: what they are, and since when
+function profileInfoLine(p) {
+    const parts = [];
+
+    if (p.is_admin) parts.push("LBN team");
+    else if (p.role === "student") parts.push(p.graduated ? "Graduate" : "Student");
+    else if (p.role === "lecturer") parts.push("Lecturer");
+    else if (p.role === "business") parts.push("Business");
+
+    if (p.member_since) {
+        parts.push("Joined " + new Date(p.member_since).toLocaleDateString(undefined, { month: "long", year: "numeric" }));
+    }
+
+    return parts.length ? '<p class="profile-sub">' + escapeHTML(parts.join(" \u2022 ")) + "</p>" : "";
+}
+
 function headerHTML(clickable, actions) {
     const p = profileRow;
     const name = p.full_name || "Member";
@@ -175,6 +191,8 @@ function headerHTML(clickable, actions) {
             ${statsHTML(clickable)}
         </div>
         <h1 class="profile-name">${escapeHTML(name)}${badgeHTML(p)}</h1>
+        ${p.username ? '<p class="profile-sub profile-handle">@' + escapeHTML(p.username) + (p.follows_me && !isOwn ? ' <span class="profile-chip">Follows you</span>' : "") + "</p>" : ""}
+        ${profileInfoLine(p)}
         ${p.institution ? '<p class="profile-sub">' + escapeHTML(p.institution) + "</p>" : ""}
         ${p.bio ? '<p class="profile-bio">' + escapeHTML(p.bio) + "</p>" : ""}
         <div class="profile-actions">${actions}</div>

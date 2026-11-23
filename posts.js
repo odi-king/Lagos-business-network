@@ -1102,3 +1102,13 @@ function linkMentions(text) {
 function handleTag(m) {
     return m && m.username ? ' <span class="meta">@' + escapeHTML(m.username) + "</span>" : "";
 }
+
+
+(function () {
+    const style = document.createElement("style");
+    style.textContent =
+        ".profile-handle{margin:0 0 2px;font-weight:600}" +
+        ".profile-chip{display:inline-block;margin-left:8px;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:600;" +
+        "background:var(--card,#111a2e);border:1px solid var(--line,#1f2a44);color:var(--muted,#8fa0bc)}";
+    document.head.appendChild(style);
+})();
