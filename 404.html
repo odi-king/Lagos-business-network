@@ -15,6 +15,19 @@
     </style>
 </head>
 <body>
+<script>
+// A link like .../Lagos-business-network/@daniel opens that member's profile
+(function redirectHandle() {
+    var path = window.location.pathname;
+    var at = path.indexOf("/@");
+    if (at === -1) return;
+
+    var name = decodeURIComponent(path.slice(at + 2)).split("/")[0].toLowerCase();
+    if (!/^[a-z0-9_]{3,20}$/.test(name)) return;
+
+    window.location.replace(path.slice(0, at + 1) + "member.html?u=" + encodeURIComponent(name));
+})();
+</script>
     <div>
         <h1>404</h1>
         <p>We could not find that page.</p>

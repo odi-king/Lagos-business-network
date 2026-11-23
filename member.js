@@ -14,8 +14,22 @@ const memberMore = document.getElementById("memberMore");
 const editPanel = document.getElementById("editPanel");
 const sheet = document.getElementById("sheet");
 
+let profileHandle = "";
+
 function profileLink() {
+    const base = window.location.origin + window.location.pathname.replace(/[^/]*$/, "");
+
+    // A short link like .../@daniel when the member has a username
+    if (profileHandle) return base + "@" + profileHandle;
+
     return window.location.origin + window.location.pathname + "?id=" + encodeURIComponent(memberId);
+}
+
+async function loadProfileHandle() {
+    if (!memberId || !db) return;
+
+    const found = await db.rpc("member_handles", { p_ids: [memberId] });
+    if (!found.error && found.data && found.data[0]) profileHandle = found.data[0].username;
 }
 
 async function shareProfile() {
@@ -44,6 +58,16 @@ async function shareProfile() {
 }
 
 async function init() {
+    // A profile opened by username, for example member.html?u=daniel
+    const wantedUser = query.get("u");
+
+    if (!memberId && wantedUser && db) {
+        const found = await db.rpc("profile_id_for_username", { p_name: wantedUser });
+
+        // An unknown username must never fall back to showing your own profile
+        memberId = found.data || "00000000-0000-0000-0000-000000000000";
+    }
+
     if (!db) {
         profileBox.innerHTML = "<p class='meta'>Supabase is not connected yet. Check supabase-config.js.</p>";
         return;
@@ -72,6 +96,7 @@ async function init() {
         const full = await db.rpc("member_profile", { p_id: memberId });
 
         if (full.data && full.data[0]) {
+            await loadProfileHandle();
             profileRow = full.data[0];
             await renderMember();
             return;
