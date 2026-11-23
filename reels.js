@@ -126,7 +126,7 @@ function renderReel(p, src, kind) {
                 ${followButton(p.author_id, p.following)}
             </div>
             ${price}
-            ${p.caption ? '<div class="reel-caption">' + escapeHTML(p.caption) + "</div>" : ""}
+            ${p.caption ? '<div class="reel-caption">' + linkMentions(p.caption) + "</div>" : ""}
             ${tradeBtn}${message}
         </div>
         <div class="reel-actions">

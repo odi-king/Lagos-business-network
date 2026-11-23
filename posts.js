@@ -403,7 +403,7 @@ function setPostText(card) {
     }
 
     if (price !== "") html += '<div class="post-price">' + (intent === "need" ? "Budget " : "") + formatPrice(price) + "</div>";
-    if (caption) html += '<div class="post-caption">' + escapeHTML(caption) + "</div>";
+    if (caption) html += '<div class="post-caption">' + linkMentions(caption) + "</div>";
 
     box.innerHTML = html;
 
@@ -589,7 +589,7 @@ async function loadComments(card) {
             '<div class="comment-main"><div>' +
             '<a class="post-author" href="member.html?id=' + encodeURIComponent(c.author_id) + '">' + escapeHTML(name) + "</a>" +
             badgeHTML({ role: c.author_role, approved: c.author_approved, verified: c.author_verified, is_admin: c.author_is_admin }) +
-            ' <span class="comment-text">' + escapeHTML(c.body) + "</span>" +
+            ' <span class="comment-text">' + linkMentions(c.body) + "</span>" +
             (c.edited_at ? ' <span class="meta">(edited)</span>' : "") + "</div>" +
             '<div class="comment-meta"><span>' + timeAgo(c.created_at) + "</span>" +
             '<button type="button" class="plain-btn comment-reply-btn" data-parent="' + escapeHTML(threadId) +
@@ -1004,4 +1004,20 @@ async function requireSocialMember() {
     postsContext.marketOpen = marketOpen;
 
     return { user: user, profile: profile, marketOpen: marketOpen };
+}
+
+
+// ---------- @mentions become links to profiles ----------
+
+(function () {
+    const style = document.createElement("style");
+    style.textContent = "a.mention{color:var(--accent,#22d3a0);font-weight:600}a.mention:hover{text-decoration:underline}";
+    document.head.appendChild(style);
+})();
+
+// Safe text with every @username turned into a link to that member's profile
+function linkMentions(text) {
+    return escapeHTML(text).replace(/(^|[^A-Za-z0-9_])@([A-Za-z0-9_]{3,20})\b/g, function (match, before, name) {
+        return before + '<a class="mention" href="member.html?u=' + name.toLowerCase() + '">@' + name + "</a>";
+    });
 }
