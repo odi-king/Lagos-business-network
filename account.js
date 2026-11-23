@@ -269,7 +269,7 @@ document.getElementById("blockSearch").addEventListener("input", function (event
         results.innerHTML = others.length === 0
             ? "<p class='meta'>No members found.</p>"
             : others.map(function (m) {
-                return '<div class="member-row"><strong>' + esc(m.full_name || "Member") + "</strong>" +
+                return '<div class="member-row"><span><strong>' + esc(m.full_name || "Member") + "</strong>" + (m.username ? ' <span class="meta">@' + esc(m.username) + "</span>" : "") + "</span>" +
                     '<button type="button" class="btn btn-outline block-btn" data-id="' + esc(m.id) + '" data-name="' + esc(m.full_name || "this member") + '">Block</button></div>';
             }).join("");
     }, 300);

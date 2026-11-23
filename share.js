@@ -96,7 +96,7 @@ function openShare(postId, caption, authorName) {
 
 function personRow(m, name, avatar) {
     return '<div class="member-row"><div class="member-link">' + avatarHTML(name, avatar, "avatar-sm") +
-        "<div><span class='post-author'>" + escapeHTML(name || "Member") + "</span>" + badgeHTML(m) + "</div></div>" +
+        "<div><span class='post-author'>" + escapeHTML(name || "Member") + "</span>" + badgeHTML(m) + handleTag(m) + "</div></div>" +
         '<button type="button" class="contact-btn" data-share="send" data-member="' + escapeHTML(m.id || m.other_id) + '">Send</button></div>';
 }
 

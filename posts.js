@@ -1096,3 +1096,9 @@ function linkMentions(text) {
     new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
     schedule();
 })();
+
+
+// "@username" in grey, for member search results
+function handleTag(m) {
+    return m && m.username ? ' <span class="meta">@' + escapeHTML(m.username) + "</span>" : "";
+}

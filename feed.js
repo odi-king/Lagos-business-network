@@ -320,7 +320,7 @@ document.getElementById("tagSearch").addEventListener("input", function (event) 
 
         results.innerHTML = data.slice(0, 6).map(function (m) {
             return '<div class="member-row"><div class="member-link">' + avatarHTML(m.full_name, m.avatar_path, "avatar-sm") +
-                "<span class='post-author'>" + escapeHTML(m.full_name || "Member") + "</span></div>" +
+                "<span class='post-author'>" + escapeHTML(m.full_name || "Member") + "</span>" + handleTag(m) + "</div>" +
                 '<button type="button" class="btn btn-outline tag-add" data-id="' + escapeHTML(m.id) +
                 '" data-name="' + escapeHTML(m.full_name || "Member") + '">Tag</button></div>';
         }).join("");
@@ -513,7 +513,7 @@ memberSearch.addEventListener("input", function () {
             row.innerHTML =
                 '<a class="member-link" href="member.html?id=' + encodeURIComponent(m.id) + '">' +
                 avatarHTML(m.full_name, m.avatar_path, "avatar-sm") +
-                "<div><span class='post-author'>" + escapeHTML(m.full_name || "Member") + "</span>" + badgeHTML(m) +
+                "<div><span class='post-author'>" + escapeHTML(m.full_name || "Member") + "</span>" + badgeHTML(m) + handleTag(m) +
                 "<div class='post-time'>" + Number(m.follower_count) + " followers</div></div></a>" +
                 followButton(m.id, m.i_follow);
 
