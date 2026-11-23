@@ -1021,3 +1021,78 @@ function linkMentions(text) {
         return before + '<a class="mention" href="member.html?u=' + name.toLowerCase() + '">@' + name + "</a>";
     });
 }
+
+
+// ---------- @handles next to member names ----------
+// Every member name that links to a profile gets "@username" beside it: posts, comments, Reels and lists.
+
+(function () {
+    const style = document.createElement("style");
+    style.textContent =
+        ".handle{color:var(--muted,#8fa0bc);font-size:13px;font-weight:400;margin-left:6px;white-space:nowrap}" +
+        ".reel .handle{color:rgba(255,255,255,.8)}";
+    document.head.appendChild(style);
+
+    const handles = {};   // member id -> username, or "" when the member has none
+    const asked = {};
+    let timer = null;
+
+    function idOf(link) {
+        const m = /[?&]id=([0-9a-f-]{36})/i.exec(link.getAttribute("href") || "");
+        return m ? m[1].toLowerCase() : null;
+    }
+
+    function paint() {
+        document.querySelectorAll("a.post-author").forEach(function (link) {
+            if (link.dataset.handled) return;
+
+            const id = idOf(link);
+            if (!id || handles[id] === undefined) return;
+
+            link.dataset.handled = "1";
+
+            if (handles[id]) {
+                const span = document.createElement("span");
+                span.className = "handle";
+                span.textContent = "@" + handles[id];
+                link.insertAdjacentElement("afterend", span);
+            }
+        });
+    }
+
+    async function run() {
+        if (typeof db === "undefined" || !db) return;
+
+        const wanted = [];
+
+        document.querySelectorAll("a.post-author").forEach(function (link) {
+            const id = idOf(link);
+            if (id && handles[id] === undefined && !asked[id] && wanted.indexOf(id) === -1) wanted.push(id);
+        });
+
+        for (let i = 0; i < wanted.length; i += 80) {
+            const chunk = wanted.slice(i, i + 80);
+            chunk.forEach(function (id) { asked[id] = true; });
+
+            const result = await db.rpc("member_handles", { p_ids: chunk });
+
+            if (result.error) {
+                chunk.forEach(function (id) { delete asked[id]; });
+                return;
+            }
+
+            chunk.forEach(function (id) { handles[id] = ""; });
+            (result.data || []).forEach(function (row) { handles[row.user_id] = row.username || ""; });
+        }
+
+        paint();
+    }
+
+    function schedule() {
+        clearTimeout(timer);
+        timer = setTimeout(function () { paint(); run(); }, 250);
+    }
+
+    new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
+    schedule();
+})();
