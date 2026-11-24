@@ -345,6 +345,10 @@ function renderPostCard(p, media) {
         ? '<button type="button" class="plain-btn post-status" data-status="' + (p.status === "closed" ? "open" : "closed") + '">' +
           (p.status === "closed" ? "Reopen" : "Mark as closed") + "</button>"
         : "";
+    const save = p.intent && !own
+        ? '<button type="button" class="plain-btn post-save' + (p.saved ? " saved" : "") + '">' + (p.saved ? "Saved" : "Save") + "</button>"
+        : "";
+    const where = [p.category, p.location_area, p.location_state].filter(Boolean).join(" \u2022 ");
     const repost = own ? "" : '<button type="button" class="plain-btn post-repost' + (p.reposted ? " reposted" : "") +
         '">\u21BB <span class="repost-count">' + Number(p.repost_count || 0) + "</span></button>";
 
@@ -361,6 +365,7 @@ function renderPostCard(p, media) {
         </div>
         ${mediaHTML}
         <div class="post-text"></div>
+        ${where ? '<div class="meta post-where">' + escapeHTML(where) + "</div>" : ""}
         <div class="post-actions">
             <button type="button" class="plain-btn post-like${p.liked ? " liked" : ""}">${p.liked ? "\u2665" : "\u2661"} <span class="like-count">${Number(p.like_count)}</span></button>
             <button type="button" class="plain-btn post-comments-toggle">Comments (<span class="comment-count">${Number(p.comment_count)}</span>)</button>
@@ -368,6 +373,7 @@ function renderPostCard(p, media) {
             ${repost}
             <button type="button" class="plain-btn post-share">Share</button>
             ${tradeBtn}
+            ${save}
             ${message}
             ${statusBtn}
             ${edit}
@@ -740,6 +746,17 @@ function mountPosts(listEl) {
         if (shareBtn) {
             const who = card.querySelector(".post-author");
             openShare(card.dataset.postId, card.dataset.caption, who ? who.textContent : "");
+            return;
+        }
+
+        const saveBtn = target.closest(".post-save");
+        if (saveBtn) {
+            const turnOn = !saveBtn.classList.contains("saved");
+            const { data, error } = await db.rpc("save_post", { p_post: card.dataset.postId, p_save: turnOn });
+            if (error) { alert(friendlyError(error)); return; }
+            saveBtn.classList.toggle("saved", data);
+            saveBtn.textContent = data ? "Saved" : "Save";
+            showToast(data ? "Saved. Find it under the Saved button." : "Removed from saved");
             return;
         }
 

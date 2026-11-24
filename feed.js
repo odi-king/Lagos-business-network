@@ -4,6 +4,11 @@ let marketFilter = "market";
 let searchText = "";
 let lastCreated = null;
 let marketAvailable = true;
+let searchAvailable = true;
+let feedOffset = 0;
+let savedOnly = false;
+let filt = { category: "", state: "", min: null, max: null, sort: "newest" };
+let categories = [];
 
 let postIntent = "offer";
 let postItemType = "product";
@@ -69,6 +74,7 @@ async function init() {
     mountPosts(feedList);
     applyIntent("offer", "product");
     await loadMyListings();
+    await loadCategories();
     await loadFeed(true);
 }
 
@@ -92,6 +98,31 @@ async function loadMyListings() {
 // ---------- Loading the marketplace ----------
 
 async function fetchFeedPage(before) {
+    if (marketAvailable && searchAvailable) {
+        const { data, error } = await db.rpc("market_search", {
+            p_search: searchText,
+            p_filter: marketFilter,
+            p_mode: feedMode,
+            p_category: filt.category || null,
+            p_state: filt.state || null,
+            p_min: filt.min,
+            p_max: filt.max,
+            p_saved: savedOnly,
+            p_sort: filt.sort,
+            p_limit: 10,
+            p_offset: feedOffset
+        });
+
+        if (!error) return data;
+
+        if (!/market_search|schema cache|could not find/i.test(error.message)) throw error;
+
+        // supabase-market-2.sql has not been run yet: use the older search without the new filters
+        searchAvailable = false;
+        document.getElementById("filtersBox").style.display = "none";
+        document.querySelector('#filterChips [data-filter="saved"]').style.display = "none";
+    }
+
     if (marketAvailable) {
         const { data, error } = await db.rpc("market_posts", {
             p_search: searchText,
@@ -119,6 +150,7 @@ async function loadFeed(reset) {
     if (reset) {
         feedList.innerHTML = "";
         lastCreated = null;
+        feedOffset = 0;
         feedNote.textContent = "";
     }
 
@@ -132,8 +164,10 @@ async function loadFeed(reset) {
     }
 
     if (posts.length === 0 && reset) {
-        if (searchText) {
-            feedNote.textContent = 'Nothing found for "' + searchText + '". Try another word.';
+        if (savedOnly) {
+            feedNote.textContent = "You have not saved anything yet. Tap Save on a post to keep it here.";
+        } else if (searchText || filt.category || filt.state || filt.min !== null || filt.max !== null) {
+            feedNote.textContent = "Nothing found. Try another word or clear the filters.";
         } else if (feedMode === "following") {
             feedNote.textContent = "Nothing here yet. Follow members to see their posts.";
         } else {
@@ -145,6 +179,7 @@ async function loadFeed(reset) {
 
     if (posts.length > 0) {
         lastCreated = posts[posts.length - 1].created_at;
+        feedOffset += posts.length;
     }
 
     loadMoreBtn.style.display = posts.length === 10 ? "" : "none";
@@ -170,7 +205,13 @@ document.getElementById("filterChips").addEventListener("click", function (event
     document.querySelectorAll("#filterChips .chip").forEach(function (c) { c.classList.remove("active"); });
     chip.classList.add("active");
 
-    marketFilter = chip.dataset.filter;
+    if (chip.dataset.filter === "saved") {
+        savedOnly = true;
+        marketFilter = "market";
+    } else {
+        savedOnly = false;
+        marketFilter = chip.dataset.filter;
+    }
     loadFeed(true);
 });
 
@@ -183,6 +224,53 @@ document.getElementById("marketSearch").addEventListener("input", function (even
         searchText = event.target.value.trim();
         loadFeed(true);
     }, 350);
+});
+
+
+// ---------- Categories, places and prices (5A) ----------
+
+async function loadCategories() {
+    const { data, error } = await db.rpc("market_category_list");
+    if (error) return;
+    categories = data || [];
+    const fill = function (select, first, list) {
+        select.innerHTML = '<option value="">' + first + "</option>" + list.map(function (c) {
+            return '<option value="' + escapeHTML(c.name) + '">' + escapeHTML(c.name) + "</option>";
+        }).join("");
+    };
+    const products = categories.filter(function (c) { return c.item_type === "product"; });
+    const services = categories.filter(function (c) { return c.item_type === "service"; });
+    document.getElementById("fCategory").innerHTML = '<option value="">All categories</option><optgroup label="Products">' +
+        products.map(function (c) { return '<option value="' + escapeHTML(c.name) + '">' + escapeHTML(c.name) + "</option>"; }).join("") +
+        '</optgroup><optgroup label="Services">' +
+        services.map(function (c) { return '<option value="' + escapeHTML(c.name) + '">' + escapeHTML(c.name) + "</option>"; }).join("") + "</optgroup>";
+    fillPostCategories();
+    return fill;
+}
+
+function fillPostCategories() {
+    const select = document.getElementById("postCategory");
+    const type = postItemType || "product";
+    select.innerHTML = '<option value="">Category (helps buyers find you)</option>' + categories.filter(function (c) {
+        return c.item_type === type;
+    }).map(function (c) { return '<option value="' + escapeHTML(c.name) + '">' + escapeHTML(c.name) + "</option>"; }).join("");
+}
+
+document.getElementById("fApply").addEventListener("click", function () {
+    const num = function (id) { const v = document.getElementById(id).value; return v === "" ? null : Math.max(0, parseInt(v, 10)); };
+    filt = {
+        category: document.getElementById("fCategory").value, state: document.getElementById("fState").value,
+        min: num("fMin"), max: num("fMax"), sort: document.getElementById("fSort").value
+    };
+    if (filt.min !== null && filt.max !== null && filt.min > filt.max) { feedNote.textContent = "The lowest price is higher than the highest price."; return; }
+    loadFeed(true);
+});
+
+document.getElementById("fClear").addEventListener("click", function () {
+    ["fCategory", "fState", "fMin", "fMax"].forEach(function (id) { document.getElementById(id).value = ""; });
+    document.getElementById("fSort").value = "newest";
+    filt = { category: "", state: "", min: null, max: null, sort: "newest" };
+    loadFeed(true);
 });
 
 // ---------- What kind of post is it? ----------
@@ -206,6 +294,9 @@ function applyIntent(intent, type) {
     titleInput.placeholder = text.title;
     document.getElementById("postCaption").placeholder = text.caption;
     document.getElementById("postPrice").placeholder = text.price;
+
+    document.getElementById("postWhere").style.display = intent ? "" : "none";
+    fillPostCategories();
 
     document.querySelectorAll("#intentGrid .intent-card").forEach(function (card) {
         card.classList.toggle("selected", card.dataset.intent === intent && card.dataset.type === type);
@@ -440,6 +531,16 @@ postForm.addEventListener("submit", async function (event) {
         const created = await db.rpc("create_post", params);
 
         if (created.error) throw created.error;
+
+        if (postIntent) {
+            const cat = document.getElementById("postCategory").value;
+            const st = document.getElementById("postState").value;
+            const ar = document.getElementById("postArea").value;
+            if (cat || st || ar) {
+                const det = await db.rpc("post_set_details", { p_post: created.data, p_category: cat || null, p_state: st || null, p_area: ar || null });
+                if (det.error) showPostNote("Posted, but the category or place was not saved: " + friendlyError(det.error), "error");
+            }
+        }
 
         if (taggedPeople.length > 0) {
             await db.rpc("tag_post", {
