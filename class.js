@@ -321,7 +321,8 @@ async function loadLive() {
 
     data.forEach(function (session) {
         const start = new Date(session.starts_at);
-        const finished = start.getTime() < threeHoursAgo;
+        const inside = session.in_lbn === true;
+        const finished = start.getTime() < (inside ? Date.now() - 6 * 60 * 60 * 1000 : threeHoursAgo);
         const card = document.createElement("div");
         card.className = "business-card";
         card.dataset.session = session.id;
@@ -329,7 +330,10 @@ async function loadLive() {
 
         const join = finished
             ? '<p class="meta">This live class has ended.</p>'
-            : '<a class="contact-btn join-live" data-session="' + escapeHTML(session.id) + '" target="_blank" rel="noopener" href="' + escapeHTML(session.join_url) + '">Join live class</a>';
+            : inside
+                ? '<a class="contact-btn" href="live-room.html?s=' + encodeURIComponent(session.id) + '">' + (isOwner ? "Start the class in LBN" : "Join the class in LBN") + '</a>' +
+                  '<p class="meta">The room opens 15 minutes before the start time.</p>'
+                : '<a class="contact-btn join-live" data-session="' + escapeHTML(session.id) + '" target="_blank" rel="noopener" href="' + escapeHTML(session.join_url) + '">Join live class</a>';
 
         const remove = isOwner
             ? '<button type="button" class="delete-btn" data-kind="live_sessions" data-id="' + escapeHTML(session.id) + '">Delete</button>'
@@ -542,9 +546,10 @@ document.getElementById("lessonForm").addEventListener("submit", async function 
 document.getElementById("liveForm").addEventListener("submit", async function (event) {
     event.preventDefault();
 
+    const inside = document.getElementById("liveInside").checked;
     const link = document.getElementById("liveUrl").value.trim();
 
-    if (!link.startsWith("https://")) {
+    if (!inside && !link.startsWith("https://")) {
         alert("The meeting link must start with https://");
         return;
     }
@@ -559,13 +564,16 @@ document.getElementById("liveForm").addEventListener("submit", async function (e
         class_id: classId,
         title: document.getElementById("liveTitle").value.trim(),
         starts_at: start.toISOString(),
-        join_url: link
+        join_url: inside ? null : link,
+        in_lbn: inside
     });
 
     button.disabled = false;
 
     if (error) {
-        alert("Could not schedule the live class: " + error.message);
+        alert(/in_lbn/.test(error.message || "")
+            ? "Live rooms inside LBN are not switched on yet. Please try again later, or paste a meeting link."
+            : "Could not schedule the live class: " + error.message);
         return;
     }
 
@@ -759,3 +767,18 @@ liveList.addEventListener("click", async function (event) {
 });
 
 init();
+
+// Live class form: hide the link box when the class is hosted inside LBN
+(function () {
+    const box = document.getElementById("liveInside");
+    const link = document.getElementById("liveUrl");
+    if (!box || !link) return;
+
+    function sync() {
+        link.style.display = box.checked ? "none" : "";
+        link.required = !box.checked;
+    }
+
+    box.addEventListener("change", sync);
+    sync();
+})();

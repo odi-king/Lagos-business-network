@@ -63,7 +63,9 @@ async function init() {
             <h3>${escapeHTML(s.title)}</h3>
             <p class="meta">${escapeHTML(start.toLocaleString())}</p>
             <p class="meta">${escapeHTML(s.class_title)} &bull; ${escapeHTML(s.field)} &bull; ${escapeHTML(s.lecturer_name || "Lecturer")}</p>
-            <a class="contact-btn join-live" data-session="${escapeHTML(s.id)}" target="_blank" rel="noopener" href="${escapeHTML(s.join_url)}">Join live class</a>
+            ${s.in_lbn
+                ? '<a class="contact-btn" href="live-room.html?s=' + encodeURIComponent(s.id) + '">Join the class in LBN</a>'
+                : '<a class="contact-btn join-live" data-session="' + escapeHTML(s.id) + '" target="_blank" rel="noopener" href="' + escapeHTML(s.join_url) + '">Join live class</a>'}
             <a class="btn btn-outline" style="margin:10px 8px 0 0;" href="class.html?id=${encodeURIComponent(s.class_id)}">Open class</a>
         `;
 

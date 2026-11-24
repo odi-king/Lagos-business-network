@@ -66,11 +66,12 @@
 
         <section class="panel" id="addLive">
             <h2>Schedule a live class</h2>
-            <p class="meta">Paste your Zoom, Google Meet or Teams invite link. Free Zoom accounts end group meetings after 40 minutes.</p>
+            <p class="meta">Host your class inside LBN, with video and audio here. Or paste a Zoom, Google Meet or Teams invite link instead (free Zoom accounts end group meetings after 40 minutes).</p>
             <form id="liveForm">
                 <input type="text" id="liveTitle" placeholder="Topic (e.g. How to price your products)" required>
                 <input type="datetime-local" id="liveStart" required>
-                <input type="url" id="liveUrl" placeholder="Meeting link (https://...)" required>
+                <label class="meta"><input type="checkbox" id="liveInside" checked> Host this class inside LBN (no outside link needed)</label>
+                <input type="url" id="liveUrl" placeholder="Meeting link (https://...)">
                 <button type="submit" class="contact-btn">Schedule live class</button>
             </form>
         </section>
