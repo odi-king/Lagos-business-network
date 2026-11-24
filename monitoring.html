@@ -39,6 +39,34 @@
     </div>
     <p id="monMsg" class="msg"></p>
 
+    <section class="panel" id="perfBox" style="display:none;">
+        <h2>Performance and verification</h2>
+        <p class="meta">Points: 1 per verified registration + 2 per active member + 5 per paid subscription &minus; 3 per suspicious referral. Verified means the email is confirmed and the referral is not flagged. Active means signed in within 30 days. Referred members show by first name only, and opening an ambassador's list is recorded.</p>
+        <div class="filters">
+            <select id="pfPeriod">
+                <option value="">All time</option>
+                <option value="30">Last 30 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="365">Last 12 months</option>
+            </select>
+            <select id="pfType">
+                <option value="">All types</option>
+                <option value="student">Student</option>
+                <option value="lecturer">Lecturer</option>
+                <option value="business">Business</option>
+            </select>
+            <select id="pfSchool"><option value="">All schools</option></select>
+            <select id="pfStatus">
+                <option value="live">Current ambassadors</option>
+                <option value="all">Including ended</option>
+            </select>
+            <button type="button" class="btn btn-outline" id="pfCsv">Download CSV</button>
+        </div>
+        <div id="pfCards" class="meta"></div>
+        <div id="pfTable"><p class="meta">Loading...</p></div>
+        <div id="pfDetail"></div>
+    </section>
+
     <section class="panel" id="mineBox" style="display:none;"></section>
 
     <div id="mgmtBox" style="display:none;">

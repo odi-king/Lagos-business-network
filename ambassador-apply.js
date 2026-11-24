@@ -55,6 +55,8 @@ async function init() {
             box.innerHTML += '<p><a class="contact-btn" href="ambassador-certificate.html">My certificate</a></p>';
         }
 
+        await showIdentity(box);
+
         box.innerHTML += '<p><button type="button" class="btn btn-outline" id="resignBtn">Resign from my position</button></p>';
 
         await showCareer(box);
@@ -108,6 +110,25 @@ async function init() {
     }
 
     document.getElementById("appFormBox").style.display = "";
+}
+
+async function showIdentity(box) {
+    const { data } = await db.rpc("my_ambassador_identity");
+    if (!data || !data.referral_code) return;
+    const link = "https://odi-king.github.io/Lagos-business-network/auth.html?ref=" + encodeURIComponent(data.referral_code);
+    let qrSvg = "";
+    try {
+        if (typeof qrcode === "function") {
+            const qr = qrcode(0, "M");
+            qr.addData(link);
+            qr.make();
+            qrSvg = qr.createSvgTag(5, 4);
+        }
+    } catch (e) { qrSvg = ""; }
+    box.innerHTML += "<h3>My ambassador ID and link</h3>" +
+        "<p><strong>" + escapeHTML(data.ambassador_no || "") + "</strong> &mdash; keep this number, it stays the same.</p>" +
+        "<p class='meta'>Your link: <span style='word-break:break-all;'>" + escapeHTML(link) + "</span></p>" +
+        (qrSvg ? "<div style='background:#fff;display:inline-block;padding:6px;border-radius:8px;max-width:220px;'>" + qrSvg + "</div><p class='meta'>Show this QR code at events and on posters. Anyone who scans it lands on the sign-up page with your link attached.</p>" : "");
 }
 
 function money(kobo) {

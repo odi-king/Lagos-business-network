@@ -220,6 +220,118 @@ document.getElementById("appointForm").addEventListener("submit", async function
     await loadStaff();
 });
 
+// ---------- Performance and verification (4D-2) ----------
+let pfRows = [];
+
+function pfDates() {
+    const days = parseInt(document.getElementById("pfPeriod").value, 10);
+    if (!days) return { from: null, to: null };
+    const to = new Date();
+    const from = new Date(Date.now() - days * 86400000);
+    const iso = function (x) { return x.toISOString().slice(0, 10); };
+    return { from: iso(from), to: iso(to) };
+}
+
+async function loadPerformance() {
+    const box = document.getElementById("pfTable");
+    const dt = pfDates();
+    const args = {
+        p_from: dt.from, p_to: dt.to,
+        p_school: document.getElementById("pfSchool").value || null,
+        p_type: document.getElementById("pfType").value || null,
+        p_status: document.getElementById("pfStatus").value
+    };
+    const [perf, over] = await Promise.all([
+        db.rpc("monitoring_performance", args),
+        db.rpc("monitoring_overview", { p_from: dt.from, p_to: dt.to })
+    ]);
+    if (perf.error) {
+        box.innerHTML = "<p class='msg error'>" + escapeHTML(perf.error.message.indexOf("function") >= 0 ? "Not set up yet. Run supabase-monitoring-2.sql in Supabase." : perf.error.message) + "</p>";
+        return;
+    }
+    pfRows = perf.data || [];
+
+    const o = over.data || {};
+    document.getElementById("pfCards").innerHTML =
+        "<strong>" + (o.ambassadors || 0) + "</strong> ambassadors &bull; <strong>" + (o.registrations || 0) + "</strong> registrations &bull; <strong>" +
+        (o.verified || 0) + "</strong> verified &bull; <strong>" + (o.active || 0) + "</strong> active &bull; <strong>" +
+        (o.paid || 0) + "</strong> paid &bull; <strong>" + (o.flagged || 0) + "</strong> flagged";
+
+    if (pfRows.length === 0) { box.innerHTML = "<p class='meta'>No ambassadors to show.</p>"; return; }
+
+    box.innerHTML = '<div style="overflow-x:auto;"><table class="pf-table" style="width:100%;border-collapse:collapse;font-size:0.9rem;"><thead><tr>' +
+        ["#", "ID", "Name", "School", "Registered", "Verified", "Active", "Paid", "Conversion", "Flagged", "Points", ""].map(function (t) {
+            return '<th style="text-align:left;padding:6px;border-bottom:1px solid #334;">' + t + "</th>";
+        }).join("") + "</tr></thead><tbody>" +
+        pfRows.map(function (r) {
+            const td = function (v) { return '<td style="padding:6px;border-bottom:1px solid #223;">' + v + "</td>"; };
+            return "<tr>" + td(r.position) + td(escapeHTML(r.ambassador_no || "")) + td(escapeHTML(r.full_name)) + td(escapeHTML(r.school_name || "")) +
+                td(r.registrations) + td(r.verified) + td(r.active) + td(r.paid) + td(r.conversion_pct + "%") +
+                td(r.flagged ? "<strong>" + r.flagged + "</strong>" : "0") + td("<strong>" + r.points + "</strong>") +
+                td('<a href="#" class="pf-open" data-amb="' + escapeHTML(r.ambassador_id) + '">Details</a>') + "</tr>";
+        }).join("") + "</tbody></table></div>";
+}
+
+document.getElementById("pfTable").addEventListener("click", async function (event) {
+    const a = event.target.closest(".pf-open");
+    if (!a) return;
+    event.preventDefault();
+    const dt = pfDates();
+    const box = document.getElementById("pfDetail");
+    const { data, error } = await db.rpc("monitoring_ambassador_detail", { p_amb: a.dataset.amb, p_from: dt.from, p_to: dt.to });
+    if (error) { say(error.message, "error"); return; }
+    say("");
+    const refs = data.referrals || [];
+    box.innerHTML = '<div class="staff-card"><h3>' + escapeHTML(data.ambassador_no || "") + " " + escapeHTML(data.name) + "</h3>" +
+        "<p class='meta'>" + escapeHTML(data.school || "") + " &bull; " + escapeHTML(data.type) + " &bull; " + escapeHTML(data.rank || "") + " &bull; " + escapeHTML(data.status) + "</p>" +
+        (refs.length === 0 ? "<p class='meta'>No referrals in this period.</p>" : refs.map(function (r) {
+            return "<p class='meta'>" + escapeHTML(r.first_name) + " &bull; " + escapeHTML(d(r.created_at)) + " &bull; " +
+                (r.void ? "cancelled" : [r.email_confirmed ? "email confirmed" : "email not confirmed", r.active ? "active" : "not active lately", r.paid ? "PAID" : "not paid"].join(", ")) +
+                (r.flagged ? " &bull; <strong>FLAGGED" + (r.flag_reason ? ": " + escapeHTML(r.flag_reason) : "") + "</strong>" : "") + "</p>";
+        }).join("")) +
+        '<p><a href="#" id="pfClose">Close</a></p></div>';
+    box.scrollIntoView({ behavior: "smooth" });
+});
+
+document.getElementById("pfDetail").addEventListener("click", function (event) {
+    if (event.target.id === "pfClose") { event.preventDefault(); document.getElementById("pfDetail").innerHTML = ""; }
+});
+
+["pfPeriod", "pfType", "pfSchool", "pfStatus"].forEach(function (id) {
+    document.getElementById(id).addEventListener("change", loadPerformance);
+});
+
+document.getElementById("pfCsv").addEventListener("click", function () {
+    const rows = [["Position", "ID", "Name", "School", "Type", "Rank", "Status", "Registrations", "Verified", "Active", "Paid", "Conversion %", "Flagged", "Points"]];
+    pfRows.forEach(function (r) {
+        rows.push([r.position, r.ambassador_no, r.full_name, r.school_name, r.ambassador_type, r.ambassador_rank, r.appointment_status,
+            r.registrations, r.verified, r.active, r.paid, r.conversion_pct, r.flagged, r.points]);
+    });
+    // A leading apostrophe stops a spreadsheet from running a name that starts with = + - or @ as a formula
+    const csv = rows.map(function (row) {
+        return row.map(function (cell) {
+            let v = String(cell ?? "");
+            if (/^[=+\-@]/.test(v)) v = "'" + v;
+            return '"' + v.replace(/"/g, '""') + '"';
+        }).join(",");
+    }).join("\n");
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    link.download = "ambassador-performance-" + new Date().toISOString().slice(0, 10) + ".csv";
+    link.click();
+    URL.revokeObjectURL(link.href);
+});
+
+async function startPerformance() {
+    const can = await db.rpc("monitoring_can_view");
+    if (can.error || !can.data) return;
+    document.getElementById("perfBox").style.display = "";
+    const sc = await db.rpc("monitoring_schools");
+    document.getElementById("pfSchool").innerHTML = '<option value="">All schools</option>' +
+        (sc.data || []).map(function (s) { return '<option value="' + escapeHTML(s.id) + '">' + escapeHTML(s.name) + "</option>"; }).join("");
+    await loadPerformance();
+}
+
 (async function init() {
     if (!db) { say("Supabase is not connected yet.", "error"); return; }
     const { data } = await db.auth.getSession();
@@ -230,6 +342,8 @@ document.getElementById("appointForm").addEventListener("submit", async function
     myRole = role.data;
 
     if (!myRole) { say("This area is only for the Monitoring Department team and the Super Admin.", "error"); return; }
+
+    await startPerformance();
 
     if (myRole === "super" || myRole === "head") {
         document.getElementById("mgmtBox").style.display = "";
