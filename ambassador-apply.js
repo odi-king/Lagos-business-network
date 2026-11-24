@@ -56,6 +56,7 @@ async function init() {
         }
 
         await showIdentity(box);
+        await showReports(box);
 
         box.innerHTML += '<p><button type="button" class="btn btn-outline" id="resignBtn">Resign from my position</button></p>';
 
@@ -129,6 +130,18 @@ async function showIdentity(box) {
         "<p><strong>" + escapeHTML(data.ambassador_no || "") + "</strong> &mdash; keep this number, it stays the same.</p>" +
         "<p class='meta'>Your link: <span style='word-break:break-all;'>" + escapeHTML(link) + "</span></p>" +
         (qrSvg ? "<div style='background:#fff;display:inline-block;padding:6px;border-radius:8px;max-width:220px;'>" + qrSvg + "</div><p class='meta'>Show this QR code at events and on posters. Anyone who scans it lands on the sign-up page with your link attached.</p>" : "");
+}
+
+async function showReports(box) {
+    const { data } = await db.rpc("my_ambassador_reports");
+    if (!data || data.length === 0) return;
+    box.innerHTML += "<h3>My monthly reports</h3>" + data.map(function (r) {
+        return "<div class='staff-card'><strong>" + escapeHTML(new Date(r.month).toLocaleDateString(undefined, { month: "long", year: "numeric" })) + "</strong>" +
+            (r.score !== null ? " &bull; score " + r.score + "/100" : "") + (r.position ? " &bull; position " + r.position : "") +
+            "<p class='meta'>Sign-ups " + r.registrations + (r.target_registrations !== null ? " of " + r.target_registrations : "") + " &bull; verified " + r.verified + " &bull; active " + r.active + " &bull; paid " + r.paid + (r.target_paid !== null ? " of " + r.target_paid : "") + " &bull; points " + r.points + "</p>" +
+            (r.achievements ? "<p><strong>Achievements:</strong> " + escapeHTML(r.achievements) + "</p>" : "") +
+            (r.improvements ? "<p><strong>Areas to improve:</strong> " + escapeHTML(r.improvements) + "</p>" : "") + "</div>";
+    }).join("");
 }
 
 function money(kobo) {

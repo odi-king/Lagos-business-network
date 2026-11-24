@@ -496,6 +496,192 @@ async function startInspections() {
     await loadInspections();
 }
 
+// ---------- Anti-fraud and monthly reports (4D-4) ----------
+const CASEKIND = { duplicate_accounts: "Duplicate accounts", suspicious_referrals: "Suspicious referrals", fake_activity: "Fake activity", other: "Other" };
+const SIGKIND = { shared_device: "Same device", shared_network: "Same network", high_flagged: "Many flagged referrals" };
+
+async function loadSignals() {
+    const box = document.getElementById("sigList");
+    const { data, error } = await db.rpc("monitoring_fraud_signals");
+    if (error) {
+        box.innerHTML = "<p class='msg error'>" + escapeHTML(error.message.indexOf("function") >= 0 ? "Not set up yet. Run supabase-monitoring-4.sql in Supabase." : error.message) + "</p>";
+        return;
+    }
+    const rows = data || [];
+    box.innerHTML = rows.length === 0 ? "<p class='meta'>No warning signs right now.</p>" : rows.map(function (r) {
+        return '<div class="staff-card"><strong>' + escapeHTML(r.ambassador_no || "") + " " + escapeHTML(r.name) + "</strong> <span class='meta'>" + escapeHTML(r.school || "") + " &bull; <strong>" + escapeHTML(SIGKIND[r.kind]) + "</strong>: " + r.count + " of " + r["of"] + " referrals" + (r.open_case ? " &bull; case already open" : "") + "</span>" +
+            "<p class='meta'>" + escapeHTML(r.detail) + "</p>" +
+            (r.open_case ? "" : '<p><a href="#" class="sig-case" data-amb="' + escapeHTML(r.ambassador_id) + '" data-kind="' + (r.kind === "high_flagged" ? "suspicious_referrals" : "duplicate_accounts") + '" data-title="' + escapeHTML(SIGKIND[r.kind] + ": " + r.name) + '">Open a case</a></p>') + "</div>";
+    }).join("");
+}
+
+async function loadCases() {
+    const box = document.getElementById("caseList");
+    const { data, error } = await db.rpc("monitoring_cases_list", { p_status: document.getElementById("caseFilter").value || null });
+    if (error) { box.innerHTML = "<p class='msg error'>" + escapeHTML(error.message) + "</p>"; return; }
+    const rows = data || [];
+    box.innerHTML = rows.length === 0 ? "<p class='meta'>No cases.</p>" : rows.map(function (c) {
+        const closed = c.status === "resolved";
+        return '<div class="staff-card" data-case="' + escapeHTML(c.id) + '"><strong>' + escapeHTML(c.case_no) + " " + escapeHTML(c.title) + "</strong> <span class='meta'>" + escapeHTML(CASEKIND[c.kind]) + " &bull; " +
+            escapeHTML(c.status) + (c.outcome ? " (" + (c.outcome === "fraud_confirmed" ? "fraud confirmed" : "no fraud") + ")" : "") + " &bull; " + escapeHTML(d(c.created_at)) + " &bull; opened by " + escapeHTML(c.opened_by_name) +
+            (c.ambassador_name ? " &bull; " + escapeHTML((c.ambassador_no || "") + " " + c.ambassador_name) : "") + "</span>" +
+            (c.description ? "<p>" + escapeHTML(c.description) + "</p>" : "") +
+            (c.notes || []).map(function (n) { return "<p class='meta'>" + escapeHTML(d(n.created_at)) + " " + escapeHTML(n.author) + ": " + escapeHTML(n.body) + "</p>"; }).join("") +
+            (closed ? "" : '<p><input type="text" class="case-note" maxlength="1500" placeholder="Add a note"> ' +
+                '<button type="button" class="btn btn-outline case-note-btn">Add note</button> ' +
+                (c.status === "open" ? '<button type="button" class="btn btn-outline case-inv">Start investigating</button> ' : "") +
+                '<button type="button" class="btn btn-outline case-fraud">Close: fraud confirmed</button> ' +
+                '<button type="button" class="btn btn-outline case-clear">Close: no fraud</button></p>') + "</div>";
+    }).join("");
+}
+
+async function caseUpdate(id, status, outcome, note) {
+    const { error } = await db.rpc("monitoring_case_update", { p_id: id, p_status: status, p_outcome: outcome, p_note: note });
+    if (error) { say(error.message, "error"); return false; }
+    say("Saved.", "ok");
+    await Promise.all([loadCases(), loadSignals()]);
+    return true;
+}
+
+document.getElementById("caseList").addEventListener("click", async function (event) {
+    const card = event.target.closest("[data-case]");
+    if (!card) return;
+    const id = card.dataset.case;
+    const note = card.querySelector(".case-note");
+    const text = note ? note.value.trim() : "";
+    const t = event.target;
+    if (t.closest(".case-note-btn")) {
+        if (!text) { say("Write a note first.", "error"); return; }
+        const cur = card.querySelector(".case-inv") ? "open" : "investigating";
+        await caseUpdate(id, cur, null, text);
+    } else if (t.closest(".case-inv")) {
+        await caseUpdate(id, "investigating", null, text);
+    } else if (t.closest(".case-fraud") || t.closest(".case-clear")) {
+        const fraud = !!t.closest(".case-fraud");
+        if (text.length < 10) { say("Write how you reached this conclusion in the note box (at least a sentence), then close the case.", "error"); return; }
+        if (!confirm(fraud ? "Close as FRAUD CONFIRMED? The admins will be alerted." : "Close as no fraud?")) return;
+        await caseUpdate(id, "resolved", fraud ? "fraud_confirmed" : "no_fraud", text);
+    }
+});
+
+document.getElementById("caseFilter").addEventListener("change", loadCases);
+document.getElementById("caseCancel").addEventListener("click", function () { document.getElementById("caseForm").style.display = "none"; });
+
+async function caseFillAmbassadors() {
+    const { data } = await db.rpc("monitoring_performance", { p_status: "live" });
+    document.getElementById("caseAmb").innerHTML = '<option value="">No specific ambassador</option>' + (data || []).map(function (r) {
+        return '<option value="' + escapeHTML(r.ambassador_id) + '">' + escapeHTML((r.ambassador_no || "") + " " + r.full_name) + "</option>";
+    }).join("");
+}
+
+document.getElementById("caseNew").addEventListener("click", async function () {
+    await caseFillAmbassadors();
+    document.getElementById("caseForm").style.display = "";
+});
+
+document.getElementById("sigList").addEventListener("click", async function (event) {
+    const a = event.target.closest(".sig-case");
+    if (!a) return;
+    event.preventDefault();
+    await caseFillAmbassadors();
+    document.getElementById("caseAmb").value = a.dataset.amb;
+    document.getElementById("caseKind").value = a.dataset.kind;
+    document.getElementById("caseTitle").value = a.dataset.title;
+    document.getElementById("caseForm").style.display = "";
+    document.getElementById("caseForm").scrollIntoView({ behavior: "smooth" });
+});
+
+document.getElementById("caseForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const { error } = await db.rpc("monitoring_case_open", {
+        p_kind: document.getElementById("caseKind").value, p_amb: document.getElementById("caseAmb").value || null,
+        p_title: document.getElementById("caseTitle").value, p_description: document.getElementById("caseDesc").value
+    });
+    if (error) { say(error.message, "error"); return; }
+    say("Case opened.", "ok");
+    document.getElementById("caseForm").style.display = "none";
+    document.getElementById("caseTitle").value = "";
+    document.getElementById("caseDesc").value = "";
+    await Promise.all([loadCases(), loadSignals()]);
+});
+
+async function startFraud() {
+    if (["super", "head", "data_analyst"].indexOf(myRole) < 0) return;
+    document.getElementById("fraudBox").style.display = "";
+    await Promise.all([loadSignals(), loadCases()]);
+}
+
+// Monthly reports
+function rpMonthDate() {
+    const v = document.getElementById("rpMonth").value;
+    return v ? v + "-01" : null;
+}
+
+async function loadReports() {
+    const box = document.getElementById("rpList");
+    const m = rpMonthDate();
+    if (!m) { box.innerHTML = "<p class='meta'>Choose a month.</p>"; return; }
+    const { data, error } = await db.rpc("monitoring_reports_list", { p_month: m });
+    if (error) {
+        box.innerHTML = "<p class='msg error'>" + escapeHTML(error.message.indexOf("function") >= 0 ? "Not set up yet. Run supabase-monitoring-4.sql in Supabase." : error.message) + "</p>";
+        return;
+    }
+    const rows = data || [];
+    box.innerHTML = rows.length === 0 ? "<p class='meta'>No drafts for this month yet. Click Generate.</p>" : rows.map(function (r) {
+        const locked = r.status === "published";
+        return '<div class="staff-card" data-rp="' + escapeHTML(r.id) + '"><strong>#' + (r.position || "-") + " " + escapeHTML(r.ambassador_no || "") + " " + escapeHTML(r.name) + "</strong> <span class='meta'>" + escapeHTML(r.school || "") + " &bull; " + escapeHTML(r.status) + (r.score !== null ? " &bull; score " + r.score + "/100" : "") + "</span>" +
+            "<p class='meta'>Registered " + r.registrations + " &bull; verified " + r.verified + " &bull; active " + r.active + " &bull; paid " + r.paid + " &bull; flagged " + r.flagged + " &bull; points " + r.points +
+            (r.inspection_result ? " &bull; latest inspection: " + escapeHTML(r.inspection_result) : "") + "</p>" +
+            (locked ? "<p><strong>Targets:</strong> " + (r.target_registrations ?? "-") + " sign-ups, " + (r.target_paid ?? "-") + " paid</p><p><strong>Achievements:</strong> " + escapeHTML(r.achievements) + "</p><p><strong>To improve:</strong> " + escapeHTML(r.improvements) + "</p>" :
+            '<p>Targets: <input type="number" class="rp-treg" min="0" style="width:90px;" placeholder="sign-ups" value="' + (r.target_registrations ?? "") + '"> <input type="number" class="rp-tpaid" min="0" style="width:90px;" placeholder="paid" value="' + (r.target_paid ?? "") + '"></p>' +
+            '<textarea class="rp-ach" rows="2" maxlength="1500" placeholder="Achievements">' + escapeHTML(r.achievements) + '</textarea>' +
+            '<textarea class="rp-imp" rows="2" maxlength="1500" placeholder="Areas to improve">' + escapeHTML(r.improvements) + '</textarea>' +
+            '<p><button type="button" class="btn btn-outline rp-save">Save</button> <button type="button" class="contact-btn rp-pub">Save and publish</button></p>') + "</div>";
+    }).join("");
+}
+
+document.getElementById("rpMonth").addEventListener("change", loadReports);
+
+document.getElementById("rpGen").addEventListener("click", async function () {
+    const m = rpMonthDate();
+    if (!m) { say("Choose a month first.", "error"); return; }
+    const { data, error } = await db.rpc("monitoring_report_generate", { p_month: m });
+    if (error) { say(error.message, "error"); return; }
+    say("Drafts ready for " + data + " ambassador(s). Published reports were left untouched.", "ok");
+    await loadReports();
+});
+
+document.getElementById("rpList").addEventListener("click", async function (event) {
+    const card = event.target.closest("[data-rp]");
+    if (!card) return;
+    const save = event.target.closest(".rp-save");
+    const pub = event.target.closest(".rp-pub");
+    if (!save && !pub) return;
+    const num = function (sel) { const v = card.querySelector(sel).value; return v === "" ? null : parseInt(v, 10); };
+    const s = await db.rpc("monitoring_report_save", {
+        p_id: card.dataset.rp, p_target_reg: num(".rp-treg"), p_target_paid: num(".rp-tpaid"),
+        p_achievements: card.querySelector(".rp-ach").value, p_improvements: card.querySelector(".rp-imp").value
+    });
+    if (s.error) { say(s.error.message, "error"); return; }
+    if (pub) {
+        if (!confirm("Publish this report? It will be locked and the ambassador will see it.")) return;
+        const p = await db.rpc("monitoring_report_publish", { p_id: card.dataset.rp });
+        if (p.error) { say(p.error.message, "error"); return; }
+        say("Published.", "ok");
+    } else {
+        say("Saved.", "ok");
+    }
+    await loadReports();
+});
+
+async function startReports() {
+    if (["super", "head", "performance_officer"].indexOf(myRole) < 0) return;
+    document.getElementById("reportBox").style.display = "";
+    const now = new Date();
+    document.getElementById("rpMonth").value = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+    await loadReports();
+}
+
 (async function init() {
     if (!db) { say("Supabase is not connected yet.", "error"); return; }
     const { data } = await db.auth.getSession();
@@ -509,6 +695,8 @@ async function startInspections() {
 
     await startPerformance();
     await startInspections();
+    await startFraud();
+    await startReports();
 
     if (myRole === "super" || myRole === "head") {
         document.getElementById("mgmtBox").style.display = "";

@@ -105,6 +105,47 @@
         <div id="inList"><p class="meta">Loading...</p></div>
     </section>
 
+    <section class="panel" id="fraudBox" style="display:none;">
+        <h2>Anti-fraud</h2>
+        <p class="meta">Warning signs found automatically among each ambassador's referred members. A warning is a reason to look, not proof. Open a case, record what you find, and close it as fraud confirmed or no fraud. Confirmed fraud alerts the admins.</p>
+        <h3>Warning signs</h3>
+        <div id="sigList"><p class="meta">Loading...</p></div>
+        <h3>Cases</h3>
+        <div class="filters">
+            <select id="caseFilter">
+                <option value="">All cases</option>
+                <option value="open">Open</option>
+                <option value="investigating">Investigating</option>
+                <option value="resolved">Closed</option>
+            </select>
+            <button type="button" class="btn btn-outline" id="caseNew">Open a case</button>
+        </div>
+        <form id="caseForm" style="display:none;">
+            <select id="caseKind">
+                <option value="duplicate_accounts">Duplicate accounts</option>
+                <option value="suspicious_referrals">Suspicious referrals</option>
+                <option value="fake_activity">Fake activity</option>
+                <option value="other">Other</option>
+            </select>
+            <select id="caseAmb"></select>
+            <input type="text" id="caseTitle" maxlength="140" placeholder="Short title" required>
+            <textarea id="caseDesc" rows="3" maxlength="2000" placeholder="What did you notice?"></textarea>
+            <button type="submit" class="contact-btn">Open case</button>
+            <button type="button" class="btn btn-outline" id="caseCancel">Cancel</button>
+        </form>
+        <div id="caseList"><p class="meta">Loading...</p></div>
+    </section>
+
+    <section class="panel" id="reportBox" style="display:none;">
+        <h2>Monthly performance reports</h2>
+        <p class="meta">Generate a draft for every ambassador for a month. Numbers are filled in automatically with suggested achievements and areas to improve. Set targets, edit the text, then publish. Published reports are locked and appear on the ambassador's page. Score = how much of the targets were reached, out of 100.</p>
+        <div class="filters">
+            <input type="month" id="rpMonth">
+            <button type="button" class="btn btn-outline" id="rpGen">Generate or refresh drafts</button>
+        </div>
+        <div id="rpList"><p class="meta">Choose a month.</p></div>
+    </section>
+
     <section class="panel" id="mineBox" style="display:none;"></section>
 
     <div id="mgmtBox" style="display:none;">
