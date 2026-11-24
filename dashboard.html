@@ -61,6 +61,27 @@
             <button type="submit" class="contact-btn">Save payout account</button>
         </form>
         <p id="payoutMsg" class="msg"></p>
+
+        <div id="idCheck" style="display:none; margin-top:20px;">
+            <h3>Identity check</h3>
+            <p class="meta">Before your first payout, the LBN team checks your ID, so money only goes to the right person. Only you and the LBN finance team can see these photos.</p>
+            <p id="idStatus" class="notice"></p>
+            <form id="idForm" style="display:none;">
+                <input type="text" id="idLegalName" placeholder="Your full name exactly as written on your ID" maxlength="80" required>
+                <select id="idType">
+                    <option value="nin_slip">NIN slip</option>
+                    <option value="voters_card">Voter's card</option>
+                    <option value="drivers_licence">Driver's licence</option>
+                    <option value="passport">International passport</option>
+                </select>
+                <label class="meta" for="idPhoto">Photo of your ID (clear, with all four corners and the name visible)</label>
+                <input type="file" id="idPhoto" accept="image/*" required>
+                <label class="meta" for="idSelfie">Selfie: your face, holding the same ID next to it</label>
+                <input type="file" id="idSelfie" accept="image/*" required>
+                <button type="submit" id="idSubmit" class="contact-btn">Send for checking</button>
+            </form>
+            <p id="idMsg" class="msg"></p>
+        </div>
     </section>
 
     <section class="panel">
@@ -130,6 +151,7 @@
 <script src="supabase-config.js"></script>
 <script src="membership.js"></script>
 <script src="dashboard.js"></script>
+<script src="seller-id.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>
 <script src="ambassador-banner.js"></script>

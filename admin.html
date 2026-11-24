@@ -125,6 +125,18 @@
         <div id="peopleList"></div>
     </section>
 
+    <section class="panel" data-perm="finance">
+        <h2>Seller ID checks</h2>
+        <p class="meta">Sellers must pass this check before they can be paid. Open the photos, check that the name on the ID matches the name of the payout bank account, and that the selfie matches the ID photo. The photos are private.</p>
+        <div class="filters">
+            <select id="idFilter">
+                <option value="pending">Waiting for me</option>
+                <option value="all">All checks</option>
+            </select>
+        </div>
+        <div id="idList"></div>
+    </section>
+
     <section class="panel" data-perm="finance,marketplace">
         <h2>Payments and disputes</h2>
         <p class="meta">Money held by LBN, disputes to decide, and payouts to make. Open the chat to read what both sides said.</p>
@@ -201,6 +213,7 @@
 <script src="paystack-config.js"></script>
 <script src="mfa.js"></script>
 <script src="admin.js"></script>
+<script src="seller-id-admin.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>
 <script src="i18n-strings.js"></script>

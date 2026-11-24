@@ -329,6 +329,7 @@ supportFilter.addEventListener("change", renderSupport);
 // ---------- Payments and disputes ----------
 
 let queue = [];
+let payoutChecks = {};
 
 const queueList = document.getElementById("queueList");
 const queueFilter = document.getElementById("queueFilter");
@@ -355,7 +356,21 @@ async function loadQueue() {
     }
 
     queue = data;
+    await loadPayoutChecks();
     renderQueue();
+}
+
+// Which sellers in the list have passed the ID check (supabase-seller-id.sql)
+async function loadPayoutChecks() {
+    payoutChecks = {};
+
+    const ids = queue.filter(function (row) { return row.kind === "payout_due" && row.trade_id; }).map(function (row) { return row.trade_id; });
+    if (ids.length === 0) return;
+
+    const result = await db.rpc("admin_payout_verification", { p_trade_ids: ids });
+    if (result.error || !result.data) return;
+
+    result.data.forEach(function (c) { payoutChecks[c.trade_id] = c; });
 }
 
 function renderQueue() {
@@ -397,7 +412,19 @@ function renderQueue() {
                 (row.account_number
                     ? "<p>" + escapeHTML(row.bank_name) + " &bull; " + escapeHTML(row.account_number) + " &bull; " + escapeHTML(row.account_name) + "</p>"
                     : "<p class='meta'>The seller has not saved a payout account yet. Ask them to add one on their dashboard.</p>");
-            buttons = '<button type="button" class="contact-btn" data-act="paidout" data-trade="' + id + '">Mark as paid out</button>';
+            const check = payoutChecks[row.trade_id];
+
+            if (check && !check.verified) {
+                details += "<p class='msg error'>ID check " +
+                    (check.status === "pending" ? "is waiting for your review (see Seller ID checks above)"
+                        : check.status === "recheck" ? "is needed again because the seller changed their bank account"
+                        : check.status === "rejected" ? "was rejected and the seller must send it again"
+                        : "has not been done yet") + ". Do not pay this seller until it passes.</p>";
+                buttons = "";
+            } else {
+                if (check) details += "<p class='meta'>ID check passed.</p>";
+                buttons = '<button type="button" class="contact-btn" data-act="paidout" data-trade="' + id + '">Mark as paid out</button>';
+            }
         } else if (row.kind === "refund_due") {
             details =
                 "<p><strong>Refund the buyer " + money(row.amount) + "</strong> through your Paystack dashboard.</p>" +
