@@ -697,6 +697,7 @@ async function loadGradRules() {
     document.getElementById("ruleAssessments").value = data.min_assessments;
 
     loadMaterials();
+    loadCertificates();
 }
 
 document.getElementById("gradRulesForm").addEventListener("submit", async function (event) {
@@ -712,6 +713,63 @@ document.getElementById("gradRulesForm").addEventListener("submit", async functi
 
     message.className = error ? "msg error" : "msg ok";
     message.textContent = error ? error.message : "Requirements saved.";
+});
+
+// ---------- Graduation certificates ----------
+
+async function loadCertificates() {
+    const box = document.getElementById("certAdminList");
+    const { data, error } = await db.rpc("admin_certificates", { p_search: document.getElementById("certSearch").value });
+
+    if (error) {
+        box.innerHTML = "<p class='meta'>Not set up yet. Run supabase-certificates.sql in Supabase.</p>";
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        box.innerHTML = "<p class='meta'>No certificates found.</p>";
+        return;
+    }
+
+    box.innerHTML = data.map(function (c) {
+        return '<div class="comment"><strong>' + escapeHTML(c.holder_name) + "</strong> &bull; " + escapeHTML(c.certificate_no) +
+            ' <span class="meta">' + escapeHTML(c.student_email) + " &bull; " + new Date(c.issued_at).toLocaleDateString() + "</span> " +
+            (c.revoked_at
+                ? '<span class="badge closed">withdrawn</span> <span class="meta">' + escapeHTML(c.revoked_reason || "") + "</span>"
+                : '<button type="button" class="delete-btn" data-cert="' + escapeHTML(c.certificate_no) + '">Withdraw</button>') +
+            "</div>";
+    }).join("");
+}
+
+let certTimer = null;
+
+document.getElementById("certSearch").addEventListener("input", function () {
+    clearTimeout(certTimer);
+    certTimer = setTimeout(loadCertificates, 400);
+});
+
+document.getElementById("certAdminList").addEventListener("click", async function (event) {
+    const button = event.target.closest("button[data-cert]");
+    if (!button) return;
+
+    const reason = prompt("Why is this certificate being withdrawn? The graduate will see this (10 to 300 characters):");
+    if (!reason) return;
+
+    const message = document.getElementById("certAdminMsg");
+    button.disabled = true;
+
+    const { error } = await db.rpc("admin_revoke_certificate", { p_no: button.dataset.cert, p_reason: reason });
+
+    if (error) {
+        button.disabled = false;
+        message.className = "msg error";
+        message.textContent = error.message;
+        return;
+    }
+
+    message.className = "msg ok";
+    message.textContent = "Certificate withdrawn.";
+    await loadCertificates();
 });
 
 // ---------- Required books and handouts ----------

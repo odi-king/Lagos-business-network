@@ -280,7 +280,8 @@ async function loadGraduation() {
     const g = result.data;
 
     if (g.graduated) {
-        body.innerHTML = "<p><strong>You have graduated.</strong> The marketplace is open to you.</p>";
+        body.innerHTML = "<p><strong>You have graduated.</strong> The marketplace is open to you.</p>" +
+            '<p><a class="contact-btn" href="graduation-certificate.html">View and print your certificate</a></p>';
         return;
     }
 
