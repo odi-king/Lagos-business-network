@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DIAG Marketplace - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+<div id="diagBox" style="position:fixed;left:0;right:0;top:0;z-index:2147483647;background:#000;color:#0f0;font:11px/1.3 monospace;padding:4px;max-height:45vh;overflow:hidden;white-space:pre-wrap;pointer-events:none;"></div>
+<script>
+(function () {
+    var lines = [], t0 = Date.now();
+    var box = function () { return document.getElementById("diagBox"); };
+    function log(msg) {
+        lines.push(((Date.now() - t0) / 1000).toFixed(1) + "s " + msg);
+        if (lines.length > 22) lines.shift();
+        var b = box(); if (b) b.textContent = lines.join("\n");
+    }
+    var n = 1;
+    try { n = (parseInt(sessionStorage.getItem("diagLoads") || "0", 10) || 0) + 1; sessionStorage.setItem("diagLoads", String(n)); } catch (e) {}
+    log("PAGE LOAD NUMBER " + n + " (a number that keeps rising = the page keeps reloading)");
+    window.addEventListener("error", function (e) { log("ERROR " + e.message + " @" + String(e.filename || "").split("/").pop() + ":" + e.lineno); });
+    window.addEventListener("unhandledrejection", function (e) { log("PROMISE ERROR " + (e.reason && e.reason.message || e.reason)); });
+    var of = window.fetch;
+    window.fetch = function (u) {
+        var s = String(u && u.url || u).replace(/^https?:\/\/[^\/]+/, "").slice(0, 60);
+        log("fetch " + s);
+        return of.apply(this, arguments);
+    };
+    var lastH = 0, lastY = -1;
+    setInterval(function () {
+        var h = document.documentElement.scrollHeight, y = Math.round(window.scrollY);
+        if (h !== lastH || y !== lastY) { log("height " + h + " scrollY " + y); lastH = h; lastY = y; }
+    }, 150);
+    document.addEventListener("visibilitychange", function () { log("visibility " + document.visibilityState); });
+    window.addEventListener("pageshow", function (e) { log("pageshow cached=" + e.persisted); });
+    window.addEventListener("beforeunload", function () { try { sessionStorage.setItem("diagLast", "left page at " + new Date().toISOString()); } catch (e) {} });
+    document.addEventListener("DOMContentLoaded", function () { log("DOM ready"); });
+    window.addEventListener("load", function () { log("fully loaded"); });
+})();
+</script>
+
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="classes.html">Classes</a>
+            <a href="feed.html" class="active">Marketplace</a>
+            <a href="reels.html">Reels</a>
+            <a href="trades.html">My trades</a>
+            <a href="member.html">Profile</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container feed-page">
+    <div class="feed-top">
+        <div id="marketNav"></div>
+        <h1>Marketplace</h1>
+        <p class="meta">Buy, sell and offer services. Tap a post to chat and trade safely.</p>
+    </div>
+
+    <div class="tips" id="tips" style="display:none;">
+        <button type="button" class="plain-btn tips-close" id="tipsClose">Close</button>
+        <h3>Welcome. Four easy steps</h3>
+        <ol>
+            <li>Tap <strong>Post something</strong> to sell, offer a service, or ask for what you need.</li>
+            <li>Search the marketplace, or use the buttons for items for sale, services and wanted.</li>
+            <li>Tap <strong>Chat to buy</strong> or <strong>Chat to offer</strong> on a post to start a safe trade.</li>
+            <li>Both of you confirm when it is done, and the trade closes.</li>
+        </ol>
+    </div>
+
+    <details class="composer" id="composer">
+        <summary>Post something</summary>
+        <p class="meta">Do not put phone numbers or links in posts. Buyers and sellers talk in the trade chat on LBN.</p>
+        <form id="postForm">
+            <div class="intent-grid" id="intentGrid">
+                                <button type="button" class="intent-card selected" data-intent="offer" data-type="product"><strong>Sell a product</strong><span>Something you have for sale</span></button>
+                <button type="button" class="intent-card" data-intent="offer" data-type="service"><strong>Offer a service</strong><span>Work you can do</span></button>
+                <button type="button" class="intent-card" data-intent="need" data-type="product"><strong>I need a product</strong><span>Tell people what you want</span></button>
+                <button type="button" class="intent-card" data-intent="need" data-type="service"><strong>I need a service</strong><span>Ask for help with a job</span></button>
+            </div>
+            <input type="text" id="postTitle" maxlength="80" placeholder="Title" style="display:none;">
+            <textarea id="postCaption" placeholder="What do you want to share?" maxlength="1000"></textarea>
+            <input type="number" id="postPrice" placeholder="Price in naira (optional)" min="0">
+            <div id="postWhere" style="display:none;">
+                <select id="postCategory"><option value="">Category (helps buyers find you)</option></select>
+                <select id="postState"><option value="">State</option><option value="Abia">Abia</option><option value="Adamawa">Adamawa</option><option value="Akwa Ibom">Akwa Ibom</option><option value="Anambra">Anambra</option><option value="Bauchi">Bauchi</option><option value="Bayelsa">Bayelsa</option><option value="Benue">Benue</option><option value="Borno">Borno</option><option value="Cross River">Cross River</option><option value="Delta">Delta</option><option value="Ebonyi">Ebonyi</option><option value="Edo">Edo</option><option value="Ekiti">Ekiti</option><option value="Enugu">Enugu</option><option value="FCT Abuja">FCT Abuja</option><option value="Gombe">Gombe</option><option value="Imo">Imo</option><option value="Jigawa">Jigawa</option><option value="Kaduna">Kaduna</option><option value="Kano">Kano</option><option value="Katsina">Katsina</option><option value="Kebbi">Kebbi</option><option value="Kogi">Kogi</option><option value="Kwara">Kwara</option><option value="Lagos">Lagos</option><option value="Nasarawa">Nasarawa</option><option value="Niger">Niger</option><option value="Ogun">Ogun</option><option value="Ondo">Ondo</option><option value="Osun">Osun</option><option value="Oyo">Oyo</option><option value="Plateau">Plateau</option><option value="Rivers">Rivers</option><option value="Sokoto">Sokoto</option><option value="Taraba">Taraba</option><option value="Yobe">Yobe</option><option value="Zamfara">Zamfara</option><option value="Outside Nigeria">Outside Nigeria</option></select>
+                <input type="text" id="postArea" maxlength="60" placeholder="Area or town, for example Yaba (optional)">
+            </div>
+            <select id="postListing"><option value="">Attach one of your listings (optional)</option></select>
+            <input type="text" id="tagSearch" placeholder="Tag people (optional)" autocomplete="off">
+            <div id="tagResults"></div>
+            <div id="tagChips" class="chips"></div>
+            <input type="file" id="postMedia" accept="image/*,video/*" style="display:none;">
+            <button type="button" id="pickMedia" class="media-tile">
+                <span class="media-plus">+</span>
+                <span>Add a photo or video from your phone</span>
+                <span class="meta">Videos can be up to 90 seconds</span>
+            </button>
+            <div id="mediaPreview" class="media-preview" style="display:none;"></div>
+            <input type="url" id="postVideo" placeholder="Or paste a YouTube, Vimeo or Google Drive link (optional)">
+            <button type="submit" id="postBtn" class="contact-btn">Post</button>
+        </form>
+        <p id="postNote" class="msg"></p>
+    </details>
+
+    <input type="text" id="marketSearch" class="search-box" placeholder="Search products and services">
+
+    <details class="composer" id="filtersBox">
+        <summary>Filters: category, place, price</summary>
+        <select id="fCategory"><option value="">All categories</option></select>
+        <select id="fState"><option value="">Anywhere</option><option value="Abia">Abia</option><option value="Adamawa">Adamawa</option><option value="Akwa Ibom">Akwa Ibom</option><option value="Anambra">Anambra</option><option value="Bauchi">Bauchi</option><option value="Bayelsa">Bayelsa</option><option value="Benue">Benue</option><option value="Borno">Borno</option><option value="Cross River">Cross River</option><option value="Delta">Delta</option><option value="Ebonyi">Ebonyi</option><option value="Edo">Edo</option><option value="Ekiti">Ekiti</option><option value="Enugu">Enugu</option><option value="FCT Abuja">FCT Abuja</option><option value="Gombe">Gombe</option><option value="Imo">Imo</option><option value="Jigawa">Jigawa</option><option value="Kaduna">Kaduna</option><option value="Kano">Kano</option><option value="Katsina">Katsina</option><option value="Kebbi">Kebbi</option><option value="Kogi">Kogi</option><option value="Kwara">Kwara</option><option value="Lagos">Lagos</option><option value="Nasarawa">Nasarawa</option><option value="Niger">Niger</option><option value="Ogun">Ogun</option><option value="Ondo">Ondo</option><option value="Osun">Osun</option><option value="Oyo">Oyo</option><option value="Plateau">Plateau</option><option value="Rivers">Rivers</option><option value="Sokoto">Sokoto</option><option value="Taraba">Taraba</option><option value="Yobe">Yobe</option><option value="Zamfara">Zamfara</option><option value="Outside Nigeria">Outside Nigeria</option></select>
+        <input type="number" id="fMin" min="0" inputmode="numeric" placeholder="Lowest price (naira)">
+        <input type="number" id="fMax" min="0" inputmode="numeric" placeholder="Highest price (naira)">
+        <select id="fSort">
+            <option value="newest">Newest first (best match when searching)</option>
+            <option value="price_low">Cheapest first</option>
+            <option value="price_high">Most expensive first</option>
+        </select>
+        <button type="button" class="btn btn-outline" id="fApply">Apply</button>
+        <button type="button" class="btn btn-outline" id="fClear">Clear filters</button>
+    </details>
+
+    <div class="chips" id="filterChips">
+        <button type="button" class="chip active" data-filter="market">All</button>
+        <button type="button" class="chip" data-filter="selling">For sale</button>
+        <button type="button" class="chip" data-filter="services">Services</button>
+        <button type="button" class="chip" data-filter="wanted">Wanted</button>
+        <button type="button" class="chip" data-filter="saved">Saved</button>
+    </div>
+
+    <div class="tabs">
+        <button type="button" class="tab-btn active" data-mode="all">Everyone</button>
+        <button type="button" class="tab-btn" data-mode="following">Following</button>
+    </div>
+
+    <div id="feedList"></div>
+    <p id="feedNote" class="meta"></p>
+    <button type="button" id="loadMore" class="btn btn-outline" style="display:none; margin-top:14px;">Load more</button>
+
+    <details class="composer" id="membersBox" style="margin-top:20px;">
+        <summary>Find members</summary>
+        <input type="text" id="memberSearch" class="search-box" placeholder="Find members by name">
+        <div class="chips" id="roleChips">
+            <button type="button" class="chip active" data-role="">Everyone</button>
+            <button type="button" class="chip" data-role="student">Talent</button>
+            <button type="button" class="chip" data-role="lecturer">Lecturers</button>
+            <button type="button" class="chip" data-role="business">Businesses</button>
+        </div>
+        <div id="memberResults"></div>
+    </details>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a>
+        <div class="legal-links"><a href="terms.html">Terms of Use</a> &bull; <a href="privacy.html">Privacy Policy</a> &bull; <a href="refunds.html">Refunds and Disputes</a></div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="membership.js"></script>
+<script src="badges.js"></script>
+<script src="video-utils.js"></script>
+<script src="reviews.js"></script>
+<script src="posts.js"></script>
+<script src="mention.js"></script>
+<script src="share.js"></script>
+<script src="marketnav.js"></script>
+<script src="feed.js"></script>
+<script src="appnav.js"></script>
+<script src="pwa.js"></script>
+<script src="ambassador-badge.js"></script>
+<script src="feedback.js"></script>
+<script src="i18n-strings.js"></script>
+<script src="i18n-strings-extra.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>
