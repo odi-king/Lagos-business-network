@@ -282,6 +282,20 @@ async function loadGraduation() {
     if (g.graduated) {
         body.innerHTML = "<p><strong>You have graduated.</strong> The marketplace is open to you.</p>" +
             '<p><a class="contact-btn" href="graduation-certificate.html">View and print your certificate</a></p>';
+
+        // Where is the graduation gift?
+        const gift = await db.rpc("my_gift_package");
+
+        if (!gift.error && gift.data) {
+            const p = gift.data;
+            const text = p.status === "delivered"
+                ? "Your graduation gift package was delivered."
+                : p.status === "shipped"
+                    ? "Your graduation gift package is on its way to " + p.city + ". Courier: " + p.courier + ". Tracking number: " + p.tracking_no + "."
+                    : "Your graduation gift package is being prepared.";
+
+            body.insertAdjacentHTML("beforeend", "<p class='notice'>" + escapeHTML(text) + "</p>");
+        }
         return;
     }
 

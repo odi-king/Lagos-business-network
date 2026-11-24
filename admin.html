@@ -203,6 +203,22 @@
         <p id="certAdminMsg" class="msg"></p>
     </section>
 
+    <section class="panel" data-perm="education">
+        <h2>Graduation gift packages</h2>
+        <p class="meta">A package is created when a graduation is approved. Mark it Shipped with the courier and tracking number, then Delivered. The graduate is notified each time.</p>
+        <div class="filters">
+            <select id="giftFilter">
+                <option value="preparing">Being prepared</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="all">All packages</option>
+            </select>
+            <button type="button" class="btn btn-outline" id="giftExport">Download this list (CSV)</button>
+        </div>
+        <div id="giftList"></div>
+        <p id="giftMsg" class="msg"></p>
+    </section>
+
     <section class="panel" data-perm="support">
         <h2>Customer care messages</h2>
         <div class="filters">
@@ -228,6 +244,7 @@
 <script src="mfa.js"></script>
 <script src="admin.js"></script>
 <script src="seller-id-admin.js"></script>
+<script src="gift-admin.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>
 <script src="i18n-strings.js"></script>
