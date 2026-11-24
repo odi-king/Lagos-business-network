@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manage subscription - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="classes.html">Classes</a>
+            <a href="feed.html">Marketplace</a>
+            <a href="reels.html">Reels</a>
+            <a href="trades.html">My trades</a>
+            <a href="member.html">Profile</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>Manage subscription</h1>
+        <p class="meta">You can cancel at any time. You keep full access until the end of the period you paid for.</p>
+    </div>
+    <p id="subMsg" class="msg"></p>
+    <section class="panel" id="subBox"><p class="meta">Loading...</p></section>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a>
+        <div class="legal-links"><a href="terms.html">Terms of Use</a> &bull; <a href="privacy.html">Privacy Policy</a> &bull; <a href="refunds.html">Refunds and Disputes</a></div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="membership.js"></script>
+<script src="subscription.js"></script>
+<script src="appnav.js"></script>
+<script src="pwa.js"></script>
+<script src="feedback.js"></script>
+<script src="i18n-strings.js"></script>
+<script src="i18n-strings-extra.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>
