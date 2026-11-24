@@ -57,6 +57,8 @@ async function init() {
 
         box.innerHTML += '<p><button type="button" class="btn btn-outline" id="resignBtn">Resign from my position</button></p>';
 
+        await showEarnings(box);
+
         document.getElementById("resignBtn").addEventListener("click", async function () {
             const reason = prompt("You are about to resign. Your place will open for someone else. Reason (optional):", "");
             if (reason === null) return;
@@ -105,6 +107,53 @@ async function init() {
     }
 
     document.getElementById("appFormBox").style.display = "";
+}
+
+function money(kobo) {
+    return "\u20A6" + (Number(kobo || 0) / 100).toLocaleString();
+}
+
+async function showEarnings(box) {
+    const { data, error } = await db.rpc("my_ambassador_earnings");
+    if (error || !data) return;
+
+    const link = "https://odi-king.github.io/Lagos-business-network/auth.html?ref=" + encodeURIComponent(data.referral_code || "");
+
+    const stipends = (data.stipends || []).length === 0 ? "<p class='meta'>No stipends yet.</p>" : data.stipends.map(function (s) {
+        return "<p class='meta'>" + escapeHTML(new Date(s.month).toLocaleDateString(undefined, { month: "long", year: "numeric" })) + " &bull; " + money(s.amount_kobo) +
+            " &bull; <strong>" + escapeHTML(s.status) + "</strong>" + (s.note ? " &bull; " + escapeHTML(s.note) : "") + "</p>";
+    }).join("");
+
+    const section = document.createElement("div");
+    section.innerHTML =
+        "<h3>My referral link</h3>" +
+        (data.referral_code ? "<p class='meta'>Code <strong>" + escapeHTML(data.referral_code) + "</strong>. You earn " + money(50000) + " when someone you invite pays for a yearly subscription.</p>" +
+            '<input type="text" readonly value="' + escapeHTML(link) + '">' : "<p class='meta'>Open <a href='referrals.html'>Invite friends and earn</a> once to create your code.</p>") +
+        "<h3>My earnings</h3>" +
+        "<p class='meta'>Paid subscriptions you brought in: <strong>" + data.paid_subscriptions + "</strong> &bull; Commission on hold: " + money(data.commission_pending_kobo) +
+        " &bull; Commission earned: " + money(data.commission_earned_kobo) + ". Withdraw commissions on <a href='referrals.html'>Invite friends and earn</a>.</p>" +
+        "<h3>My monthly stipends</h3>" + stipends +
+        "<h3>Where should we pay your stipend?</h3>" +
+        (data.bank_name ? "<p class='meta'>Saved: " + escapeHTML(data.bank_name) + " ending " + escapeHTML(data.account_last4) + "</p>" : "<p class='meta'>No bank details saved yet.</p>") +
+        '<form id="bankForm"><input type="text" id="bkBank" maxlength="60" placeholder="Bank name" required>' +
+        '<input type="text" id="bkNumber" maxlength="10" inputmode="numeric" placeholder="Account number (10 digits)" required>' +
+        '<input type="text" id="bkName" maxlength="80" placeholder="Account name" required>' +
+        '<button type="submit" class="contact-btn">Save bank details</button></form>';
+
+    box.appendChild(section);
+
+    document.getElementById("bankForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        say("");
+        const res = await db.rpc("set_ambassador_bank", {
+            p_bank: document.getElementById("bkBank").value,
+            p_number: document.getElementById("bkNumber").value,
+            p_name: document.getElementById("bkName").value
+        });
+        if (res.error) { say(res.error.message, "error"); return; }
+        say("Bank details saved.", "ok");
+        window.location.reload();
+    });
 }
 
 document.getElementById("appForm").addEventListener("submit", async function (event) {

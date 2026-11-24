@@ -43,6 +43,7 @@
         <button type="button" class="btn btn-outline amb-tab" data-tab="applications">Applications</button>
         <button type="button" class="btn btn-outline amb-tab" data-tab="appointments">Ambassadors</button>
         <button type="button" class="btn btn-outline amb-tab" data-tab="schools">Schools and positions</button>
+        <button type="button" class="btn btn-outline amb-tab" data-tab="payments">Payments and reports</button>
     </div>
 
     <section class="panel" id="tab-applications">
@@ -76,6 +77,25 @@
             <button type="submit" class="contact-btn">Add school</button>
         </form>
         <div id="schoolList"><p class="meta">Loading...</p></div>
+    </section>
+    <section class="panel" id="tab-payments" style="display:none;">
+        <h2>Monthly stipends</h2>
+        <p class="meta">School Ambassador N70,000 and Senior Ambassador N210,000 a month. Create the month, approve each stipend, pay by bank transfer, then mark it paid. Commissions (N500 per paid yearly subscription) are paid through the normal withdrawal list in Admin.</p>
+        <input type="month" id="payMonth">
+        <button type="button" class="contact-btn" id="genStipends">Create stipends for this month</button>
+        <select id="stipendFilter">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="paid">Paid</option>
+            <option value="withheld">Withheld</option>
+        </select>
+        <div id="stipendList"><p class="meta">Loading...</p></div>
+
+        <h2>Monthly report</h2>
+        <p class="meta">Stipend and commission for each ambassador in the chosen month.</p>
+        <button type="button" class="btn btn-outline" id="csvBtn">Download as spreadsheet (CSV)</button>
+        <div id="reportBox"><p class="meta">Loading...</p></div>
     </section>
 </main>
 

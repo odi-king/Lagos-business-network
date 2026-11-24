@@ -24,12 +24,16 @@ const TYPE = { business: "Business Owner", student: "Student", lecturer: "Lectur
 const RANK = { school: "School Ambassador", senior: "Senior Ambassador", regional_manager: "Regional Ambassador Manager", national_director: "National Ambassador Director" };
 let schoolsCache = [];
 
+function naira(kobo) {
+    return "\u20A6" + (Number(kobo || 0) / 100).toLocaleString();
+}
+
 function d(value) {
     return value ? new Date(value).toLocaleDateString() : "";
 }
 
 function showTab(name) {
-    ["applications", "appointments", "schools"].forEach(function (t) {
+    ["applications", "appointments", "schools", "payments"].forEach(function (t) {
         document.getElementById("tab-" + t).style.display = t === name ? "" : "none";
     });
     document.querySelectorAll(".amb-tab").forEach(function (b) {
@@ -38,6 +42,7 @@ function showTab(name) {
     if (name === "applications") loadApplications();
     if (name === "appointments") loadAppointments();
     if (name === "schools") loadSchools();
+    if (name === "payments") loadPayments();
 }
 
 document.getElementById("ambTabs").addEventListener("click", function (event) {
@@ -139,11 +144,20 @@ async function loadAppointments() {
             (a.appointment_status === "trial" ? " &bull; trial ends " + d(a.trial_end) : "") +
             (a.appointment_end ? " &bull; appointment until " + d(a.appointment_end) : "") +
             (a.certificate_no ? " &bull; certificate " + escapeHTML(a.certificate_no) : "") +
+            (a.last_review ? " &bull; last review " + escapeHTML(a.last_review) : "") +
+            (a.renewal_decision ? " &bull; renewal " + escapeHTML(a.renewal_decision) : "") +
             (a.left_at ? " &bull; left " + d(a.left_at) + (a.left_reason ? " (" + escapeHTML(a.left_reason) + ")" : "") : "") + "</div>" +
             '<div class="staff-actions">' +
             (a.appointment_status === "suspended" ? '<button type="button" class="btn btn-outline amb-act" data-action="reinstate">Reinstate</button>' : "") +
             (a.appointment_status === "trial" || a.appointment_status === "confirmed" ? '<button type="button" class="btn btn-outline amb-act" data-action="suspend">Suspend</button>' : "") +
             (live ? '<button type="button" class="btn btn-outline amb-act" data-action="terminate">Terminate</button>' : "") +
+            (a.appointment_status === "confirmed" || a.appointment_status === "trial" ? '<button type="button" class="btn btn-outline amb-act" data-action="review">Quarterly review</button>' +
+                '<button type="button" class="btn btn-outline amb-act" data-action="warn">Warning</button>' : "") +
+            (a.appointment_status === "confirmed" ? '<button type="button" class="btn btn-outline amb-act" data-action="renew">Renew</button>' +
+                '<button type="button" class="btn btn-outline amb-act" data-action="decline">Do not renew</button>' : "") +
+            (a.appointment_status === "expired" || a.appointment_status === "resigned" ? '<button type="button" class="btn btn-outline amb-act" data-action="renew">Appoint again</button>' : "") +
+            '<button type="button" class="btn btn-outline amb-comm">Commissions</button>' +
+            '<button type="button" class="btn btn-outline amb-rev">Reviews</button>' +
             '<button type="button" class="btn btn-outline amb-hist">History</button></div>' +
             '<div class="amb-hist-box"></div></div>';
     }).join("");
@@ -167,11 +181,77 @@ document.getElementById("ambList").addEventListener("click", async function (eve
         return;
     }
 
+    if (event.target.closest(".amb-comm")) {
+        const holder = card.querySelector(".amb-hist-box");
+        const { data, error } = await db.rpc("admin_ambassador_commissions", { p_amb: card.dataset.amb });
+        if (error) { say(error.message, "error"); return; }
+        const label = { hold: "on hold", earned: "earned", review: "being checked", void: "not counted" };
+        holder.innerHTML = data.length === 0 ? "<p class='meta'>No commissions yet.</p>" : data.map(function (c) {
+            return "<p class='meta'>" + escapeHTML(d(c.created_at)) + " &bull; " + escapeHTML(c.who) + " &bull; " + escapeHTML(label[c.state] || c.state) +
+                " &bull; " + naira(c.reward_kobo) + "</p>";
+        }).join("");
+        return;
+    }
+
+    if (event.target.closest(".amb-rev")) {
+        const holder = card.querySelector(".amb-hist-box");
+        const { data, error } = await db.rpc("admin_ambassador_reviews", { p_amb: card.dataset.amb });
+        if (error) { say(error.message, "error"); return; }
+        holder.innerHTML = data.length === 0 ? "<p class='meta'>No reviews yet.</p>" : data.map(function (r) {
+            return "<p class='meta'><strong>" + escapeHTML(r.period) + "</strong> &bull; " + escapeHTML(r.outcome.replace("_", " ")) +
+                (r.score != null ? " &bull; score " + r.score : "") + (r.notes ? " &bull; " + escapeHTML(r.notes) : "") + " &bull; " + escapeHTML(r.reviewer_name) + "</p>";
+        }).join("");
+        return;
+    }
+
     const button = event.target.closest(".amb-act");
     if (!button) return;
 
     const action = button.dataset.action;
     let reason = "";
+
+    if (action === "review") {
+        const score = prompt("Quarterly review. Score from 0 to 100 (leave empty for no score):", "");
+        if (score === null) return;
+        const outcome = prompt("Outcome. Type 1 = Satisfactory, 2 = Needs improvement, 3 = Concern:", "1");
+        if (outcome === null) return;
+        const notes = prompt("Notes (what went well, what to improve):", "");
+        if (notes === null) return;
+        const map = { "1": "satisfactory", "2": "needs_improvement", "3": "concern" };
+        say("");
+        const { error } = await db.rpc("admin_ambassador_review_save", {
+            p_amb: card.dataset.amb, p_score: score.trim() === "" ? null : parseInt(score, 10),
+            p_outcome: map[outcome.trim()] || "satisfactory", p_notes: notes
+        });
+        if (error) { say(error.message, "error"); return; }
+        say("Review saved.", "ok");
+        await loadAppointments();
+        return;
+    }
+
+    if (action === "warn") {
+        const why = prompt("Performance warning. What is it about? (the ambassador is notified):", "");
+        if (why === null) return;
+        say("");
+        const { error } = await db.rpc("admin_ambassador_warn", { p_id: card.dataset.amb, p_reason: why });
+        if (error) { say(error.message, "error"); return; }
+        say("Warning sent.", "ok");
+        return;
+    }
+
+    if (action === "renew" || action === "decline") {
+        const q = action === "renew"
+            ? "Renew for a NEW 12-month appointment with a new certificate? Add a note (optional):"
+            : "Do NOT renew. The appointment will run to its end date. Add a note (optional):";
+        const note = prompt(q, "");
+        if (note === null) return;
+        say("");
+        const { error } = await db.rpc("admin_ambassador_renew", { p_id: card.dataset.amb, p_decision: action, p_note: note });
+        if (error) { say(error.message, "error"); return; }
+        say(action === "renew" ? "Renewed." : "Recorded.", "ok");
+        await loadAppointments();
+        return;
+    }
 
     if (action !== "reinstate") {
         reason = prompt((action === "terminate" ? "Terminate this appointment. " : "Suspend this ambassador. ") + "Write the reason (kept in the record):", "");
@@ -257,5 +337,130 @@ document.getElementById("schoolForm").addEventListener("submit", async function 
         return;
     }
 
+    try { await db.rpc("ambassador_run_expiry"); } catch (e) {}
+
+    try {
+        const due = await db.rpc("admin_ambassador_reviews_due");
+        if (!due.error && due.data > 0) say(due.data + " ambassador" + (due.data === 1 ? " has" : "s have") + " no quarterly review yet this quarter. Open the Ambassadors tab.", "");
+    } catch (e) {}
+
     showTab("applications");
 })();
+
+
+// ---------- Payments and reports ----------
+
+const payMonth = document.getElementById("payMonth");
+payMonth.value = new Date().toISOString().slice(0, 7);
+
+function monthDate() {
+    return (payMonth.value || new Date().toISOString().slice(0, 7)) + "-01";
+}
+
+let lastReport = [];
+
+async function loadPayments() {
+    await loadStipends();
+    await loadReport();
+}
+
+async function loadStipends() {
+    const box = document.getElementById("stipendList");
+    const { data, error } = await db.rpc("admin_stipend_list", { p_month: monthDate(), p_status: document.getElementById("stipendFilter").value });
+
+    if (error) { box.innerHTML = ""; fail(error); return; }
+
+    box.innerHTML = data.length === 0 ? "<p class='meta'>No stipends for this month yet. Press the button above to create them.</p>" : data.map(function (s) {
+        return '<div class="staff-card" data-stipend="' + escapeHTML(s.id) + '"><strong>' + escapeHTML(s.full_name || "Member") + " &bull; " + naira(s.amount_kobo) + "</strong>" +
+            '<div class="meta">' + escapeHTML(TYPE[s.ambassador_type]) + " &bull; " + escapeHTML(RANK[s.ambassador_rank]) + " &bull; " + escapeHTML(s.school_name || "") +
+            " &bull; <strong>" + escapeHTML(s.status) + "</strong>" + (s.payment_ref ? " &bull; ref " + escapeHTML(s.payment_ref) : "") + (s.status === "withheld" && s.note ? " &bull; " + escapeHTML(s.note) : "") + "</div>" +
+            '<div class="meta">' + (s.bank_name ? escapeHTML(s.bank_name) + " &bull; " + escapeHTML(s.account_number) + " &bull; " + escapeHTML(s.account_name) : "No bank details saved yet") + "</div>" +
+            (s.status !== "paid" ? '<div class="staff-actions">' +
+                (s.status === "pending" || s.status === "withheld" ? '<button type="button" class="btn btn-outline stp-act" data-status="approved">Approve</button>' : "") +
+                (s.status === "approved" ? '<button type="button" class="btn btn-outline stp-act" data-status="paid">Mark paid</button>' : "") +
+                (s.status !== "withheld" ? '<button type="button" class="btn btn-outline stp-act" data-status="withheld">Withhold</button>' : "") +
+                "</div>" : "") + "</div>";
+    }).join("");
+}
+
+async function loadReport() {
+    const box = document.getElementById("reportBox");
+    const { data, error } = await db.rpc("admin_ambassador_report", { p_month: monthDate() });
+
+    if (error) { box.innerHTML = ""; return; }
+    lastReport = data;
+
+    const total = data.reduce(function (t, r) {
+        t.stipend += r.stipend_status === "paid" ? r.stipend_kobo : 0;
+        t.commission += Number(r.commission_kobo || 0);
+        t.subs += Number(r.paid_subscriptions || 0);
+        return t;
+    }, { stipend: 0, commission: 0, subs: 0 });
+
+    box.innerHTML = data.length === 0 ? "<p class='meta'>No ambassadors were active in this month.</p>" :
+        '<p class="meta">Stipends paid: ' + naira(total.stipend) + " &bull; Commission earned: " + naira(total.commission) + " &bull; Paid subscriptions: " + total.subs + "</p>" +
+        data.map(function (r) {
+            return '<div class="staff-card"><strong>' + escapeHTML(r.full_name || "Member") + "</strong>" +
+                '<div class="meta">' + escapeHTML(TYPE[r.ambassador_type]) + " &bull; " + escapeHTML(r.school_name || "") + " &bull; " + escapeHTML(r.appointment_status) + "</div>" +
+                '<div class="meta">Stipend: ' + (r.stipend_kobo ? naira(r.stipend_kobo) + " (" + escapeHTML(r.stipend_status) + ")" : "none") +
+                " &bull; Signed up: " + r.signed_up + " &bull; Paid subscriptions: " + r.paid_subscriptions + " &bull; Commission: " + naira(r.commission_kobo) +
+                (r.flagged > 0 ? " &bull; " + r.flagged + " being checked" : "") + "</div></div>";
+        }).join("");
+}
+
+payMonth.addEventListener("change", loadPayments);
+document.getElementById("stipendFilter").addEventListener("change", loadStipends);
+
+document.getElementById("genStipends").addEventListener("click", async function () {
+    if (!confirm("Create the stipend records for " + payMonth.value + "? Nothing is paid until you approve and mark each one.")) return;
+    say("");
+    const { data, error } = await db.rpc("admin_stipend_generate", { p_month: monthDate() });
+    if (error) { say(error.message, "error"); return; }
+    say(data + " new stipend record" + (data === 1 ? "" : "s") + " created.", "ok");
+    await loadPayments();
+});
+
+document.getElementById("stipendList").addEventListener("click", async function (event) {
+    const button = event.target.closest(".stp-act");
+    const card = event.target.closest("[data-stipend]");
+    if (!button || !card) return;
+
+    const status = button.dataset.status;
+    let note = "";
+
+    if (status === "withheld") {
+        note = prompt("Why is this stipend being withheld? (the ambassador will see this):", "");
+        if (note === null) return;
+    } else if (status === "paid") {
+        note = prompt("Transfer reference (optional):", "");
+        if (note === null) return;
+    }
+
+    say("");
+    const { error } = await db.rpc("admin_stipend_set", { p_id: card.dataset.stipend, p_status: status, p_note: note });
+    if (error) { say(error.message, "error"); return; }
+    await loadPayments();
+});
+
+document.getElementById("csvBtn").addEventListener("click", function () {
+    const rows = [["Name", "School", "Type", "Rank", "Status", "Stipend (NGN)", "Stipend status", "Signed up", "Paid subscriptions", "Commission (NGN)"]];
+    lastReport.forEach(function (r) {
+        rows.push([r.full_name, r.school_name, r.ambassador_type, r.ambassador_rank, r.appointment_status,
+            r.stipend_kobo ? r.stipend_kobo / 100 : "", r.stipend_status || "", r.signed_up, r.paid_subscriptions, (r.commission_kobo || 0) / 100]);
+    });
+
+    // A leading apostrophe stops a spreadsheet from running a name that starts with = + - or @ as a formula
+    const csv = rows.map(function (row) {
+        return row.map(function (cell) {
+            let v = String(cell ?? "");
+            if (/^[=+\-@]/.test(v)) v = "'" + v;
+            return '"' + v.replace(/"/g, '""') + '"';
+        }).join(",");
+    }).join("\n");
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    link.download = "ambassador-report-" + payMonth.value + ".csv";
+    link.click();
+    URL.revokeObjectURL(link.href);
+});
