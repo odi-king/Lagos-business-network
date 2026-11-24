@@ -50,6 +50,21 @@ async function init() {
         box.innerHTML = s.appointment_status === "trial"
             ? "<h2>You are on your two-week trial</h2><p>Your trial ends on " + escapeHTML(new Date(s.trial_end).toLocaleDateString()) + ". Final approval follows the trial.</p>"
             : "<h2>You are an LBN ambassador</h2><p>Status: " + escapeHTML(s.appointment_status) + (s.appointment_end ? ". Appointment until " + escapeHTML(new Date(s.appointment_end).toLocaleDateString()) : "") + ".</p>";
+
+        if (s.appointment_status === "confirmed") {
+            box.innerHTML += '<p><a class="contact-btn" href="ambassador-certificate.html">My certificate</a></p>';
+        }
+
+        box.innerHTML += '<p><button type="button" class="btn btn-outline" id="resignBtn">Resign from my position</button></p>';
+
+        document.getElementById("resignBtn").addEventListener("click", async function () {
+            const reason = prompt("You are about to resign. Your place will open for someone else. Reason (optional):", "");
+            if (reason === null) return;
+            const { error } = await db.rpc("ambassador_resign", { p_reason: reason });
+            if (error) { say(error.message, "error"); return; }
+            window.location.reload();
+        });
+
         return;
     }
 

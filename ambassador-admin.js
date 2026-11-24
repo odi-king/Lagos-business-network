@@ -131,13 +131,59 @@ async function loadAppointments() {
     if (error) { box.innerHTML = ""; fail(error); return; }
 
     box.innerHTML = data.length === 0 ? "<p class='meta'>Nobody here yet.</p>" : data.map(function (a) {
-        return '<div class="staff-card"><strong>' + escapeHTML(a.full_name || "Member") + "</strong>" +
+        const live = ["trial", "confirmed", "suspended"].indexOf(a.appointment_status) !== -1;
+
+        return '<div class="staff-card" data-amb="' + escapeHTML(a.id) + '" data-user="' + escapeHTML(a.user_id) + '"><strong>' + escapeHTML(a.full_name || "Member") + "</strong>" +
             '<div class="meta">Type: ' + escapeHTML(TYPE[a.ambassador_type]) + " &bull; Rank: " + escapeHTML(RANK[a.ambassador_rank]) +
             " &bull; Status: " + escapeHTML(a.appointment_status) + " &bull; " + escapeHTML(a.school_name || "No school") +
             (a.appointment_status === "trial" ? " &bull; trial ends " + d(a.trial_end) : "") +
-            (a.appointment_end ? " &bull; appointment until " + d(a.appointment_end) : "") + "</div></div>";
+            (a.appointment_end ? " &bull; appointment until " + d(a.appointment_end) : "") +
+            (a.certificate_no ? " &bull; certificate " + escapeHTML(a.certificate_no) : "") +
+            (a.left_at ? " &bull; left " + d(a.left_at) + (a.left_reason ? " (" + escapeHTML(a.left_reason) + ")" : "") : "") + "</div>" +
+            '<div class="staff-actions">' +
+            (a.appointment_status === "suspended" ? '<button type="button" class="btn btn-outline amb-act" data-action="reinstate">Reinstate</button>' : "") +
+            (a.appointment_status === "trial" || a.appointment_status === "confirmed" ? '<button type="button" class="btn btn-outline amb-act" data-action="suspend">Suspend</button>' : "") +
+            (live ? '<button type="button" class="btn btn-outline amb-act" data-action="terminate">Terminate</button>' : "") +
+            '<button type="button" class="btn btn-outline amb-hist">History</button></div>' +
+            '<div class="amb-hist-box"></div></div>';
     }).join("");
 }
+
+document.getElementById("ambList").addEventListener("click", async function (event) {
+    const card = event.target.closest("[data-amb]");
+    if (!card) return;
+
+    if (event.target.closest(".amb-hist")) {
+        const holder = card.querySelector(".amb-hist-box");
+        if (holder.innerHTML) { holder.innerHTML = ""; return; }
+
+        const { data, error } = await db.rpc("admin_ambassador_history", { p_user: card.dataset.user });
+        if (error) { say(error.message, "error"); return; }
+
+        holder.innerHTML = data.length === 0 ? "<p class='meta'>No history yet.</p>" : data.map(function (h) {
+            return "<p class='meta'>" + escapeHTML(new Date(h.created_at).toLocaleString()) + " &bull; <strong>" + escapeHTML(h.event) + "</strong>" +
+                (h.details ? " &bull; " + escapeHTML(h.details) : "") + " &bull; " + escapeHTML(h.actor_name) + "</p>";
+        }).join("");
+        return;
+    }
+
+    const button = event.target.closest(".amb-act");
+    if (!button) return;
+
+    const action = button.dataset.action;
+    let reason = "";
+
+    if (action !== "reinstate") {
+        reason = prompt((action === "terminate" ? "Terminate this appointment. " : "Suspend this ambassador. ") + "Write the reason (kept in the record):", "");
+        if (reason === null) return;
+    }
+
+    say("");
+    const { error } = await db.rpc("admin_ambassador_action", { p_id: card.dataset.amb, p_action: action, p_reason: reason });
+    if (error) { say(error.message, "error"); return; }
+    say("Done.", "ok");
+    await loadAppointments();
+});
 
 document.getElementById("ambFilter").addEventListener("change", loadAppointments);
 

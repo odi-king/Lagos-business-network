@@ -190,7 +190,7 @@ function headerHTML(clickable, actions) {
             ${avatarHTML(name, p.avatar_path, "avatar-xl")}
             ${statsHTML(clickable)}
         </div>
-        <h1 class="profile-name">${escapeHTML(name)}${badgeHTML(p)}</h1>
+        <h1 class="profile-name" data-uid="${escapeHTML(p.id)}">${escapeHTML(name)}${badgeHTML(p)}</h1>
         ${p.username ? '<p class="profile-sub profile-handle">@' + escapeHTML(p.username) + (p.follows_me && !isOwn ? ' <span class="profile-chip">Follows you</span>' : "") + "</p>" : ""}
         ${profileInfoLine(p)}
         ${p.institution ? '<p class="profile-sub">' + escapeHTML(p.institution) + "</p>" : ""}
