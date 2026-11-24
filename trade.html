@@ -82,9 +82,42 @@
             <button type="button" id="receivedBtn" class="contact-btn" style="display:none;">Confirm received</button>
             <button type="button" id="sellerDoneBtn" class="contact-btn" style="display:none;">Confirm complete</button>
             <button type="button" id="cancelBtn" class="delete-btn" style="display:none;">Cancel trade</button>
+            <button type="button" id="returnBtn" class="btn btn-outline" style="display:none;">Return this item</button>
             <button type="button" id="disputeBtn" class="delete-btn" style="display:none;">Open a dispute</button>
             <button type="button" id="reportBtn" class="btn btn-outline">Report a problem</button>
         </div>
+    </section>
+
+    <section class="panel" id="returnPanel" style="display:none;">
+        <h2>Return</h2>
+        <div id="returnSummary"></div>
+
+        <form id="returnForm" style="display:none;">
+            <p class="meta">Ask the seller to take the item back. Your money stays on hold with LBN while the return is open. Do not put phone numbers or links here.</p>
+            <select id="returnReason">
+                <option value="wrong_item">Wrong item received</option>
+                <option value="damaged_faulty">Damaged or faulty</option>
+                <option value="not_as_described">Not as described</option>
+                <option value="incomplete">Parts missing or incomplete</option>
+            </select>
+            <textarea id="returnDetails" maxlength="1000" placeholder="Explain what is wrong with the item."></textarea>
+            <label class="meta" for="returnFiles">Photos of the problem (up to 5 files, 5 MB each)</label>
+            <input type="file" id="returnFiles" multiple accept="image/*">
+            <button type="submit" id="returnSubmit" class="contact-btn">Send return request</button>
+            <button type="button" id="returnCancelForm" class="plain-btn">Cancel</button>
+        </form>
+
+        <div id="returnActions" class="chat-actions"></div>
+
+        <div id="returnEvidence" style="display:none;">
+            <h3>Photos</h3>
+            <div id="returnPhotoList"><p class="meta">Loading...</p></div>
+            <label class="meta" for="returnMoreFiles">Add more photos</label>
+            <input type="file" id="returnMoreFiles" multiple accept="image/*">
+            <input type="text" id="returnMoreNote" placeholder="What does this show? (optional)" maxlength="300">
+            <button type="button" id="returnAddPhotos" class="contact-btn">Add photos</button>
+        </div>
+        <p id="returnMsg" class="msg"></p>
     </section>
 
     <section class="panel" id="reviewPanel" style="display:none;">
@@ -134,6 +167,7 @@
 <script src="reviews.js"></script>
 <script src="chat-common.js"></script>
 <script src="trade.js"></script>
+<script src="returns.js"></script>
 <script src="marketnav.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>

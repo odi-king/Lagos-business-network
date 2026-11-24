@@ -141,6 +141,9 @@ async function refresh() {
         renderMoneyState();
     }
 
+    // Returns (supabase-returns.sql): shows or hides the return screen
+    if (typeof loadReturn === "function") loadReturn();
+
     const messages = await db
         .from("trade_messages")
         .select("*")
