@@ -1,6 +1,6 @@
 // Service worker: lets the app open fast and show its pages when the signal is weak.
 // Bump CACHE_NAME whenever you push changes, so phones pick up the new files.
-const CACHE_NAME = "lbn-v56";
+const CACHE_NAME = "lbn-v57";
 
 const APP_FILES = [
     "./",
@@ -106,7 +106,10 @@ const APP_FILES = [
 self.addEventListener("install", function (event) {
     event.waitUntil(
         caches.open(CACHE_NAME).then(function (cache) {
-            return cache.addAll(APP_FILES);
+            // One file at a time: a single missing file must never stop the whole update
+            return Promise.all(APP_FILES.map(function (url) {
+                return cache.add(url).catch(function () { /* skip this file, the rest still cache */ });
+            }));
         })
     );
     self.skipWaiting();
