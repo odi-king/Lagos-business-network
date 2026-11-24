@@ -349,6 +349,9 @@ function renderPostCard(p, media) {
         ? '<button type="button" class="plain-btn post-save' + (p.saved ? " saved" : "") + '">' + (p.saved ? "Saved" : "Save") + "</button>"
         : "";
     const where = [p.category, p.location_area, p.location_state].filter(Boolean).join(" \u2022 ");
+    const photosLink = p.intent && own
+        ? '<a class="plain-btn post-photos-link" href="listing-edit.html?id=' + encodeURIComponent(p.id) + '">Photos and details</a>'
+        : "";
     const repost = own ? "" : '<button type="button" class="plain-btn post-repost' + (p.reposted ? " reposted" : "") +
         '">\u21BB <span class="repost-count">' + Number(p.repost_count || 0) + "</span></button>";
 
@@ -377,6 +380,7 @@ function renderPostCard(p, media) {
             ${message}
             ${statusBtn}
             ${edit}
+            ${photosLink}
             ${remove}
             ${report}
         </div>
@@ -518,6 +522,54 @@ async function appendPosts(listEl, posts) {
     });
 
     decorateRatings(listEl);
+    addGalleries(listEl);
+}
+
+// Extra photos on marketplace listings: a row of small pictures under the main photo. Tapping one shows it large.
+async function addGalleries(root) {
+    const cards = Array.prototype.slice.call(root.querySelectorAll(".post-card:not([data-gallery])")).filter(function (c) {
+        return c.dataset.intent;
+    });
+    if (cards.length === 0) return;
+    cards.forEach(function (c) { c.dataset.gallery = "1"; });
+
+    const { data, error } = await db.rpc("post_extra_photos", { p_posts: cards.map(function (c) { return c.dataset.postId; }).slice(0, 40) });
+    if (error || !data || data.length === 0) return;
+
+    const paths = data.map(function (r) { return r.path; });
+    const signed = await db.storage.from("post-images").createSignedUrls(paths, 3600);
+    const urls = {};
+    (signed.data || []).forEach(function (item) { if (item.signedUrl) urls[item.path] = item.signedUrl; });
+
+    cards.forEach(function (card) {
+        const mine = data.filter(function (r) { return r.post_id === card.dataset.postId && urls[r.path]; });
+        if (mine.length === 0) return;
+
+        let main = card.querySelector(".post-image");
+        const cover = main ? main.getAttribute("src") : null;
+
+        if (!main) {
+            const box = document.createElement("div");
+            box.className = "post-media";
+            box.innerHTML = '<img class="post-image" alt="Listing photo" loading="lazy">';
+            card.insertBefore(box, card.querySelector(".post-text"));
+            main = box.querySelector("img");
+            main.src = urls[mine[0].path];
+        }
+
+        const all = (cover ? [cover] : []).concat(mine.map(function (r) { return urls[r.path]; }));
+        const strip = document.createElement("div");
+        strip.className = "post-gallery";
+        strip.style.cssText = "display:flex;gap:6px;padding:8px 12px;overflow-x:auto;";
+        strip.innerHTML = all.map(function (u, i) {
+            return '<img src="' + escapeHTML(u) + '" alt="Photo ' + (i + 1) + '" data-full="' + escapeHTML(u) + '" style="width:64px;height:64px;object-fit:cover;border-radius:6px;cursor:pointer;flex:0 0 auto;">';
+        }).join("");
+        strip.addEventListener("click", function (event) {
+            const img = event.target.closest("img[data-full]");
+            if (img) main.src = img.dataset.full;
+        });
+        main.closest(".post-media").insertAdjacentElement("afterend", strip);
+    });
 }
 
 // Shows a seller's star rating next to their name, using one request for all the cards

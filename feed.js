@@ -108,7 +108,7 @@ async function fetchFeedPage(before) {
             p_min: filt.min,
             p_max: filt.max,
             p_saved: savedOnly,
-            p_sort: filt.sort,
+            p_sort: searchText && filt.sort === "newest" ? "relevance" : filt.sort,
             p_limit: 10,
             p_offset: feedOffset
         });

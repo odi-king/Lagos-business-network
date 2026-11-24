@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Photos and details - Lagos Business Network</title>
+    <meta property="og:title" content="A post on Lagos Business Network">
+    <meta property="og:description" content="Watch and shop from trusted members of Lagos Business Network.">
+    <meta property="og:image" content="https://odi-king.github.io/Lagos-business-network/icons/icon-512.png">
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="classes.html">Classes</a>
+            <a href="feed.html">Marketplace</a>
+            <a href="reels.html">Reels</a>
+            <a href="messages.html">Messages</a>
+            <a href="member.html">Profile</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <a href="#" onclick="history.back(); return false;" class="plain-btn" style="display:inline-block; margin:14px 0 0; color: var(--accent);">&larr; Back</a>
+    <div class="page-head">
+        <h1>Photos and details</h1>
+        <p class="meta" id="leTitle"></p>
+    </div>
+    <p id="leMsg" class="msg"></p>
+
+    <section class="panel" id="leBox" style="display:none;">
+        <h2>Category and place</h2>
+        <select id="leCategory"><option value="">No category</option></select>
+        <select id="leState"><option value="">State</option><option value="Abia">Abia</option><option value="Adamawa">Adamawa</option><option value="Akwa Ibom">Akwa Ibom</option><option value="Anambra">Anambra</option><option value="Bauchi">Bauchi</option><option value="Bayelsa">Bayelsa</option><option value="Benue">Benue</option><option value="Borno">Borno</option><option value="Cross River">Cross River</option><option value="Delta">Delta</option><option value="Ebonyi">Ebonyi</option><option value="Edo">Edo</option><option value="Ekiti">Ekiti</option><option value="Enugu">Enugu</option><option value="FCT Abuja">FCT Abuja</option><option value="Gombe">Gombe</option><option value="Imo">Imo</option><option value="Jigawa">Jigawa</option><option value="Kaduna">Kaduna</option><option value="Kano">Kano</option><option value="Katsina">Katsina</option><option value="Kebbi">Kebbi</option><option value="Kogi">Kogi</option><option value="Kwara">Kwara</option><option value="Lagos">Lagos</option><option value="Nasarawa">Nasarawa</option><option value="Niger">Niger</option><option value="Ogun">Ogun</option><option value="Ondo">Ondo</option><option value="Osun">Osun</option><option value="Oyo">Oyo</option><option value="Plateau">Plateau</option><option value="Rivers">Rivers</option><option value="Sokoto">Sokoto</option><option value="Taraba">Taraba</option><option value="Yobe">Yobe</option><option value="Zamfara">Zamfara</option><option value="Outside Nigeria">Outside Nigeria</option></select>
+        <input type="text" id="leArea" maxlength="60" placeholder="Area or town, for example Yaba (optional)">
+
+        <h2>Photos</h2>
+        <p class="meta">Up to 6 photos in all. The first photo is the cover. Buyers swipe through the rest. Use clear, bright photos of the real item.</p>
+        <div id="lePhotos" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+        <input type="file" id="leFiles" accept="image/jpeg,image/png,image/webp,image/*" multiple style="display:none;">
+        <p><button type="button" class="btn btn-outline" id="leAdd">Add photos</button></p>
+
+        <p><button type="button" class="contact-btn" id="leSave">Save</button></p>
+    </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="membership.js"></script>
+<script src="badges.js"></script>
+<script src="video-utils.js"></script>
+<script src="reviews.js"></script>
+<script src="posts.js"></script>
+<script src="listing-edit.js"></script>
+<script src="appnav.js"></script>
+<script src="pwa.js"></script>
+<script src="feedback.js"></script>
+<script src="i18n-strings.js"></script>
+<script src="i18n-strings-extra.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>
