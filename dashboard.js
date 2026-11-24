@@ -292,6 +292,16 @@ async function loadGraduation() {
         action = "<p class='notice'>Your request is waiting for review by the LBN team.</p>";
     } else if (ready) {
         action =
+            '<h3>Your graduation application</h3>' +
+            '<p class="meta">The LBN team uses these details for your certificate and your graduation gift package. Only you and the LBN team can see them.</p>' +
+            '<input type="text" id="gradName" maxlength="80" placeholder="Full name for the certificate" autocomplete="name">' +
+            '<input type="tel" id="gradPhone" maxlength="20" placeholder="Phone number (for delivery)" autocomplete="tel">' +
+            '<input type="text" id="gradAddress" maxlength="200" placeholder="Delivery address (house number, street, area)" autocomplete="street-address">' +
+            '<input type="text" id="gradCity" maxlength="60" placeholder="City or town" autocomplete="address-level2">' +
+            '<input type="text" id="gradState" maxlength="60" placeholder="State" autocomplete="address-level1">' +
+            '<input type="text" id="gradCountry" maxlength="60" placeholder="Country" value="Nigeria" autocomplete="country-name">' +
+            '<select id="gradShirt"><option value="" disabled selected>Shirt size</option>' +
+            '<option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option></select>' +
             '<textarea id="gradNote" placeholder="Anything you want the team to know (optional)" maxlength="300"></textarea>' +
             '<button type="button" id="gradRequestBtn" class="contact-btn">Ask to graduate</button>' +
             '<p id="gradMsg" class="msg"></p>';
@@ -331,8 +341,15 @@ async function loadGraduation() {
         request.addEventListener("click", async function () {
             request.disabled = true;
 
-            const { error } = await db.rpc("request_graduation", {
-                p_note: document.getElementById("gradNote").value
+            const { error } = await db.rpc("request_graduation_v2", {
+                p_note: document.getElementById("gradNote").value,
+                p_name: document.getElementById("gradName").value,
+                p_phone: document.getElementById("gradPhone").value,
+                p_address: document.getElementById("gradAddress").value,
+                p_city: document.getElementById("gradCity").value,
+                p_state: document.getElementById("gradState").value,
+                p_country: document.getElementById("gradCountry").value,
+                p_shirt: document.getElementById("gradShirt").value
             });
 
             if (error) {

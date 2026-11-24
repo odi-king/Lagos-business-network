@@ -631,6 +631,11 @@ function renderGradRequests() {
             </h3>
             <p class="meta">${escapeHTML(r.student_email)} &bull; asked on ${new Date(r.created_at).toLocaleDateString()}</p>
             <p><strong>${r.lessons_done}</strong> lectures counted &bull; <strong>${r.assessments_passed}</strong> assessments passed</p>
+            ${r.phone
+                ? "<p><strong>Certificate name:</strong> " + escapeHTML(r.certificate_name) + "<br><strong>Phone:</strong> " + escapeHTML(r.phone) +
+                  "<br><strong>Address:</strong> " + escapeHTML(r.address) + ", " + escapeHTML(r.city) + ", " + escapeHTML(r.state) + ", " + escapeHTML(r.country) +
+                  "<br><strong>Shirt size:</strong> " + escapeHTML(r.shirt_size) + "</p>"
+                : "<p class='meta'>No application details (an older request).</p>"}
             ${r.student_note ? "<p>Student says: " + escapeHTML(r.student_note) + "</p>" : ""}
             <details class="faq"><summary>See the evidence</summary>${evidence}</details>
             ${decided
