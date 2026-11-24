@@ -269,21 +269,22 @@ function progressRow(label, done, needed) {
 
 async function loadGraduation() {
     const body = document.getElementById("gradBody");
-    const result = await db.rpc("my_graduation_progress");
+    const result = await db.rpc("my_graduation_eligibility");
 
-    if (result.error || !result.data || !result.data[0]) {
+    // Until supabase-eligibility.sql is run, this shows a short "not available yet" message
+    if (result.error || !result.data) {
         body.innerHTML = "<p class='meta'>Your progress is not available yet.</p>";
         return;
     }
 
-    const g = result.data[0];
+    const g = result.data;
 
     if (g.graduated) {
         body.innerHTML = "<p><strong>You have graduated.</strong> The marketplace is open to you.</p>";
         return;
     }
 
-    const ready = Number(g.lessons_done) >= g.min_lessons && Number(g.assessments_passed) >= g.min_assessments;
+    const ready = !!g.eligible;
 
     let action = "";
 
@@ -295,7 +296,7 @@ async function loadGraduation() {
             '<button type="button" id="gradRequestBtn" class="contact-btn">Ask to graduate</button>' +
             '<p id="gradMsg" class="msg"></p>';
     } else {
-        action = "<p class='meta'>Keep going. When you reach both numbers, you can ask to graduate here.</p>";
+        action = "<p class='meta'>Keep going. When every bar below is full, you can ask to graduate here.</p>";
     }
 
     if (!g.pending && g.last_status === "declined") {
@@ -303,9 +304,24 @@ async function loadGraduation() {
             " Keep learning and ask again.</p>" + action;
     }
 
+    const materials = (g.materials || []).map(function (m) {
+        return "<div class='comment'>" + (m.have ? "\u2713 " : "\u2022 ") + escapeHTML(m.title) +
+            " <span class='meta'>(" + escapeHTML(m.kind) + (m.have ? ", you have it" : ", get it in the Library") + ")</span></div>";
+    }).join("");
+
+    const days = (g.days || []).slice(0, 10).map(function (d) {
+        return "<div class='comment'>" + new Date(d.day + "T12:00:00").toLocaleDateString() + ": " + d.lectures +
+            (d.lectures === 1 ? " lecture" : " lectures") + " from " + d.lecturers + (d.lecturers === 1 ? " lecturer" : " lecturers") +
+            (d.counts ? " <strong>\u2713 counted</strong>" : " <span class='meta'>(not counted: you need " + g.min_day_lecturers + " different lecturers on a day)</span>") + "</div>";
+    }).join("");
+
     body.innerHTML =
-        progressRow("Lessons completed", Number(g.lessons_done), g.min_lessons) +
+        progressRow("Lectures counted", Number(g.lectures), g.min_lectures) +
         progressRow("Assessments passed", Number(g.assessments_passed), g.min_assessments) +
+        (g.materials_total > 0 ? progressRow("Required books and handouts", Number(g.materials_have), g.materials_total) + materials : "") +
+        '<p class="meta">A lecture counts when you type the live class code, or watch an uploaded video to the end. ' +
+        "A day counts only if you had lectures from at least " + g.min_day_lecturers + " different lecturers that day.</p>" +
+        (days ? '<details class="faq"><summary>Your recent days</summary>' + days + "</details>" : "") +
         action +
         '<div id="myAssessments"></div>';
 

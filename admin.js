@@ -630,7 +630,7 @@ function renderGradRequests() {
                 <span class="badge ${r.status === "approved" ? "lecturer" : r.status === "declined" ? "closed" : "admin"}">${r.status}</span>
             </h3>
             <p class="meta">${escapeHTML(r.student_email)} &bull; asked on ${new Date(r.created_at).toLocaleDateString()}</p>
-            <p><strong>${r.lessons_done}</strong> lessons completed &bull; <strong>${r.assessments_passed}</strong> assessments passed</p>
+            <p><strong>${r.lessons_done}</strong> lectures counted &bull; <strong>${r.assessments_passed}</strong> assessments passed</p>
             ${r.student_note ? "<p>Student says: " + escapeHTML(r.student_note) + "</p>" : ""}
             <details class="faq"><summary>See the evidence</summary>${evidence}</details>
             ${decided
@@ -679,12 +679,19 @@ gradFilter.addEventListener("change", loadGradRequests);
 // ---------- Graduation requirements ----------
 
 async function loadGradRules() {
-    const { data } = await db.rpc("graduation_rules_now");
+    const { data, error } = await db.rpc("admin_graduation_rules");
 
-    if (data && data[0]) {
-        document.getElementById("ruleLessons").value = data[0].min_lessons;
-        document.getElementById("ruleAssessments").value = data[0].min_assessments;
+    if (error || !data) {
+        document.getElementById("gradRulesMsg").className = "msg error";
+        document.getElementById("gradRulesMsg").textContent = "Not set up yet. Run supabase-eligibility.sql in Supabase.";
+        return;
     }
+
+    document.getElementById("ruleLectures").value = data.min_lectures;
+    document.getElementById("ruleDayLecturers").value = data.min_day_lecturers;
+    document.getElementById("ruleAssessments").value = data.min_assessments;
+
+    loadMaterials();
 }
 
 document.getElementById("gradRulesForm").addEventListener("submit", async function (event) {
@@ -692,13 +699,62 @@ document.getElementById("gradRulesForm").addEventListener("submit", async functi
 
     const message = document.getElementById("gradRulesMsg");
 
-    const { error } = await db.rpc("admin_set_graduation_rules", {
-        p_lessons: parseInt(document.getElementById("ruleLessons").value, 10),
+    const { error } = await db.rpc("admin_set_graduation_rules_v2", {
+        p_lectures: parseInt(document.getElementById("ruleLectures").value, 10),
+        p_day_lecturers: parseInt(document.getElementById("ruleDayLecturers").value, 10),
         p_assessments: parseInt(document.getElementById("ruleAssessments").value, 10)
     });
 
     message.className = error ? "msg error" : "msg ok";
     message.textContent = error ? error.message : "Requirements saved.";
+});
+
+// ---------- Required books and handouts ----------
+
+async function loadMaterials() {
+    const box = document.getElementById("materialList");
+    const { data, error } = await db.rpc("admin_required_materials");
+
+    if (error) {
+        box.innerHTML = "<p class='meta'>" + escapeHTML(error.message) + "</p>";
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        box.innerHTML = "<p class='meta'>No handouts or books have been uploaded yet.</p>";
+        return;
+    }
+
+    box.innerHTML = data.map(function (h) {
+        return '<label class="meta" style="display:block;margin:6px 0;"><input type="checkbox" class="material-box" data-id="' + escapeHTML(h.handout_id) + '"' +
+            (h.required ? " checked" : "") + "> " + escapeHTML(h.title) + " (" + escapeHTML(h.kind) + ", " + escapeHTML(h.lecturer_name || "Lecturer") +
+            (h.price > 0 ? ", ₦" + Number(h.price).toLocaleString() : ", free") + ")</label>";
+    }).join("");
+}
+
+document.getElementById("materialList").addEventListener("change", async function (event) {
+    const box = event.target.closest(".material-box");
+    if (!box) return;
+
+    const message = document.getElementById("materialMsg");
+    box.disabled = true;
+
+    const { error } = await db.rpc("admin_set_required_material", {
+        p_handout_id: box.dataset.id,
+        p_required: box.checked
+    });
+
+    box.disabled = false;
+
+    if (error) {
+        box.checked = !box.checked;
+        message.className = "msg error";
+        message.textContent = error.message;
+        return;
+    }
+
+    message.className = "msg ok";
+    message.textContent = box.checked ? "Now required." : "No longer required.";
 });
 
 init();

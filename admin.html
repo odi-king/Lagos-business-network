@@ -172,7 +172,7 @@
 
     <section class="panel" data-perm="education">
         <h2>Graduation requests</h2>
-        <p class="meta">Students ask to graduate after finishing lessons and passing assessments. Read the evidence, then approve or decline.</p>
+        <p class="meta">Students ask to graduate only when they have enough proven lectures, passed assessments and own the required materials. Read the evidence, then approve or decline.</p>
         <div class="filters">
             <select id="gradFilter">
                 <option value="pending">Waiting for review</option>
@@ -180,13 +180,22 @@
             </select>
         </div>
         <div id="gradList"></div>
-        <h3>Starting requirements</h3>
+        <h3>Graduation requirements</h3>
+        <p class="meta">A lecture is a live class attended with the code, or an uploaded video watched to the end. A day counts only if the student had lectures from enough different lecturers that day.</p>
         <form id="gradRulesForm">
-            <input type="number" id="ruleLessons" min="0" max="100" placeholder="Lessons a student must complete" required>
-            <input type="number" id="ruleAssessments" min="0" max="100" placeholder="Assessments a student must pass" required>
+            <label class="meta" for="ruleLectures">Lectures a student must complete (for example 50)</label>
+            <input type="number" id="ruleLectures" min="0" max="500" placeholder="Lectures" required>
+            <label class="meta" for="ruleDayLecturers">Different lecturers needed on a day for it to count (for example 2)</label>
+            <input type="number" id="ruleDayLecturers" min="1" max="10" placeholder="Lecturers per day" required>
+            <label class="meta" for="ruleAssessments">Assessments a student must pass</label>
+            <input type="number" id="ruleAssessments" min="0" max="100" placeholder="Assessments" required>
             <button type="submit" class="contact-btn">Save requirements</button>
         </form>
         <p id="gradRulesMsg" class="msg"></p>
+        <h3>Required books and handouts</h3>
+        <p class="meta">Tick the materials every student must own before asking to graduate.</p>
+        <div id="materialList"></div>
+        <p id="materialMsg" class="msg"></p>
     </section>
 
     <section class="panel" data-perm="support">
