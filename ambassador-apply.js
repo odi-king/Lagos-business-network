@@ -57,6 +57,7 @@ async function init() {
 
         box.innerHTML += '<p><button type="button" class="btn btn-outline" id="resignBtn">Resign from my position</button></p>';
 
+        await showCareer(box);
         await showEarnings(box);
 
         document.getElementById("resignBtn").addEventListener("click", async function () {
@@ -111,6 +112,35 @@ async function init() {
 
 function money(kobo) {
     return "\u20A6" + (Number(kobo || 0) / 100).toLocaleString();
+}
+
+const RANK_NAME = { school: "School Ambassador", senior: "Senior Ambassador", regional_manager: "Regional Ambassador Manager", national_director: "National Ambassador Director" };
+
+async function showCareer(box) {
+    const { data, error } = await db.rpc("my_ambassador_career");
+    if (error || !data) return;
+
+    const p = data.performance;
+    const moves = data.changes.length === 0 ? "<p class='meta'>No promotions or transfers yet.</p>" : data.changes.map(function (c) {
+        let line = "";
+        if (c.type === "promotion" || c.type === "rank_change") line = (c.type === "promotion" ? "Promotion: " : "Rank change: ") + RANK_NAME[c.old_rank] + " to " + RANK_NAME[c.new_rank];
+        else if (c.type === "salary") line = "Salary changed to " + money(c.new_salary_kobo);
+        else if (c.type === "transfer") line = "Transferred to " + (c.new_school || "another school");
+        else line = "School " + (c.detail || "") + ": " + (c.new_school || "");
+        return "<p class='meta'>" + escapeHTML(new Date(c.created_at).toLocaleDateString()) + " &bull; " + escapeHTML(line) + "</p>";
+    }).join("");
+
+    const section = document.createElement("div");
+    section.innerHTML =
+        "<h3>My rank and position</h3>" +
+        "<p><strong>" + escapeHTML(RANK_NAME[data.ambassador_rank]) + "</strong>" + (data.region ? " &bull; " + escapeHTML(data.region) : "") + "</p>" +
+        "<p class='meta'>School: " + escapeHTML(data.school || "none") +
+        (data.assigned_schools.length ? " &bull; Also looking after: " + data.assigned_schools.map(function (s) { return escapeHTML(s.name); }).join(", ") : "") + "</p>" +
+        "<p class='meta'>Monthly salary: " + (data.salary_kobo ? money(data.salary_kobo) : "to be approved") + "</p>" +
+        "<p class='meta'>My performance: " + p.reviews + " review(s)" + (p.average_score != null ? ", average score " + p.average_score : "") +
+        " &bull; signed up " + p.signed_up + " &bull; paid subscriptions " + p.paid_subscriptions + "</p>" +
+        "<h3>My promotion history</h3>" + moves;
+    box.appendChild(section);
 }
 
 async function showEarnings(box) {

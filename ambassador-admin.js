@@ -144,6 +144,8 @@ async function loadAppointments() {
             (a.appointment_status === "trial" ? " &bull; trial ends " + d(a.trial_end) : "") +
             (a.appointment_end ? " &bull; appointment until " + d(a.appointment_end) : "") +
             (a.certificate_no ? " &bull; certificate " + escapeHTML(a.certificate_no) : "") +
+            (a.salary_kobo ? " &bull; salary " + naira(a.salary_kobo) + "/month" : " &bull; salary not approved yet") +
+            (a.region ? " &bull; region " + escapeHTML(a.region) : "") +
             (a.last_review ? " &bull; last review " + escapeHTML(a.last_review) : "") +
             (a.renewal_decision ? " &bull; renewal " + escapeHTML(a.renewal_decision) : "") +
             (a.left_at ? " &bull; left " + d(a.left_at) + (a.left_reason ? " (" + escapeHTML(a.left_reason) + ")" : "") : "") + "</div>" +
@@ -156,6 +158,7 @@ async function loadAppointments() {
             (a.appointment_status === "confirmed" ? '<button type="button" class="btn btn-outline amb-act" data-action="renew">Renew</button>' +
                 '<button type="button" class="btn btn-outline amb-act" data-action="decline">Do not renew</button>' : "") +
             (a.appointment_status === "expired" || a.appointment_status === "resigned" ? '<button type="button" class="btn btn-outline amb-act" data-action="renew">Appoint again</button>' : "") +
+            '<button type="button" class="btn btn-outline amb-career">Career</button>' +
             '<button type="button" class="btn btn-outline amb-comm">Commissions</button>' +
             '<button type="button" class="btn btn-outline amb-rev">Reviews</button>' +
             '<button type="button" class="btn btn-outline amb-hist">History</button></div>' +
@@ -178,6 +181,17 @@ document.getElementById("ambList").addEventListener("click", async function (eve
             return "<p class='meta'>" + escapeHTML(new Date(h.created_at).toLocaleString()) + " &bull; <strong>" + escapeHTML(h.event) + "</strong>" +
                 (h.details ? " &bull; " + escapeHTML(h.details) : "") + " &bull; " + escapeHTML(h.actor_name) + "</p>";
         }).join("");
+        return;
+    }
+
+    if (event.target.closest(".amb-career")) {
+        await openCareer(card);
+        return;
+    }
+
+    const careerBtn = event.target.closest("[data-career]");
+    if (careerBtn) {
+        await careerAction(card, careerBtn.dataset.career);
         return;
     }
 
@@ -464,3 +478,116 @@ document.getElementById("csvBtn").addEventListener("click", function () {
     link.click();
     URL.revokeObjectURL(link.href);
 });
+
+
+// ---------- Career: rank, salary, transfers and schools (Super Admin changes; other admins can read) ----------
+
+const RANK_ORDER = ["school", "senior", "regional_manager", "national_director"];
+let isSuper = null;
+
+async function checkSuper() {
+    if (isSuper !== null) return isSuper;
+    try {
+        const { data: s } = await db.auth.getSession();
+        const { data } = await db.from("profiles").select("is_super_admin").eq("id", s.session.user.id).maybeSingle();
+        isSuper = !!(data && data.is_super_admin);
+    } catch (e) { isSuper = false; }
+    return isSuper;
+}
+
+function schoolOptions(exceptId) {
+    return schoolsCache.filter(function (s) { return s.active && s.id !== exceptId; }).map(function (s) {
+        return '<option value="' + escapeHTML(s.id) + '">' + escapeHTML(s.name) + "</option>";
+    }).join("");
+}
+
+async function openCareer(card) {
+    const holder = card.querySelector(".amb-hist-box");
+    const { data, error } = await db.rpc("admin_ambassador_career", { p_id: card.dataset.amb });
+    if (error) { say(error.message, "error"); return; }
+
+    if (schoolsCache.length === 0) {
+        const s = await db.rpc("admin_ambassador_schools");
+        schoolsCache = s.data || [];
+    }
+
+    const sup = await checkSuper();
+    const p = data.performance;
+    const manager = data.ambassador_rank === "regional_manager" || data.ambassador_rank === "national_director";
+
+    const history = data.changes.length === 0 ? "<p class='meta'>No promotions or transfers yet.</p>" : data.changes.map(function (c) {
+        let line = "";
+        if (c.type === "promotion" || c.type === "rank_change") line = (c.type === "promotion" ? "Promotion" : "Rank change") + ": " + RANK[c.old_rank] + " to " + RANK[c.new_rank] + " (salary " + naira(c.old_salary_kobo) + " to " + naira(c.new_salary_kobo) + ")";
+        else if (c.type === "salary") line = "Salary " + naira(c.old_salary_kobo) + " to " + naira(c.new_salary_kobo);
+        else if (c.type === "transfer") line = "Transfer: " + (c.old_school || "none") + " to " + (c.new_school || "none");
+        else line = "School " + (c.detail || "") + ": " + (c.new_school || "");
+        return "<p class='meta'>" + escapeHTML(d(c.created_at)) + " &bull; " + escapeHTML(line) + (c.reason ? " &bull; " + escapeHTML(c.reason) : "") + "</p>";
+    }).join("");
+
+    holder.innerHTML =
+        "<h4>Career</h4>" +
+        "<p><strong>" + escapeHTML(RANK[data.ambassador_rank]) + "</strong> &bull; " + escapeHTML(TYPE[data.ambassador_type]) + " &bull; " + escapeHTML(data.appointment_status) + "</p>" +
+        "<p class='meta'>School: " + escapeHTML(data.school || "none") + (data.region ? " &bull; Region: " + escapeHTML(data.region) : "") +
+        " &bull; Salary: " + (data.salary_kobo ? naira(data.salary_kobo) + "/month" + (data.salary_is_custom ? " (approved)" : " (standard)") : "not approved yet") + "</p>" +
+        (manager ? "<p class='meta'>Assigned schools: " + (data.assigned_schools.length ? data.assigned_schools.map(function (s) { return escapeHTML(s.name); }).join(", ") : "none yet") + "</p>" : "") +
+        "<p class='meta'>Performance: " + p.reviews + " review(s)" + (p.average_score != null ? ", average score " + p.average_score : "") + (p.last_review ? ", last: " + escapeHTML(p.last_review) : "") +
+        " &bull; warnings " + p.warnings + " &bull; signed up " + p.signed_up + " &bull; paid subscriptions " + p.paid_subscriptions + "</p>" +
+        "<h4>Promotion and transfer history</h4>" + history +
+        (sup && (data.appointment_status === "confirmed" || data.appointment_status === "suspended") ?
+            "<h4>Super Admin controls</h4>" +
+            '<div class="career-form" data-school="' + escapeHTML(data.school_id || "") + '">' +
+            '<p class="meta">Change rank</p>' +
+            '<select class="c-rank">' + RANK_ORDER.map(function (r) { return '<option value="' + r + '"' + (r === data.ambassador_rank ? " selected" : "") + ">" + RANK[r] + "</option>"; }).join("") + "</select>" +
+            '<input type="number" class="c-rank-salary" min="1" placeholder="Monthly salary in naira (needed for Regional and National)">' +
+            '<input type="text" class="c-region" maxlength="80" placeholder="Region (Regional and National only)" value="' + escapeHTML(data.region || "") + '">' +
+            '<input type="text" class="c-rank-reason" maxlength="300" placeholder="Reason (kept in the record)">' +
+            '<button type="button" class="btn btn-outline" data-career="rank">Save rank</button>' +
+            '<p class="meta">Approve salary</p>' +
+            '<input type="number" class="c-salary" min="1" placeholder="Monthly salary in naira">' +
+            '<input type="text" class="c-salary-reason" maxlength="300" placeholder="Reason (kept in the record)">' +
+            '<button type="button" class="btn btn-outline" data-career="salary">Approve salary</button>' +
+            '<p class="meta">Transfer to another school</p>' +
+            '<select class="c-school">' + schoolOptions(data.school_id) + "</select>" +
+            '<input type="text" class="c-transfer-reason" maxlength="300" placeholder="Reason (kept in the record)">' +
+            '<button type="button" class="btn btn-outline" data-career="transfer">Transfer</button>' +
+            (manager ? '<p class="meta">Assigned schools (Regional and National managers)</p>' +
+                '<select class="c-assign">' + schoolOptions(null) + "</select>" +
+                '<button type="button" class="btn btn-outline" data-career="assign">Assign school</button>' +
+                '<button type="button" class="btn btn-outline" data-career="unassign">Remove school</button>' : "") +
+            "</div>"
+            : (data.appointment_status === "confirmed" || data.appointment_status === "suspended" ? "<p class='meta'>Only the Super Admin can change ranks, salaries, transfers and school assignments.</p>" : ""));
+}
+
+async function careerAction(card, kind) {
+    const form = card.querySelector(".career-form");
+    if (!form) return;
+    const q = function (c) { return form.querySelector(c); };
+    const id = card.dataset.amb;
+    let res;
+    say("");
+
+    if (kind === "rank") {
+        if (!confirm("Change this ambassador's rank?")) return;
+        const salary = q(".c-rank-salary").value.trim();
+        res = await db.rpc("admin_ambassador_set_rank", {
+            p_id: id, p_rank: q(".c-rank").value, p_salary_kobo: salary === "" ? null : Math.round(parseFloat(salary) * 100),
+            p_region: q(".c-region").value, p_reason: q(".c-rank-reason").value
+        });
+    } else if (kind === "salary") {
+        const salary = q(".c-salary").value.trim();
+        if (salary === "" && !confirm("No amount entered. This returns the ambassador to the standard salary for the rank. Continue?")) return;
+        res = await db.rpc("admin_ambassador_set_salary", {
+            p_id: id, p_salary_kobo: salary === "" ? null : Math.round(parseFloat(salary) * 100), p_reason: q(".c-salary-reason").value
+        });
+    } else if (kind === "transfer") {
+        if (!confirm("Transfer this ambassador to the chosen school?")) return;
+        res = await db.rpc("admin_ambassador_transfer", { p_id: id, p_school: q(".c-school").value, p_reason: q(".c-transfer-reason").value });
+    } else {
+        res = await db.rpc("admin_ambassador_assign_school", { p_id: id, p_school: q(".c-assign").value, p_assign: kind === "assign", p_reason: "" });
+    }
+
+    if (res.error) { say(res.error.message, "error"); return; }
+    say("Saved.", "ok");
+    schoolsCache = [];
+    await loadAppointments();
+}
