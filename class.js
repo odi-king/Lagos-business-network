@@ -252,6 +252,9 @@ lessonList.addEventListener("click", async function (event) {
         wrap.appendChild(video);
         slot.appendChild(wrap);
         button.textContent = "Close video";
+
+        // Students: watching to the end completes the lesson
+        if (isStudent && typeof trackWatch === "function") trackWatch(video, button.dataset.id, button.closest(".business-card"));
         return;
     }
 
@@ -494,14 +497,33 @@ document.getElementById("lessonForm").addEventListener("submit", async function 
 
     text.textContent = "Saving the lesson...";
 
-    const { error } = await db.from("lessons").insert({
+    // The real length of the video, so student watch-through can be checked against it
+    const seconds = await new Promise(function (resolve) {
+        const probe = document.createElement("video");
+        const url = URL.createObjectURL(file);
+        const finish = function (value) { URL.revokeObjectURL(url); resolve(value); };
+        probe.preload = "metadata";
+        probe.onloadedmetadata = function () { finish(isFinite(probe.duration) ? Math.round(probe.duration) : null); };
+        probe.onerror = function () { finish(null); };
+        setTimeout(function () { finish(null); }, 8000);
+        probe.src = url;
+    });
+
+    const lessonRow = {
         class_id: classId,
         title: title,
         video_path: path,
         file_name: file.name,
         file_size: file.size,
         downloadable: document.getElementById("lessonDownload").checked
-    });
+    };
+
+    let { error } = await db.from("lessons").insert(seconds ? Object.assign({ duration_seconds: seconds }, lessonRow) : lessonRow);
+
+    // The database update (supabase-watch.sql) has not been run yet: save the lesson without the length
+    if (error && /duration_seconds/.test(error.message || "")) {
+        ({ error } = await db.from("lessons").insert(lessonRow));
+    }
 
     button.disabled = false;
     progress.style.display = "none";
@@ -586,6 +608,11 @@ function completeButton(lesson) {
     if (!isStudent) return "";
 
     const done = completedLessons.has(lesson.id);
+
+    // An uploaded video is completed by watching it (see watch.js), not by pressing a button
+    if (lesson.video_path && !done) {
+        return '<p class="meta watch-note" data-lesson="' + escapeHTML(lesson.id) + '">Watch the whole video to complete this lesson.</p>';
+    }
 
     return '<button type="button" class="btn ' + (done ? "done-btn" : "btn-outline") + ' complete-btn" data-lesson="' +
         escapeHTML(lesson.id) + '">' + (done ? "\u2713 Completed" : "Mark as complete") + "</button>";
