@@ -1,102 +1,15 @@
 // Service worker: lets the app open fast and show its pages when the signal is weak.
 // Bump CACHE_NAME whenever you push changes, so phones pick up the new files.
-const CACHE_NAME = "lbn-v57";
+const CACHE_NAME = "lbn-v58";
 
+// Only a few core files are saved up front. Every other page is saved the first time it is opened.
+// (Saving about 100 files at once made GitHub Pages block heavy testing.)
 const APP_FILES = [
     "./",
     "index.html",
-    "auth.html",
-    "dashboard.html",
-    "marketplace.html",
-    "pay.html",
-    "reset.html",
-    "admin.html",
-    "classes.html",
-    "class.html",
     "style.css",
-    "auth.js",
-    "dashboard.js",
-    "script.js",
-    "pay.js",
-    "reset.js",
-    "admin.js",
-    "classes.js",
-    "class.js",
-    "membership.js",
-    "video-utils.js",
-    "badges.js",
-    "trade.html",
-    "trades.html",
-    "trade.js",
-    "trades.js",
-    "contact.html",
-    "contact.js",
-    "paystack-config.js",
-    "feed.html",
-    "feed.js",
-    "member.html",
-    "member.js",
-    "posts.js",
-    "mention.js",
-    "feedback.js",
-    "referrals.html",
-    "referrals.js",
-    "subscription.html",
-    "subscription.js",
-    "ambassador-banner.js",
-    "ambassador-badge.js",
-    "ambassador-certificate.html",
-    "ambassador-certificate.js",
-    "ambassadors.html",
-    "ambassadors.js",
-    "listing-edit.html",
-    "listing-edit.js",
-    "monitoring.html",
-    "monitoring.js",
-    "monitoring-apply.html",
-    "monitoring-apply.js",
-    "brand-ambassadors.html",
-    "brand-ambassadors.js",
-    "marketnav.js",
-    "lifestyle.js",
-    "lifestyle.html",
-    "i18n-strings-extra.js",
-    "reviews.js",
-    "mfa.js",
-    "refunds.html",
-    "privacy.html",
-    "terms.html",
-    "account.js",
-    "account.html",
-    "analytics.js",
-    "analytics.html",
-    "i18n-strings.js",
-    "i18n.js",
-    "dispute.js",
-    "dispute.html",
-    "chat-common.js",
-    "admins.js",
-    "admins.html",
-    "chat.js",
-    "chat.html",
-    "messages.js",
-    "messages.html",
-    "post.js",
-    "post.html",
-    "share.js",
-    "library.js",
-    "library.html",
-    "settings.js",
-    "settings.html",
-    "notifications.js",
-    "notifications.html",
-    "help.html",
-    "appnav.js",
-    "live.js",
-    "live.html",
-    "reels.js",
-    "reels.html",
     "supabase-config.js",
+    "appnav.js",
     "pwa.js",
     "manifest.webmanifest",
     "icons/icon-192.png",
@@ -142,10 +55,12 @@ self.addEventListener("fetch", function (event) {
     event.respondWith(
         fetch(request, { cache: "no-cache" })
             .then(function (response) {
-                const copy = response.clone();
-                caches.open(CACHE_NAME).then(function (cache) {
-                    cache.put(request, copy);
-                });
+                if (response && response.ok) {
+                    const copy = response.clone();
+                    caches.open(CACHE_NAME).then(function (cache) {
+                        cache.put(request, copy);
+                    });
+                }
                 return response;
             })
             .catch(function () {
