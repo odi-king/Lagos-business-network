@@ -67,6 +67,44 @@
         <div id="pfDetail"></div>
     </section>
 
+    <section class="panel" id="inspBox" style="display:none;">
+        <h2>Field verification and inspections</h2>
+        <p class="meta">Reports on school visits, checks of promotional activity and random member contact. A report is private to its officer until submitted, cannot be changed after submitting, and is reviewed by the Head or a Performance Officer. Everything is recorded.</p>
+        <div class="filters">
+            <select id="inFilter">
+                <option value="">All reports</option>
+                <option value="draft">Drafts</option>
+                <option value="submitted">Waiting for review</option>
+                <option value="returned">Sent back</option>
+                <option value="accepted">Accepted</option>
+            </select>
+            <button type="button" class="btn btn-outline" id="inNew" style="display:none;">Write a new report</button>
+        </div>
+        <form id="inForm" style="display:none;">
+            <h3 id="inFormTitle">New report</h3>
+            <input type="hidden" id="inId">
+            <select id="inAmb" required></select>
+            <select id="inKind">
+                <option value="school_visit">School visit</option>
+                <option value="promotion_check">Check of promotional activity</option>
+                <option value="member_contact">Member contact check (random sample)</option>
+            </select>
+            <input type="date" id="inDate" required>
+            <select id="inResult">
+                <option value="verified">Verified: everything checks out</option>
+                <option value="concerns">Concerns: needs follow-up</option>
+                <option value="failed">Failed: claims not supported</option>
+            </select>
+            <textarea id="inFindings" rows="5" maxlength="3000" placeholder="What did you see, who did you speak to, what did you find?"></textarea>
+            <div id="inChecks"></div>
+            <button type="button" class="btn btn-outline" id="inDraw" style="display:none;">Draw 5 random members</button>
+            <button type="submit" class="btn btn-outline" id="inSaveDraft">Save draft</button>
+            <button type="button" class="contact-btn" id="inSubmit">Submit for review</button>
+            <button type="button" class="btn btn-outline" id="inCancel">Cancel</button>
+        </form>
+        <div id="inList"><p class="meta">Loading...</p></div>
+    </section>
+
     <section class="panel" id="mineBox" style="display:none;"></section>
 
     <div id="mgmtBox" style="display:none;">

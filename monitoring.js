@@ -332,6 +332,170 @@ async function startPerformance() {
     await loadPerformance();
 }
 
+// ---------- Field verification and inspections (4D-3) ----------
+const KIND = { school_visit: "School visit", promotion_check: "Promotion check", member_contact: "Member contact check" };
+const RESULT = { verified: "Verified", concerns: "Concerns", failed: "Failed" };
+const OUTCOME = { pending: "Not contacted yet", confirmed: "Confirmed", denied: "Denied", unreachable: "Unreachable" };
+let inRows = [];
+let canWrite = false;
+let canReview = false;
+
+async function loadInspections() {
+    const box = document.getElementById("inList");
+    const { data, error } = await db.rpc("monitoring_inspections_list", { p_status: document.getElementById("inFilter").value || null });
+    if (error) {
+        box.innerHTML = "<p class='msg error'>" + escapeHTML(error.message.indexOf("function") >= 0 ? "Not set up yet. Run supabase-monitoring-3.sql in Supabase." : error.message) + "</p>";
+        return;
+    }
+    inRows = data || [];
+    box.innerHTML = inRows.length === 0 ? "<p class='meta'>No reports here.</p>" : inRows.map(function (r) {
+        const c = r.contacts && r.contacts.total ? " &bull; contacts: " + r.contacts.confirmed + " confirmed, " + r.contacts.denied + " denied, " + r.contacts.unreachable + " unreachable of " + r.contacts.total : "";
+        const open = r.mine && (r.status === "draft" || r.status === "returned");
+        return '<div class="staff-card" data-insp="' + escapeHTML(r.id) + '"><strong>' + escapeHTML(r.ambassador_no || "") + " " + escapeHTML(r.ambassador_name) + "</strong> <span class='meta'>" +
+            escapeHTML(r.school || "") + " &bull; " + escapeHTML(KIND[r.kind]) + " &bull; " + escapeHTML(d(r.visited_on)) + " &bull; <strong>" + escapeHTML(RESULT[r.result]) + "</strong> &bull; " + escapeHTML(r.status) + "</span>" +
+            "<p class='meta'>By " + escapeHTML(r.officer_name) + c + "</p>" +
+            (r.findings ? "<p>" + escapeHTML(r.findings) + "</p>" : "") +
+            (r.reviewer_note ? "<p class='meta'>Reviewer: " + escapeHTML(r.reviewer_note) + "</p>" : "") +
+            (open ? '<p><a href="#" class="in-edit">Open and edit</a></p>' : "") +
+            (canReview && r.status === "submitted" && !r.mine ? '<p><button type="button" class="contact-btn in-accept">Accept</button> <button type="button" class="btn btn-outline in-return">Send back</button></p>' : "") + "</div>";
+    }).join("");
+}
+
+function inReset() {
+    document.getElementById("inForm").style.display = "none";
+    document.getElementById("inId").value = "";
+    document.getElementById("inChecks").innerHTML = "";
+}
+
+async function inFillAmbassadors() {
+    const { data } = await db.rpc("monitoring_performance", { p_status: "live" });
+    document.getElementById("inAmb").innerHTML = (data || []).map(function (r) {
+        return '<option value="' + escapeHTML(r.ambassador_id) + '">' + escapeHTML((r.ambassador_no || "") + " " + r.full_name + " (" + (r.school_name || "") + ")") + "</option>";
+    }).join("");
+}
+
+async function inShowChecks(id) {
+    const box = document.getElementById("inChecks");
+    const { data, error } = await db.rpc("monitoring_inspection_checks", { p_inspection: id });
+    if (error) { say(error.message, "error"); return; }
+    const rows = data || [];
+    document.getElementById("inDraw").style.display = rows.length === 0 && document.getElementById("inKind").value === "member_contact" ? "" : "none";
+    box.innerHTML = rows.length === 0 ? "" : "<h3>Members to contact</h3>" + rows.map(function (c) {
+        return '<div class="staff-card" data-check="' + escapeHTML(c.check_id) + '"><strong>' + escapeHTML(c.first_name) + "</strong> <span class='meta'>joined " + escapeHTML(d(c.joined)) + (c.email ? " &bull; " + escapeHTML(c.email) : "") + " &bull; " + escapeHTML(OUTCOME[c.outcome]) + "</span>" +
+            '<p><select class="ck-outcome"><option value="confirmed">They confirm they joined through this ambassador</option><option value="denied">They say they did not</option><option value="unreachable">Could not reach them</option></select> ' +
+            '<input type="text" class="ck-note" maxlength="300" placeholder="Note (optional)" value="' + escapeHTML(c.note || "") + '"> <button type="button" class="btn btn-outline ck-save">Save</button></p></div>';
+    }).join("");
+}
+
+document.getElementById("inNew").addEventListener("click", async function () {
+    inReset();
+    document.getElementById("inFormTitle").textContent = "New report";
+    document.getElementById("inDate").value = new Date().toISOString().slice(0, 10);
+    document.getElementById("inFindings").value = "";
+    document.getElementById("inAmb").disabled = false;
+    document.getElementById("inKind").disabled = false;
+    await inFillAmbassadors();
+    document.getElementById("inForm").style.display = "";
+});
+document.getElementById("inCancel").addEventListener("click", inReset);
+document.getElementById("inFilter").addEventListener("change", loadInspections);
+
+async function inSave(submit) {
+    say("");
+    const id = document.getElementById("inId").value || null;
+    const r = await db.rpc("monitoring_inspection_save", {
+        p_id: id, p_amb: document.getElementById("inAmb").value, p_kind: document.getElementById("inKind").value,
+        p_visited: document.getElementById("inDate").value, p_findings: document.getElementById("inFindings").value,
+        p_result: document.getElementById("inResult").value, p_submit: submit
+    });
+    if (r.error) { say(r.error.message, "error"); return null; }
+    document.getElementById("inId").value = r.data;
+    return r.data;
+}
+
+document.getElementById("inForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const id = await inSave(false);
+    if (!id) return;
+    say("Draft saved.", "ok");
+    if (document.getElementById("inKind").value === "member_contact") await inShowChecks(id);
+    await loadInspections();
+});
+
+document.getElementById("inSubmit").addEventListener("click", async function () {
+    if (!confirm("Submit this report? You will not be able to change it afterwards.")) return;
+    const id = await inSave(true);
+    if (!id) return;
+    say("Report submitted for review.", "ok");
+    inReset();
+    await loadInspections();
+});
+
+document.getElementById("inDraw").addEventListener("click", async function () {
+    const id = await inSave(false);
+    if (!id) return;
+    const { error } = await db.rpc("monitoring_draw_members", { p_inspection: id, p_count: 5 });
+    if (error) { say(error.message, "error"); return; }
+    await inShowChecks(id);
+});
+
+document.getElementById("inChecks").addEventListener("click", async function (event) {
+    const b = event.target.closest(".ck-save");
+    if (!b) return;
+    const card = b.closest("[data-check]");
+    const { error } = await db.rpc("monitoring_contact_record", {
+        p_check: card.dataset.check, p_outcome: card.querySelector(".ck-outcome").value, p_note: card.querySelector(".ck-note").value
+    });
+    if (error) { say(error.message, "error"); return; }
+    say("Saved.", "ok");
+    await inShowChecks(document.getElementById("inId").value);
+});
+
+document.getElementById("inList").addEventListener("click", async function (event) {
+    const card = event.target.closest("[data-insp]");
+    if (!card) return;
+    const r = inRows.find(function (x) { return x.id === card.dataset.insp; });
+
+    if (event.target.closest(".in-edit") && r) {
+        event.preventDefault();
+        await inFillAmbassadors();
+        document.getElementById("inFormTitle").textContent = "Edit report";
+        document.getElementById("inId").value = r.id;
+        document.getElementById("inAmb").value = r.ambassador_id;
+        document.getElementById("inAmb").disabled = true;
+        document.getElementById("inKind").value = r.kind;
+        document.getElementById("inKind").disabled = true;
+        document.getElementById("inDate").value = r.visited_on;
+        document.getElementById("inResult").value = r.result;
+        document.getElementById("inFindings").value = r.findings || "";
+        document.getElementById("inForm").style.display = "";
+        if (r.kind === "member_contact") await inShowChecks(r.id); else document.getElementById("inChecks").innerHTML = "";
+        document.getElementById("inForm").scrollIntoView({ behavior: "smooth" });
+        return;
+    }
+
+    if (event.target.closest(".in-accept") || event.target.closest(".in-return")) {
+        const accept = !!event.target.closest(".in-accept");
+        let note = null;
+        if (!accept) {
+            note = prompt("Tell the officer what to fix:");
+            if (!note) return;
+        }
+        const { error } = await db.rpc("monitoring_inspection_review", { p_id: card.dataset.insp, p_decision: accept ? "accepted" : "returned", p_note: note });
+        if (error) { say(error.message, "error"); return; }
+        say(accept ? "Report accepted." : "Report sent back.", "ok");
+        await loadInspections();
+    }
+});
+
+async function startInspections() {
+    canWrite = ["field_officer", "member_verifier", "head", "super"].indexOf(myRole) >= 0;
+    canReview = ["super", "head", "performance_officer"].indexOf(myRole) >= 0;
+    document.getElementById("inspBox").style.display = "";
+    document.getElementById("inNew").style.display = canWrite ? "" : "none";
+    await loadInspections();
+}
+
 (async function init() {
     if (!db) { say("Supabase is not connected yet.", "error"); return; }
     const { data } = await db.auth.getSession();
@@ -344,6 +508,7 @@ async function startPerformance() {
     if (!myRole) { say("This area is only for the Monitoring Department team and the Super Admin.", "error"); return; }
 
     await startPerformance();
+    await startInspections();
 
     if (myRole === "super" || myRole === "head") {
         document.getElementById("mgmtBox").style.display = "";
