@@ -126,6 +126,7 @@ async function refresh() {
 
     trade = result.data;
     renderHeader();
+    if (!listingShown) { listingShown = true; showListingCard(); }
 
     const stateKey = trade.status + ":" + (trade.buyer_confirmed_at ? "b" : "") + (trade.seller_confirmed_at ? "s" : "");
 
@@ -206,6 +207,7 @@ function applyStatus() {
     const isSeller = trade.seller_id === me.id;
 
     chatForm.style.display = !closed && participant ? "flex" : "none";
+    if (typeof syncQuickReplies === "function") syncQuickReplies();
     offerForm.style.display = status === "negotiating" && participant ? "flex" : "none";
 
     document.getElementById("cancelBtn").style.display =
@@ -1116,4 +1118,62 @@ function renderMoneyState() {
 
     box.textContent = text;
     box.style.display = text ? "block" : "none";
+}
+
+
+// ---------- The listing behind this trade, and quick replies (5C) ----------
+let listingShown = false;
+
+async function showListingCard() {
+    if (!trade || !trade.post_id) return;
+    const { data, error } = await db.rpc("trade_listings", { p_trades: [tradeId] });
+    if (error || !data || !data[0]) return;
+    const l = data[0];
+
+    let url = "";
+    if (l.image_path) {
+        const signed = await db.storage.from("post-images").createSignedUrls([l.image_path], 3600);
+        url = signed.data && signed.data[0] && signed.data[0].signedUrl ? signed.data[0].signedUrl : "";
+    }
+
+    const where = [l.category, l.area, l.state].filter(Boolean).join(" \u2022 ");
+    const box = document.createElement("a");
+    box.href = "post.html?id=" + encodeURIComponent(l.post_id);
+    box.style.cssText = "display:flex;gap:12px;align-items:center;padding:10px;margin:12px 0;border:1px solid #334;border-radius:10px;text-decoration:none;color:inherit;";
+    box.innerHTML = (url ? '<img src="' + escapeHTML(url) + '" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:8px;flex:0 0 auto;">' : "") +
+        "<div><strong>" + escapeHTML(l.title || "Listing") + "</strong>" +
+        (l.price !== null && l.price !== undefined ? "<div>" + escapeHTML(money(l.price)) + "</div>" : "") +
+        (where ? "<div class='meta'>" + escapeHTML(where) + "</div>" : "") +
+        (l.status === "closed" ? "<div class='meta'>This listing is closed</div>" : "") + "</div>";
+    const zone = document.querySelector(".scam-zone");
+    zone.parentNode.insertBefore(box, zone);
+}
+
+const QUICK = [
+    "Is this still available?",
+    "Can you send more photos here?",
+    "What is your best price?",
+    "When can it be delivered?",
+    "Thank you, that works for me."
+];
+
+function syncQuickReplies() {
+    let bar = document.getElementById("quickReplies");
+    if (!bar) {
+        bar = document.createElement("div");
+        bar.id = "quickReplies";
+        bar.style.cssText = "display:flex;gap:6px;overflow-x:auto;padding:6px 0;";
+        bar.innerHTML = QUICK.map(function (q) {
+            return '<button type="button" class="chip quick-reply" data-text="' + escapeHTML(q) + '" style="flex:0 0 auto;white-space:nowrap;">' + escapeHTML(q) + "</button>";
+        }).join("");
+        bar.addEventListener("click", function (event) {
+            const b = event.target.closest(".quick-reply");
+            if (!b) return;
+            const input = document.getElementById("chatInput");
+            input.value = b.dataset.text;
+            input.focus();
+        });
+        chatForm.parentNode.insertBefore(bar, chatForm);
+    }
+    bar.style.display = chatForm.style.display === "none" ? "none" : "flex";
 }

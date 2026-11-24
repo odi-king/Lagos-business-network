@@ -25,6 +25,8 @@ function escapeHTML(text) {
         .replace(/'/g, "&#39;");
 }
 
+const listings = {};
+
 async function init() {
     if (typeof marketGate === "function" && !(await marketGate())) return;
 
@@ -57,13 +59,34 @@ async function init() {
     }
 
     trades = result.data;
+
+    // Pictures and titles of the listings behind the trades (optional: needs supabase-market-4.sql)
+    try {
+        const ids = trades.map(function (t) { return t.id; }).slice(0, 60);
+        const lr = await db.rpc("trade_listings", { p_trades: ids });
+        if (!lr.error && lr.data) {
+            const paths = lr.data.filter(function (l) { return l.image_path; }).map(function (l) { return l.image_path; });
+            const urls = {};
+            if (paths.length) {
+                const signed = await db.storage.from("post-images").createSignedUrls(paths, 3600);
+                (signed.data || []).forEach(function (s) { if (s.signedUrl) urls[s.path] = s.signedUrl; });
+            }
+            lr.data.forEach(function (l) { listings[l.trade_id] = { title: l.title, url: l.image_path ? urls[l.image_path] || "" : "" }; });
+        }
+    } catch (e) { /* the list still works without pictures */ }
+
     render();
 }
 
 function render() {
     const filter = tradeFilter.value;
 
+    const q = (document.getElementById("tradeSearch").value || "").trim().toLowerCase();
     const visible = trades.filter(function (t) {
+        if (q) {
+            const hay = [t.business_name, t.buyer && t.buyer.full_name, t.seller && t.seller.full_name, listings[t.id] && listings[t.id].title].join(" ").toLowerCase();
+            if (hay.indexOf(q) === -1) return false;
+        }
         const closed = t.status === "completed" || t.status === "cancelled" || t.status === "refunded" || t.status === "settled";
         if (filter === "active") return !closed;
         if (filter === "closed") return closed;
@@ -94,8 +117,10 @@ function render() {
 
         const card = document.createElement("div");
         card.className = "business-card";
+        const li = listings[t.id];
 
         card.innerHTML = `
+            ${li && li.url ? '<img src="' + escapeHTML(li.url) + '" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:8px;float:right;margin-left:10px;">' : ""}
             <h3>${escapeHTML(t.business_name)}</h3>
             <p class="meta">${escapeHTML(who)}</p>
             <p class="meta">${escapeHTML(STATUS_LABELS[t.status] || t.status)}${amount} \u2022 Updated ${new Date(t.updated_at).toLocaleString()}</p>
@@ -107,6 +132,7 @@ function render() {
 }
 
 tradeFilter.addEventListener("change", render);
+document.getElementById("tradeSearch").addEventListener("input", render);
 
 document.getElementById("logoutBtn").addEventListener("click", async function (event) {
     event.preventDefault();
