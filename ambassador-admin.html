@@ -44,6 +44,7 @@
         <button type="button" class="btn btn-outline amb-tab" data-tab="appointments">Ambassadors</button>
         <button type="button" class="btn btn-outline amb-tab" data-tab="schools">Schools and positions</button>
         <button type="button" class="btn btn-outline amb-tab" data-tab="payments">Payments and reports</button>
+        <button type="button" class="btn btn-outline amb-tab" data-tab="brand">Celebrity and Global</button>
     </div>
 
     <section class="panel" id="tab-applications">
@@ -96,6 +97,57 @@
         <p class="meta">Stipend and commission for each ambassador in the chosen month.</p>
         <button type="button" class="btn btn-outline" id="csvBtn">Download as spreadsheet (CSV)</button>
         <div id="reportBox"><p class="meta">Loading...</p></div>
+    </section>
+    <section class="panel" id="tab-brand" style="display:none;">
+        <h2>Celebrity and Global Brand Ambassadors</h2>
+        <p class="meta">Two separate appointment categories. They are not ranks and are not part of the School Ambassador or International Representatives programmes. Only the Super Admin can appoint or change them.</p>
+        <select id="brandCat">
+            <option value="all">Both categories</option>
+            <option value="celebrity">Celebrity Brand Ambassadors</option>
+            <option value="global">Global Brand Ambassadors</option>
+        </select>
+        <select id="brandStatus">
+            <option value="live">Current</option>
+            <option value="ended">Ended</option>
+            <option value="all">Everyone</option>
+        </select>
+        <div id="brandList"><p class="meta">Loading...</p></div>
+
+        <h3 id="brandFormTitle">Appoint a brand ambassador</h3>
+        <form id="brandForm">
+            <input type="hidden" id="bId">
+            <label class="meta" for="bCat">Category</label>
+            <select id="bCat" required>
+                <option value="celebrity">Celebrity Brand Ambassador (musician, actor, athlete, entertainer, public figure)</option>
+                <option value="global">Global Brand Ambassador (represents LBN internationally)</option>
+            </select>
+            <label class="meta" for="bName">Name to show</label>
+            <input type="text" id="bName" maxlength="100" required>
+            <label class="meta" for="bTitle">Short title (for example Musician, Footballer, Entrepreneur)</label>
+            <input type="text" id="bTitle" maxlength="100" required>
+            <label class="meta" for="bCountry">Country or base</label>
+            <input type="text" id="bCountry" maxlength="60">
+            <label class="meta" for="bBio">Short public bio</label>
+            <textarea id="bBio" maxlength="600" rows="3"></textarea>
+            <label class="meta" for="bLinks">Public links (official social media pages)</label>
+            <textarea id="bLinks" maxlength="600" rows="2"></textarea>
+            <label class="meta" for="bAudience">Audience size</label>
+            <input type="text" id="bAudience" maxlength="120">
+            <label class="meta" for="bEmail">LBN member email (optional, gives them the badge)</label>
+            <input type="email" id="bEmail" maxlength="200">
+            <label class="meta" for="bStart">Appointment starts</label>
+            <input type="date" id="bStart">
+            <label class="meta" for="bEnd">Appointment ends</label>
+            <input type="date" id="bEnd">
+            <label class="meta"><input type="checkbox" id="bAgreement"> A signed agreement is in place</label>
+            <label class="meta"><input type="checkbox" id="bListed"> Show on the public page (only with their written permission)</label>
+            <label class="meta" for="bContact">Private contact (never shown publicly)</label>
+            <input type="text" id="bContact" maxlength="200">
+            <label class="meta" for="bNotes">Private notes and arrangements (never shown publicly)</label>
+            <textarea id="bNotes" maxlength="1000" rows="3"></textarea>
+            <button type="submit" class="contact-btn" id="bSave">Save appointment</button>
+            <button type="button" class="btn btn-outline" id="bReset">Clear the form</button>
+        </form>
     </section>
 </main>
 

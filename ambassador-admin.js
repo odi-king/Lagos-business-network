@@ -33,7 +33,7 @@ function d(value) {
 }
 
 function showTab(name) {
-    ["applications", "appointments", "schools", "payments"].forEach(function (t) {
+    ["applications", "appointments", "schools", "payments", "brand"].forEach(function (t) {
         document.getElementById("tab-" + t).style.display = t === name ? "" : "none";
     });
     document.querySelectorAll(".amb-tab").forEach(function (b) {
@@ -43,6 +43,7 @@ function showTab(name) {
     if (name === "appointments") loadAppointments();
     if (name === "schools") loadSchools();
     if (name === "payments") loadPayments();
+    if (name === "brand") loadBrand();
 }
 
 document.getElementById("ambTabs").addEventListener("click", function (event) {
@@ -591,3 +592,108 @@ async function careerAction(card, kind) {
     schoolsCache = [];
     await loadAppointments();
 }
+
+
+// ---------- Celebrity and Global Brand Ambassadors ----------
+
+const BRAND = { celebrity: "Celebrity Brand Ambassador", global: "Global Brand Ambassador" };
+let brandRows = [];
+
+async function loadBrand() {
+    const box = document.getElementById("brandList");
+    const { data, error } = await db.rpc("admin_brand_ambassadors", {
+        p_category: document.getElementById("brandCat").value, p_status: document.getElementById("brandStatus").value
+    });
+
+    if (error) { box.innerHTML = ""; fail(error.message.indexOf("does not exist") !== -1 ? { message: "Not set up yet. Run supabase-ambassadors-5.sql in Supabase." } : error); return; }
+    brandRows = data;
+    const sup = await checkSuper();
+
+    box.innerHTML = data.length === 0 ? "<p class='meta'>Nobody appointed yet.</p>" : data.map(function (b) {
+        return '<div class="staff-card" data-brand="' + escapeHTML(b.id) + '"><strong>' + escapeHTML(b.display_name) + "</strong> <span class='meta'>" + escapeHTML(BRAND[b.category]) + " &bull; " + escapeHTML(b.public_title) + " &bull; <strong>" + escapeHTML(b.status) + "</strong></span>" +
+            '<div class="meta">' + (b.country ? escapeHTML(b.country) + " &bull; " : "") + (b.term_start ? "from " + escapeHTML(b.term_start) : "") + (b.term_end ? " to " + escapeHTML(b.term_end) + (b.term_over ? " (term over)" : "") : "") +
+            " &bull; agreement " + (b.agreement_confirmed ? "signed" : "NOT confirmed") + " &bull; " + (b.listed_publicly ? "shown on the public page" : "not shown publicly") +
+            (b.member_email ? " &bull; member " + escapeHTML(b.member_email) : "") + "</div>" +
+            (b.private_contact ? '<div class="meta">Private contact: ' + escapeHTML(b.private_contact) + "</div>" : "") +
+            (b.private_notes ? '<div class="meta">Private notes: ' + escapeHTML(b.private_notes) + "</div>" : "") +
+            (sup && b.status !== "ended" ? '<div class="staff-actions"><button type="button" class="btn btn-outline brand-edit">Edit</button>' +
+                (b.status === "active" ? '<button type="button" class="btn btn-outline brand-act" data-status="suspended">Suspend</button>' : '<button type="button" class="btn btn-outline brand-act" data-status="active">Reinstate</button>') +
+                '<button type="button" class="btn btn-outline brand-act" data-status="ended">End appointment</button></div>' : "") +
+            '<div class="meta">' + b.events.slice(0, 3).map(function (e) { return escapeHTML(d(e.created_at)) + " " + escapeHTML(e.event) + (e.details ? " (" + escapeHTML(e.details) + ")" : ""); }).join(" &bull; ") + "</div></div>";
+    }).join("");
+}
+
+document.getElementById("brandCat").addEventListener("change", loadBrand);
+document.getElementById("brandStatus").addEventListener("change", loadBrand);
+
+function resetBrandForm() {
+    document.getElementById("brandForm").reset();
+    document.getElementById("bId").value = "";
+    document.getElementById("brandFormTitle").textContent = "Appoint a brand ambassador";
+    document.getElementById("bCat").disabled = false;
+}
+
+document.getElementById("bReset").addEventListener("click", resetBrandForm);
+
+document.getElementById("brandList").addEventListener("click", async function (event) {
+    const card = event.target.closest("[data-brand]");
+    if (!card) return;
+    const row = brandRows.find(function (r) { return r.id === card.dataset.brand; });
+
+    if (event.target.closest(".brand-edit") && row) {
+        document.getElementById("bId").value = row.id;
+        document.getElementById("bCat").value = row.category;
+        document.getElementById("bCat").disabled = true;
+        document.getElementById("bName").value = row.display_name || "";
+        document.getElementById("bTitle").value = row.public_title || "";
+        document.getElementById("bCountry").value = row.country || "";
+        document.getElementById("bBio").value = row.bio || "";
+        document.getElementById("bLinks").value = row.links || "";
+        document.getElementById("bAudience").value = row.audience_size || "";
+        document.getElementById("bEmail").value = row.member_email || "";
+        document.getElementById("bStart").value = row.term_start || "";
+        document.getElementById("bEnd").value = row.term_end || "";
+        document.getElementById("bAgreement").checked = !!row.agreement_confirmed;
+        document.getElementById("bListed").checked = !!row.listed_publicly;
+        document.getElementById("bContact").value = row.private_contact || "";
+        document.getElementById("bNotes").value = row.private_notes || "";
+        document.getElementById("brandFormTitle").textContent = "Edit " + row.display_name;
+        document.getElementById("brandForm").scrollIntoView({ behavior: "smooth" });
+        return;
+    }
+
+    const button = event.target.closest(".brand-act");
+    if (!button) return;
+
+    const status = button.dataset.status;
+    let reason = "";
+    if (status !== "active") {
+        reason = prompt((status === "ended" ? "End this appointment. " : "Suspend this appointment. ") + "Write the reason (kept in the record):", "");
+        if (reason === null) return;
+    }
+
+    say("");
+    const res = await db.rpc("admin_brand_ambassador_status", { p_id: card.dataset.brand, p_status: status, p_reason: reason });
+    if (res.error) { say(res.error.message, "error"); return; }
+    say("Done.", "ok");
+    await loadBrand();
+});
+
+document.getElementById("brandForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    say("");
+    const v = function (id) { return document.getElementById(id).value.trim(); };
+
+    const res = await db.rpc("admin_brand_ambassador_save", {
+        p_id: v("bId") || null, p_category: document.getElementById("bCat").value, p_member_email: v("bEmail") || null,
+        p_display_name: v("bName"), p_public_title: v("bTitle"), p_country: v("bCountry"), p_bio: v("bBio"), p_links: v("bLinks"),
+        p_audience_size: v("bAudience"), p_term_start: v("bStart") || null, p_term_end: v("bEnd") || null,
+        p_agreement: document.getElementById("bAgreement").checked, p_listed: document.getElementById("bListed").checked,
+        p_contact: v("bContact"), p_notes: v("bNotes")
+    });
+
+    if (res.error) { say(res.error.message, "error"); return; }
+    say("Saved.", "ok");
+    resetBrandForm();
+    await loadBrand();
+});

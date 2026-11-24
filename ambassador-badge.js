@@ -3,7 +3,7 @@
 (function () {
     if (typeof db === "undefined" || !db) return;
 
-    const LABEL = { business: "Business Ambassador", student: "Student Ambassador", lecturer: "Lecturer Ambassador" };
+    const LABEL = { business: "Business Ambassador", student: "Student Ambassador", lecturer: "Lecturer Ambassador", celebrity: "Celebrity Brand Ambassador", global: "Global Brand Ambassador" };
     const known = {}; // id -> type, or "" for "not an ambassador"
     let timer = null;
 
