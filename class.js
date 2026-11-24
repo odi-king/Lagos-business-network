@@ -321,6 +321,8 @@ async function loadLive() {
         const finished = start.getTime() < threeHoursAgo;
         const card = document.createElement("div");
         card.className = "business-card";
+        card.dataset.session = session.id;
+        card.dataset.start = session.starts_at;
 
         const join = finished
             ? '<p class="meta">This live class has ended.</p>'
@@ -718,11 +720,14 @@ liveList.addEventListener("click", async function (event) {
         return;
     }
 
+    const proven = data.filter(function (a) { return a.verified; }).length;
+
     box.innerHTML = data.length === 0
         ? "<p class='meta'>Nobody has joined yet.</p>"
-        : "<p class='meta'>" + data.length + " joined:</p>" + data.map(function (a) {
-            return "<div class='comment'>" + escapeHTML(a.full_name || "Member") + " <span class='meta'>" +
-                new Date(a.joined_at).toLocaleTimeString() + "</span></div>";
+        : "<p class='meta'>" + proven + " proved attendance with the code, " + data.length + " tapped Join:</p>" + data.map(function (a) {
+            return "<div class='comment'>" + escapeHTML(a.full_name || "Member") +
+                (a.verified ? " <strong>✓ verified</strong>" : " <span class='meta'>(tapped Join only)</span>") +
+                " <span class='meta'>" + new Date(a.verified_at || a.joined_at).toLocaleTimeString() + "</span></div>";
         }).join("");
 });
 
