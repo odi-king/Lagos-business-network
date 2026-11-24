@@ -114,6 +114,12 @@ async function init() {
         parts.push(section("Administrator", [row("Admin", "admin.html")]));
     }
 
+    // Monitoring Department team members and the Super Admin see their department here
+    try {
+        const mon = await db.rpc("monitoring_my_role");
+        if (mon.data) parts.push(section("Monitoring Department", [row("Open the Monitoring Department", "monitoring.html")]));
+    } catch (e) {}
+
     parts.push(section("More info and support", [
         row("Help", "help.html"),
         row("Customer care", "contact.html"),

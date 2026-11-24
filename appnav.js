@@ -27,7 +27,7 @@
         { href: "feed.html", label: "Market", icon: "market", pages: ["feed.html", "marketplace.html", "trades.html", "trade.html", "analytics.html"] },
         { href: "reels.html", label: "Reels", icon: "reels", pages: ["reels.html"] },
         { href: "classes.html", label: "Classes", icon: "classes", pages: ["classes.html", "class.html", "live.html", "library.html"] },
-        { href: "member.html", label: "Me", icon: "me", pages: ["member.html", "dashboard.html", "admin.html", "admins.html", "settings.html", "notifications.html", "messages.html", "chat.html", "account.html", "dispute.html", "referrals.html", "subscription.html", "ambassador-apply.html", "ambassador-admin.html"] }
+        { href: "member.html", label: "Me", icon: "me", pages: ["member.html", "dashboard.html", "admin.html", "admins.html", "settings.html", "notifications.html", "messages.html", "chat.html", "account.html", "dispute.html", "referrals.html", "subscription.html", "ambassador-apply.html", "ambassador-admin.html", "monitoring.html", "monitoring-apply.html"] }
     ];
 
     const bar = document.createElement("nav");
