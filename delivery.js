@@ -149,6 +149,10 @@
 
             html += "<p><strong>" + esc(text) + "</strong> " + info.pickup_zone + " → " + info.drop_zone + "</p>";
 
+            if (info.rider) {
+                html += "<p class='meta'>Rider: <strong>" + esc(info.rider.name) + "</strong> (" + esc(info.rider.vehicle) + (info.rider.plate ? ", " + esc(info.rider.plate) : "") + ")</p>";
+            }
+
             if (info.pin && status !== "delivered") {
                 html += info.role === "seller"
                     ? '<p class="meta">Give the rider this <strong>pickup PIN</strong> when they arrive to collect the item:</p>'

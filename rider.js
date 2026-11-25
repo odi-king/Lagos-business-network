@@ -75,9 +75,183 @@
         return Array.from(container.querySelectorAll("input:checked")).map(function (b) { return b.value; });
     }
 
+    // ---------- Jobs (Phase 9C) ----------
+    let jobTimer = null;
+    let jobBusy = false;
+    let jobSig = "";
+
+    function naira(n) { return "₦" + Number(n || 0).toLocaleString("en-NG"); }
+
+    function line(parent, text, cls) {
+        const p = document.createElement("p");
+        p.className = cls || "meta";
+        p.textContent = text;
+        parent.appendChild(p);
+        return p;
+    }
+
+    function jobButton(label, cls, fn) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = cls;
+        b.textContent = label;
+        b.addEventListener("click", fn);
+        return b;
+    }
+
+    async function accept(id) {
+        const { data, error } = await db.rpc("rider_accept_delivery", { p_id: id });
+        say(el("openMsg"), error ? error.message : (data && data.ok ? "Job accepted. See it under Your jobs." : (data && data.message) || "Could not accept"), !error && data && data.ok);
+        jobSig = "";
+        loadJobs();
+    }
+
+    async function release(id) {
+        if (!confirm("Give this job back? Another rider will be found.")) return;
+        const { data, error } = await db.rpc("rider_release_delivery", { p_id: id });
+        say(el("activeMsg"), error ? error.message : (data && data.ok ? "Job given back." : (data && data.message) || "Could not give it back"), !error && data && data.ok);
+        jobSig = "";
+        loadJobs();
+    }
+
+    async function sendPin(job, input) {
+        const fn = job.status === "assigned" ? "rider_confirm_pickup" : "rider_confirm_delivery";
+        const pin = input.value.trim();
+        if (!/^\d{4}$/.test(pin)) { say(el("activeMsg"), "The PIN is 4 numbers.", false); return; }
+
+        const { data, error } = await db.rpc(fn, { p_id: job.id, p_pin: pin });
+        const good = !error && data && data.ok;
+        let text = error ? error.message : (data && data.message) || "";
+
+        if (good) text = job.status === "assigned" ? "Pickup confirmed. The buyer's address is now shown." : "Delivered. " + naira(data.earned) + " added to your earnings.";
+
+        say(el("activeMsg"), text, good);
+        jobSig = "";
+        loadJobs();
+    }
+
+    function drawActive(jobs) {
+        const box = el("activeList");
+        box.textContent = "";
+
+        const live = jobs.filter(function (j) { return j.status !== "delivered"; });
+        const done = jobs.filter(function (j) { return j.status === "delivered"; }).slice(0, 5);
+
+        if (!live.length) line(box, "No active jobs. Accept one below.");
+
+        live.forEach(function (j) {
+            const card = document.createElement("div");
+            card.className = "panel";
+            card.style.margin = "8px 0";
+
+            line(card, j.item + " • you earn " + naira(j.earn), "").style.fontWeight = "700";
+            line(card, j.pickup_zone + " → " + j.drop_zone);
+
+            if (j.status === "assigned") {
+                line(card, "1. Collect from: " + (j.pickup_address || "") + (j.pickup_phone ? " • " + j.pickup_phone : ""), "");
+                line(card, "The seller reads you the pickup PIN when you collect the item.");
+            } else {
+                line(card, "2. Deliver to: " + (j.drop_address || "") + (j.drop_phone ? " • " + j.drop_phone : ""), "");
+                if (j.drop_note) line(card, "Note: " + j.drop_note);
+                line(card, "The buyer reads you the delivery PIN when the item is in their hands.");
+            }
+
+            if (j.locked) {
+                line(card, "Too many wrong tries. Wait a few minutes.", "notice");
+            } else {
+                const input = document.createElement("input");
+                input.type = "text";
+                input.inputMode = "numeric";
+                input.maxLength = 4;
+                input.placeholder = j.status === "assigned" ? "Pickup PIN" : "Delivery PIN";
+                card.appendChild(input);
+                card.appendChild(jobButton(j.status === "assigned" ? "Confirm pickup" : "Confirm delivery", "contact-btn", function () { sendPin(j, input); }));
+            }
+
+            if (j.status === "assigned") card.appendChild(jobButton("Give this job back", "btn btn-outline", function () { release(j.id); }));
+
+            box.appendChild(card);
+        });
+
+        if (done.length) {
+            line(box, "Recently delivered", "").style.fontWeight = "700";
+            done.forEach(function (j) { line(box, j.item + " • " + naira(j.earn) + (j.paid ? " • paid" : " • waiting for payment")); });
+        }
+    }
+
+    function drawOpen(rows) {
+        const box = el("openList");
+        box.textContent = "";
+
+        if (!rows.length) { line(box, "No open jobs in your areas right now. This page refreshes by itself."); return; }
+
+        rows.forEach(function (r) {
+            const card = document.createElement("div");
+            card.className = "panel";
+            card.style.margin = "8px 0";
+            line(card, r.item + " • you earn " + naira(r.earn), "").style.fontWeight = "700";
+            line(card, "Collect in " + r.pickup_zone + " → deliver in " + r.drop_zone);
+            card.appendChild(jobButton("Accept this job", "contact-btn", function () { accept(r.id); }));
+            box.appendChild(card);
+        });
+    }
+
+    async function loadJobs() {
+        if (jobBusy || !mine || mine.status !== "approved" || mine.needs_recheck) return;
+        jobBusy = true;
+
+        try {
+            const [mineRes, openRes, earnRes] = await Promise.all([
+                db.rpc("my_rider_jobs"),
+                mine.available ? db.rpc("rider_open_jobs") : Promise.resolve({ data: [] }),
+                db.rpc("rider_earnings")
+            ]);
+
+            if (mineRes.error || earnRes.error) {
+                say(el("activeMsg"), "Jobs are not set up yet. (The LBN team still needs to run supabase-rider-jobs.sql.)", false);
+                return;
+            }
+
+            const jobs = mineRes.data || [];
+            const open = openRes.data || [];
+            const earn = earnRes.data || {};
+
+            const sig = JSON.stringify([jobs, open, earn, mine.available]);
+            if (sig === jobSig) return;
+            jobSig = sig;
+
+            el("earnText").textContent = "Waiting to be paid: " + naira(earn.owed) + " • Already paid: " + naira(earn.paid) + " • Deliveries done: " + (earn.jobs_done || 0) +
+                (earn.can_be_paid ? "" : " • Your payout account needs checking before LBN can pay you.");
+
+            drawActive(jobs);
+
+            el("openPanel").style.display = "";
+            if (mine.available) drawOpen(open);
+            else { el("openList").textContent = ""; line(el("openList"), "Go online to see open jobs."); }
+        } finally {
+            jobBusy = false;
+        }
+    }
+
+    function startJobs() {
+        clearInterval(jobTimer);
+        jobTimer = setInterval(function () { if (!document.hidden) loadJobs(); }, 5000);
+        jobSig = "";
+        loadJobs();
+    }
+
+    function stopJobs() {
+        clearInterval(jobTimer);
+        jobTimer = null;
+        el("earnPanel").style.display = "none";
+        el("activePanel").style.display = "none";
+        el("openPanel").style.display = "none";
+    }
+
     function show() {
         el("statusPanel").style.display = "none";
         el("workPanel").style.display = "none";
+        stopJobs();
         el("applyPanel").style.display = "none";
 
         const st = mine.status;
@@ -107,6 +281,9 @@
             el("onlineText").textContent = mine.available ? "You are online. Customers can be matched with you." : "You are offline. Go online when you are ready to take jobs.";
             el("onlineBtn").textContent = mine.available ? "Go offline" : "Go online";
             zoneChecks(el("zoneBox"), mine.zone_ids || []);
+            el("earnPanel").style.display = "";
+            el("activePanel").style.display = "";
+            startJobs();
             return;
         }
 

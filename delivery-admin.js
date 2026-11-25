@@ -76,14 +76,41 @@
                 ? '<p class="msg error">Refund due to the buyer: ' + naira(d.fee) + '</p><button type="button" class="contact-btn" data-refund="' + escapeHTML(d.id) + '">I have refunded this</button>'
                 : d.refund_status === "done" ? '<p class="meta">Delivery fee refunded.</p>' : "";
 
-            return '<div class="business-card"><h3>' + escapeHTML(d.item) + "</h3>" +
+            const rider = d.rider_name ? '<p class="meta">Rider: ' + escapeHTML(d.rider_name) + "</p>" : "";
+            const back = d.status === "assigned"
+                ? '<button type="button" class="btn btn-outline" data-release="' + escapeHTML(d.id) + '">Send back to open jobs</button>' : "";
+
+            return '<div class="business-card"><h3>' + escapeHTML(d.item) + "</h3>" + rider + back +
                 '<p class="meta">' + escapeHTML(d.pickup_zone || "?") + " → " + escapeHTML(d.drop_zone || "?") +
                 " • " + naira(d.fee) + " (rider share " + naira(d.rider_amount) + ") • " + escapeHTML(d.status.replace(/_/g, " ")) + "</p>" +
                 '<p class="meta"><a href="trade.html?id=' + escapeHTML(d.trade_id) + '">Open the trade</a> • ' + escapeHTML(new Date(d.created_at).toLocaleDateString()) + "</p>" + refund + "</div>";
         }).join("") || "<p class='meta'>No deliveries here.</p>";
     }
 
+    const payBox = document.getElementById("riderPayouts");
+
+    async function loadPayouts() {
+        if (!payBox) return;
+        const { data, error } = await db.rpc("admin_rider_payouts");
+
+        if (error) { payBox.innerHTML = "<p class='meta'>Not set up yet. Run supabase-rider-jobs.sql in Supabase.</p>"; return; }
+
+        payBox.innerHTML = (data || []).map(function (r) {
+            const bank = r.account_number
+                ? escapeHTML(r.bank_name || "") + " • " + escapeHTML(r.account_number) + " • " + escapeHTML(r.account_name || "")
+                : "No payout account saved";
+
+            const action = r.can_be_paid
+                ? '<button type="button" class="contact-btn" data-paid="' + escapeHTML(r.user_id) + '" data-amount="' + Number(r.owed) + '">I have paid this rider</button>'
+                : '<p class="msg error">Not cleared for payment: the rider is not approved, or the bank account changed since you checked. Check the rider first.</p>';
+
+            return '<div class="business-card"><h3>' + escapeHTML(r.legal_name) + " is owed " + naira(r.owed) + "</h3>" +
+                '<p class="meta">' + Number(r.jobs) + " deliveries • " + bank + "</p>" + action + "</div>";
+        }).join("") || "<p class='meta'>No rider is waiting to be paid.</p>";
+    }
+
     async function loadAll() {
+        loadPayouts();
         if (await loadZones()) {
             loadFees();
             loadPercent();
@@ -173,6 +200,32 @@
         b.disabled = true;
         const { error } = await db.rpc("admin_delivery_refund_done", { p_id: b.dataset.refund });
         say(error ? error.message : "Marked as refunded. The buyer was told.", !error);
+        loadDeliveries();
+    });
+
+    if (payBox) {
+        payBox.addEventListener("click", async function (event) {
+            const b = event.target.closest("button[data-paid]");
+            if (!b) return;
+
+            if (!confirm("Confirm you have sent " + naira(b.dataset.amount) + " to this rider's bank account. The rider will be told.")) return;
+
+            b.disabled = true;
+            const { error } = await db.rpc("admin_rider_mark_paid", { p_user: b.dataset.paid });
+            say(error ? error.message : "Marked as paid. The rider was told.", !error);
+            loadPayouts();
+        });
+    }
+
+    list.addEventListener("click", async function (event) {
+        const b = event.target.closest("button[data-release]");
+        if (!b) return;
+
+        if (!confirm("Send this job back to open jobs? The rider loses it and another rider can accept.")) return;
+
+        b.disabled = true;
+        const { error } = await db.rpc("admin_delivery_release", { p_id: b.dataset.release });
+        say(error ? error.message : "The job is open again.", !error);
         loadDeliveries();
     });
 
