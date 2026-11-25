@@ -238,6 +238,21 @@
             <input type="number" id="streamMaxGuests" min="1" max="8" placeholder="Most guests on stage">
             <button type="button" class="btn btn-outline" id="streamMaxSave">Save the guest limit</button>
         </div>
+        <h3>Coins and prices</h3>
+        <p class="notice">Coin sales are OFF. Keep them off until your Nigerian lawyer has answered the questions in the legal document. These starting prices can be changed at any time.</p>
+        <div id="coinAdmin"><p class="meta">Loading...</p></div>
+        <h3>Gifts (free test coins for now)</h3>
+        <p class="meta">The pictures viewers can send during a stream. Prices are in test coins, which have no value. Hide a gift to remove it without deleting it.</p>
+        <div id="giftAdminList"></div>
+        <div class="filters" id="giftNew">
+            <input type="text" data-emoji maxlength="8" placeholder="Emoji" style="max-width:70px;">
+            <input type="text" data-name maxlength="20" placeholder="Gift name">
+            <input type="number" data-cost min="1" max="10000" placeholder="Coins" style="max-width:110px;">
+            <select data-anim><option value="float">Float up</option><option value="burst">Burst</option><option value="big">Big screen</option></select>
+            <select data-active><option value="1">Shown</option><option value="0">Hidden</option></select>
+            <button type="button" class="btn btn-outline" id="giftAdd">Add gift</button>
+        </div>
+        <h3>Streams</h3>
         <div id="streamAdminList"></div>
         <p id="streamAdminMsg" class="msg"></p>
     </section>

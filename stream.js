@@ -25,6 +25,10 @@
     let wasOnstage = false;
     let stageSig = "";
     let handUp = false;
+    let giftTimer = null;
+    let giftBusy = false;
+    let giftCursor = null;
+    let giftBalance = 0;
 
     function say(text, ok) {
         msg.className = "msg " + (ok ? "ok" : "error");
@@ -152,6 +156,7 @@
         clearInterval(beatTimer);
         clearInterval(chatTimer);
         clearInterval(stageTimer);
+        clearInterval(giftTimer);
         if (room) { try { room.disconnect(); } catch (e) { /* already closed */ } }
         el("roomLive").style.display = "none";
         say(text + " See more on the Live streams page.", true);
@@ -420,6 +425,202 @@
         }
     }
 
+
+    // ---------- Gifts (test coins only) ----------
+
+    function giftSay(text, ok) {
+        const m = el("giftMsg");
+        m.className = "msg " + (ok ? "ok" : "error");
+        m.textContent = text || "";
+    }
+
+    function layerAdd(node, ms) {
+        const layer = el("giftLayer");
+        layer.appendChild(node);
+        setTimeout(function () { node.remove(); }, ms);
+    }
+
+    function animateGift(g) {
+        const qty = Number(g.qty) > 1 ? " x" + g.qty : "";
+
+        if (g.animation === "big") {
+            const d = document.createElement("div");
+            d.className = "gift-big";
+            const e = document.createElement("span");
+            e.className = "e";
+            e.textContent = g.emoji;
+            const t = document.createElement("span");
+            t.className = "t";
+            t.textContent = g.name + " sent " + g.gift + qty;
+            d.appendChild(e);
+            d.appendChild(t);
+            layerAdd(d, 3700);
+        } else if (g.animation === "burst") {
+            for (let i = 0; i < 9; i++) {
+                const b = document.createElement("span");
+                b.className = "gift-burst";
+                b.textContent = g.emoji;
+                b.style.left = "50%";
+                b.style.top = "60%";
+                b.style.setProperty("--dx", Math.round((Math.random() - 0.5) * 280) + "px");
+                b.style.setProperty("--dy", Math.round(-40 - Math.random() * 200) + "px");
+                layerAdd(b, 1700);
+            }
+            const n = document.createElement("div");
+            n.className = "gift-fly";
+            n.style.left = "8%";
+            const s = document.createElement("small");
+            s.textContent = g.name + qty;
+            n.appendChild(s);
+            layerAdd(n, 3300);
+        } else {
+            const f = document.createElement("div");
+            f.className = "gift-fly";
+            f.style.left = Math.round(5 + Math.random() * 70) + "%";
+            f.textContent = g.emoji;
+            const s = document.createElement("small");
+            s.textContent = g.name + qty;
+            f.appendChild(s);
+            layerAdd(f, 3300);
+        }
+    }
+
+    async function refreshGifts() {
+        if (!sid || giftBusy || ended) return;
+        giftBusy = true;
+
+        try {
+            const { data, error } = await db.rpc("stream_gifts_feed", { p_stream: sid, p_after: giftCursor });
+            if (error || !data) return;
+
+            giftCursor = data.now;
+
+            (data.gifts || []).slice(-10).forEach(function (g, i) {
+                setTimeout(function () { animateGift(g); }, i * 350);
+            });
+
+            const top = (data.top || []).map(function (t) { return t.name + " " + t.coins; }).join(" • ");
+            el("giftTotal").textContent = "Gifts in this stream: " + Number(data.total || 0) + " coins" + (top ? " • Top: " + top : "");
+        } finally {
+            giftBusy = false;
+        }
+    }
+
+    async function buyPack(p, btn) {
+        if (typeof PAYSTACK_PUBLIC_KEY === "undefined" || PAYSTACK_PUBLIC_KEY.indexOf("PASTE") === 0) { giftSay("Payments are not set up yet.", false); return; }
+        if (typeof PaystackPop === "undefined") { giftSay("The payment window could not load. Check your internet and try again.", false); return; }
+
+        btn.disabled = true;
+        const chk = await db.rpc("coin_buy_start", { p_pack: p.id });
+        btn.disabled = false;
+        if (chk.error || !chk.data || chk.data.ok === false) { giftSay(chk.error ? chk.error.message : (chk.data && chk.data.message) || "Could not start", false); return; }
+
+        const u = await db.auth.getUser();
+        const user = u.data && u.data.user;
+        if (!user) { giftSay("Please log in again.", false); return; }
+
+        PaystackPop.setup({
+            key: PAYSTACK_PUBLIC_KEY,
+            email: user.email,
+            amount: chk.data.amount_naira * 100,
+            currency: "NGN",
+            ref: "COIN-" + p.id.slice(0, 8) + "-" + Date.now(),
+            metadata: { kind: "coins", pack_id: p.id, buyer_id: user.id },
+            callback: function (response) { confirmCoins(response.reference, 1); },
+            onClose: function () {}
+        }).openIframe();
+    }
+
+    async function confirmCoins(reference, attempt) {
+        giftSay("Payment received. Adding your coins (try " + attempt + " of 5)...", true);
+        const r = await db.functions.invoke("paystack-verify", { body: { reference: reference } });
+        const cat = await db.rpc("gift_catalogue");
+        if (cat.data) drawTray(cat.data);
+
+        if (!r.error && r.data && !r.data.error) { giftSay("Your coins have been added.", true); return; }
+        if (attempt < 5) { setTimeout(function () { confirmCoins(reference, attempt + 1); }, 4000); return; }
+        giftSay("We could not add your coins yet. Your money is safe. Contact LBN with this reference: " + reference, false);
+    }
+
+    function drawTray(cat) {
+        giftBalance = cat.balance;
+        el("giftBalance").textContent = cat.balance;
+        el("paidBalance").textContent = cat.paid_balance || 0;
+        el("coinShop").style.display = cat.sales_on ? "" : "none";
+        el("giftNotice").textContent = cat.sales_on
+            ? "Gifts use your bought coins first, then your free test coins."
+            : "Test mode: gifts use free test coins that have no value. Nothing is paid to the streamer yet.";
+
+        const bar = el("packBar");
+        bar.textContent = "";
+        (cat.packs || []).forEach(function (p) {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "btn";
+            b.textContent = "Buy " + p.coins + " coins - N" + Number(p.price).toLocaleString("en-NG");
+            b.addEventListener("click", function () { buyPack(p, b); });
+            bar.appendChild(b);
+        });
+        el("giftClaim").style.display = cat.can_claim ? "" : "none";
+
+        const grid = el("giftGrid");
+        grid.textContent = "";
+
+        (cat.gifts || []).forEach(function (g) {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "btn btn-outline";
+            const e = document.createElement("span");
+            e.className = "ge";
+            e.textContent = g.emoji;
+            const n = document.createElement("span");
+            n.textContent = g.name;
+            const c = document.createElement("small");
+            c.textContent = g.cost + " coins";
+            b.appendChild(e);
+            b.appendChild(n);
+            b.appendChild(c);
+
+            b.addEventListener("click", async function () {
+                b.disabled = true;
+                const r = await db.rpc("send_stream_gift", { p_stream: sid, p_gift: g.id, p_qty: 1 });
+                b.disabled = false;
+
+                if (r.error || !r.data || r.data.ok === false) {
+                    giftSay(r.error ? r.error.message : (r.data && r.data.message) || "Could not send", false);
+                    if (r.data && r.data.balance !== undefined) { el("giftBalance").textContent = r.data.balance; }
+                    return;
+                }
+
+                giftSay("", true);
+                giftBalance = r.data.balance;
+                el("giftBalance").textContent = r.data.balance;
+                el("paidBalance").textContent = r.data.paid_balance || 0;
+                refreshGifts();
+            });
+
+            grid.appendChild(b);
+        });
+    }
+
+    async function startGifts() {
+        el("giftPanel").style.display = "";
+
+        if (pass.role !== "host") {
+            const { data, error } = await db.rpc("gift_catalogue");
+
+            if (error || !data) {
+                el("giftTotal").textContent = "Gifts are not set up yet.";
+            } else {
+                el("giftTray").style.display = "";
+                drawTray(data);
+            }
+        }
+
+        refreshGifts();
+        giftTimer = setInterval(function () { if (!document.hidden) refreshGifts(); }, 2500);
+    }
+
     // ---------- Joining ----------
 
     async function join() {
@@ -462,7 +663,7 @@
             .on(E.Reconnecting, function () { say("Your connection is weak. Trying to reconnect...", false); })
             .on(E.Reconnected, function () { say("", true); msg.className = "msg"; })
             .on(E.Disconnected, function () {
-                if (!ended) { clearInterval(beatTimer); clearInterval(chatTimer); clearInterval(stageTimer); el("roomLive").style.display = "none"; say("You left the stream.", true); }
+                if (!ended) { clearInterval(beatTimer); clearInterval(chatTimer); clearInterval(stageTimer); clearInterval(giftTimer); el("roomLive").style.display = "none"; say("You left the stream.", true); }
             });
 
         try {
@@ -498,6 +699,7 @@
         // A viewer invited on stage earlier gets the buttons back after a refresh
         if (pass.stage && pass.role !== "host") { wasOnstage = true; becomeGuest(false); }
 
+        startGifts();
         refreshStage();
         stageTimer = setInterval(function () { if (!document.hidden) refreshStage(); }, 4000);
 
@@ -553,6 +755,14 @@
         if (pass && pass.role === "host" && !confirm("Leave? Your stream stays live for a few minutes, then ends. Use End the stream to stop it now.")) return;
         if (room) room.disconnect();
         location.href = "streams.html";
+    });
+
+    el("giftClaim").addEventListener("click", async function () {
+        const { data, error } = await db.rpc("claim_test_coins");
+        if (error) { giftSay(error.message, false); return; }
+        giftSay(data && data.ok ? "100 free test coins added." : (data && data.message) || "Could not claim", data && data.ok);
+        const cat = await db.rpc("gift_catalogue");
+        if (cat.data) drawTray(cat.data);
     });
 
     el("handBtn").addEventListener("click", async function () {

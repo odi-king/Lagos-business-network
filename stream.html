@@ -32,6 +32,20 @@
 #chatForm button{margin:0;}
 .react-btn{font-size:1.4rem;padding:2px 10px;}
 #reactions{min-height:1.6rem;font-size:1.2rem;}
+#stageWrap{position:relative;}
+#giftLayer{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:10px;}
+.gift-fly{position:absolute;bottom:8px;text-align:center;font-size:2.2rem;animation:giftRise 3.2s ease-out forwards;text-shadow:0 2px 6px rgba(0,0,0,.6);}
+.gift-fly small{display:block;font-size:.7rem;color:#fff;background:rgba(0,0,0,.55);border-radius:8px;padding:0 6px;}
+.gift-burst{position:absolute;font-size:1.8rem;animation:giftBurst 1.6s ease-out forwards;}
+.gift-big{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);text-align:center;color:#fff;animation:giftBig 3.6s ease-in-out forwards;text-shadow:0 3px 12px rgba(0,0,0,.7);}
+.gift-big .e{font-size:5rem;line-height:1;display:block;}
+.gift-big .t{font-weight:700;background:rgba(0,0,0,.55);border-radius:10px;padding:2px 10px;display:inline-block;margin-top:6px;}
+@keyframes giftRise{0%{transform:translateY(0) scale(.6);opacity:0}12%{opacity:1;transform:translateY(-20px) scale(1)}100%{transform:translateY(-260px) scale(1.1);opacity:0}}
+@keyframes giftBurst{0%{transform:translate(0,0) scale(.4);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.3);opacity:0}}
+@keyframes giftBig{0%{transform:translate(-50%,-50%) scale(.2);opacity:0}15%{transform:translate(-50%,-50%) scale(1.15);opacity:1}30%{transform:translate(-50%,-50%) scale(1)}85%{opacity:1}100%{transform:translate(-50%,-70%) scale(1);opacity:0}}
+.gift-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin:8px 0;}
+.gift-grid button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;margin:0;}
+.gift-grid .ge{font-size:1.8rem;line-height:1;}
 .live-dot{display:inline-block;background:#e03131;color:#fff;border-radius:6px;padding:1px 7px;font-size:.75rem;font-weight:700;margin-right:6px;}
 </style>
 </head>
@@ -61,7 +75,7 @@
 
     <section id="roomLive" style="display:none;">
         <p class="meta"><span class="live-dot">LIVE</span><span id="roomStatus"></span></p>
-        <div id="stage"></div>
+        <div id="stageWrap"><div id="stage"></div><div id="giftLayer" aria-hidden="true"></div></div>
 
         <div class="room-bar" id="hostBar" style="display:none;">
             <button type="button" class="btn btn-outline" id="micBtn">Microphone: off</button>
@@ -92,6 +106,21 @@
             </div>
             <div id="stageList"></div>
             <p id="stageMsg" class="msg"></p>
+        </section>
+
+        <section class="panel" id="giftPanel">
+            <h2>Gifts</h2>
+            <p class="notice" id="giftNotice">Test mode: gifts use free test coins that have no value. Nothing is paid to the streamer yet.</p>
+            <p class="meta" id="giftTotal"></p>
+            <div id="giftTray" style="display:none;">
+                <p class="meta">Your test coins: <strong id="giftBalance">0</strong> <button type="button" class="btn btn-outline" id="giftClaim">Get 100 free test coins</button></p>
+                <div id="coinShop" style="display:none;">
+                    <p class="meta">Your bought coins: <strong id="paidBalance">0</strong>. Bought coins are used first. They cannot be sent to another member or turned back into money.</p>
+                    <div class="room-bar" id="packBar"></div>
+                </div>
+                <div class="gift-grid" id="giftGrid"></div>
+            </div>
+            <p id="giftMsg" class="msg"></p>
         </section>
 
         <section class="panel" id="chatPanel">
@@ -127,6 +156,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.18.3/dist/livekit-client.umd.js"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="paystack-config.js"></script>
 <script src="stream.js"></script>
 <script src="pwa.js"></script>
 </body>
