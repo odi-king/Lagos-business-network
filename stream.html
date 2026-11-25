@@ -15,8 +15,8 @@
     <meta name="apple-mobile-web-app-title" content="LBN">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
-#stage{display:grid;gap:8px;grid-template-columns:1fr;margin:12px 0;}
-#stage video{width:100%;max-height:60vh;background:#000;border-radius:10px;object-fit:cover;}
+#stage{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:12px 0;}
+#stage video{width:100%;max-height:50vh;background:#000;border-radius:10px;object-fit:cover;}
 #stage video.screen{object-fit:contain;}
 .room-bar{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center;}
 .room-bar .btn,.room-bar .contact-btn{margin:0;}
@@ -72,8 +72,26 @@
         <div class="room-bar" id="viewerBar" style="display:none;">
             <button type="button" class="btn btn-outline" id="dataBtn">Save data: turn video off</button>
             <button type="button" class="btn btn-outline" id="soundBtn" style="display:none;">Tap to hear</button>
+            <button type="button" class="btn btn-outline" id="handBtn">Raise hand</button>
             <button type="button" class="btn btn-outline" id="reportBtn">Report this stream</button>
         </div>
+
+        <section class="panel" id="stagePanel" style="display:none;">
+            <h2>On stage</h2>
+            <div id="stageInvite" style="display:none;">
+                <p>The streamer invited you to join live. Everyone watching will see and hear you.</p>
+                <div class="room-bar">
+                    <button type="button" class="contact-btn" id="stageAccept">Accept and go live</button>
+                    <button type="button" class="btn btn-outline" id="stageDecline">Not now</button>
+                </div>
+            </div>
+            <div id="handBox" style="display:none;">
+                <p class="meta"><strong>Raised hands</strong></p>
+                <div id="handList"></div>
+            </div>
+            <div id="stageList"></div>
+            <p id="stageMsg" class="msg"></p>
+        </section>
 
         <section class="panel" id="chatPanel">
             <h2>Chat</h2>

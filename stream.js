@@ -20,6 +20,11 @@
     let lastSig = "";
     let viewers = 0;
     let ended = false;
+    let stageTimer = null;
+    let stageBusy = false;
+    let wasOnstage = false;
+    let stageSig = "";
+    let handUp = false;
 
     function say(text, ok) {
         msg.className = "msg " + (ok ? "ok" : "error");
@@ -146,6 +151,7 @@
         ended = true;
         clearInterval(beatTimer);
         clearInterval(chatTimer);
+        clearInterval(stageTimer);
         if (room) { try { room.disconnect(); } catch (e) { /* already closed */ } }
         el("roomLive").style.display = "none";
         say(text + " See more on the Live streams page.", true);
@@ -244,6 +250,176 @@
         return true;
     }
 
+
+    // ---------- Guests on stage ----------
+
+    function stageSay(text, ok) {
+        const m = el("stageMsg");
+        m.className = "msg " + (ok ? "ok" : "error");
+        m.textContent = text || "";
+    }
+
+    // Ask the livekit-stage function (it may have been saved under a name ending in -ts)
+    async function callStage(action, userId) {
+        const body = { stream_id: sid, action: action, user_id: userId || null };
+        let r = await db.functions.invoke("livekit-stage", { body: body });
+
+        if (r.error && r.error.context && r.error.context.status === 404) {
+            r = await db.functions.invoke("livekit-stage-ts", { body: body });
+        }
+
+        if (r.error) return { ok: false, message: await errorText(r.error) };
+        if (!r.data || r.data.ok === false) return { ok: false, message: (r.data && r.data.error) || "Not allowed" };
+        return { ok: true };
+    }
+
+    // A guest on stage: microphone and camera buttons, no screen sharing, no ending the stream
+    async function becomeGuest(startMedia) {
+        el("hostBar").style.display = "";
+        el("screenBtn").style.display = "none";
+        el("endBtn").style.display = "none";
+        setButtons();
+
+        if (!startMedia || (micOn && camOn)) return true;
+
+        // LiveKit needs a moment to apply the new permission
+        for (let i = 0; i < 6; i++) {
+            try {
+                await room.localParticipant.setMicrophoneEnabled(true);
+                micOn = true;
+                try { await room.localParticipant.setCameraEnabled(true); camOn = true; } catch (e) { /* camera is optional */ }
+                setButtons();
+                return true;
+            } catch (e) {
+                await new Promise(function (resolve) { setTimeout(resolve, 700); });
+            }
+        }
+
+        stageSay("You are on stage, but the microphone could not start. Tap Microphone and allow it.", false);
+        return false;
+    }
+
+    async function becomeViewer() {
+        if (room) {
+            try { await room.localParticipant.setMicrophoneEnabled(false); } catch (e) { /* already off */ }
+            try { await room.localParticipant.setCameraEnabled(false); } catch (e) { /* already off */ }
+        }
+
+        micOn = false;
+        camOn = false;
+        sharing = false;
+        setButtons();
+        el("hostBar").style.display = "none";
+    }
+
+    function stageButton(label, fn, primary) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = primary ? "contact-btn" : "btn btn-outline";
+        b.textContent = label;
+        b.addEventListener("click", fn);
+        return b;
+    }
+
+    function renderStage(s) {
+        const host = pass.role === "host";
+        const guests = s.onstage || [];
+        const hands = s.hands || [];
+
+        handUp = s.raised === true;
+        el("handBtn").textContent = handUp ? "Lower hand" : "Raise hand";
+
+        const sig = JSON.stringify([host, s.mine, s.max, guests.map(function (g) { return g.user_id; }), hands.map(function (h) { return h.user_id; })]);
+        if (sig === stageSig) return;
+        stageSig = sig;
+
+        el("stageInvite").style.display = !host && s.mine === "invited" ? "" : "none";
+
+        const handList = el("handList");
+        handList.textContent = "";
+        el("handBox").style.display = host && hands.length ? "" : "none";
+
+        hands.forEach(function (h) {
+            const row = document.createElement("div");
+            row.className = "chat-row";
+            const who = document.createElement("span");
+            who.className = "who";
+            who.textContent = "✋ " + h.name;
+            row.appendChild(who);
+            row.appendChild(stageButton("Invite up", async function () {
+                const { data, error } = await db.rpc("stream_stage_invite", { p_stream: sid, p_user: h.user_id });
+                stageSay(error ? error.message : (data && data.ok ? "Invitation sent to " + h.name + "." : (data && data.message) || "Could not invite"), !error && data && data.ok);
+                stageSig = "";
+                refreshStage();
+            }));
+            row.appendChild(stageButton("Lower hand", async function () {
+                await db.rpc("stream_hand_lower", { p_stream: sid, p_user: h.user_id });
+                stageSig = "";
+                refreshStage();
+            }));
+            handList.appendChild(row);
+        });
+
+        const list = el("stageList");
+        list.textContent = "";
+
+        guests.forEach(function (g) {
+            const row = document.createElement("div");
+            row.className = "chat-row";
+            const who = document.createElement("span");
+            who.className = "who";
+            who.textContent = "🎤 " + g.name + (g.mine ? " (you)" : "") + " is live on stage";
+            row.appendChild(who);
+
+            if (host) {
+                row.appendChild(stageButton("Send back", async function () {
+                    const r = await callStage("revoke", g.user_id);
+                    stageSay(r.ok ? "" : r.message, r.ok);
+                    stageSig = "";
+                    refreshStage();
+                }));
+            } else if (g.mine) {
+                row.appendChild(stageButton("Leave the stage", async function () {
+                    const r = await callStage("revoke", null);
+                    stageSay(r.ok ? "" : r.message, r.ok);
+                    if (r.ok) { wasOnstage = false; await becomeViewer(); }
+                    stageSig = "";
+                    refreshStage();
+                }));
+            }
+
+            list.appendChild(row);
+        });
+
+        el("stagePanel").style.display = (guests.length || hands.length || s.mine === "invited") ? "" : "none";
+    }
+
+    async function refreshStage() {
+        if (!sid || stageBusy || ended) return;
+        stageBusy = true;
+
+        try {
+            const { data, error } = await db.rpc("stream_stage_status", { p_stream: sid });
+            if (error || !data) return;
+
+            // Sent back by the streamer: go back to being a viewer
+            if (data.mine !== "onstage" && wasOnstage && pass.role !== "host") {
+                wasOnstage = false;
+                await becomeViewer();
+                stageSay("You are back in the audience.", true);
+            }
+
+            if (data.mine === "onstage" && !wasOnstage && pass.role !== "host") {
+                wasOnstage = true;
+                await becomeGuest(false);
+            }
+
+            renderStage(data);
+        } finally {
+            stageBusy = false;
+        }
+    }
+
     // ---------- Joining ----------
 
     async function join() {
@@ -285,7 +461,7 @@
             .on(E.Reconnecting, function () { say("Your connection is weak. Trying to reconnect...", false); })
             .on(E.Reconnected, function () { say("", true); msg.className = "msg"; })
             .on(E.Disconnected, function () {
-                if (!ended) { clearInterval(beatTimer); clearInterval(chatTimer); el("roomLive").style.display = "none"; say("You left the stream.", true); }
+                if (!ended) { clearInterval(beatTimer); clearInterval(chatTimer); clearInterval(stageTimer); el("roomLive").style.display = "none"; say("You left the stream.", true); }
             });
 
         try {
@@ -317,6 +493,12 @@
             }
             setButtons();
         }
+
+        // A viewer invited on stage earlier gets the buttons back after a refresh
+        if (pass.stage && pass.role !== "host") { wasOnstage = true; becomeGuest(false); }
+
+        refreshStage();
+        stageTimer = setInterval(function () { if (!document.hidden) refreshStage(); }, 4000);
 
         beat();
         refreshChat();
@@ -370,6 +552,38 @@
         if (pass && pass.role === "host" && !confirm("Leave? Your stream stays live for a few minutes, then ends. Use End the stream to stop it now.")) return;
         if (room) room.disconnect();
         location.href = "streams.html";
+    });
+
+    el("handBtn").addEventListener("click", async function () {
+        const { data, error } = await db.rpc("stream_hand_toggle", { p_stream: sid });
+        if (error || !data || data.ok === false) { say(error ? error.message : (data && data.message) || "Could not raise your hand", false); return; }
+        stageSay(data.raised ? "Your hand is up. The streamer can invite you." : "", true);
+        stageSig = "";
+        refreshStage();
+    });
+
+    el("stageAccept").addEventListener("click", async function () {
+        const b = this;
+        b.disabled = true;
+        stageSay("Taking you on stage...", true);
+
+        const r = await callStage("grant", null);
+
+        if (!r.ok) { stageSay(r.message, false); b.disabled = false; stageSig = ""; refreshStage(); return; }
+
+        wasOnstage = true;
+        stageSig = "";
+        stageSay("You are live on stage. Everyone watching can see and hear you.", true);
+        await becomeGuest(true);
+        b.disabled = false;
+        refreshStage();
+    });
+
+    el("stageDecline").addEventListener("click", async function () {
+        await db.rpc("stream_stage_decline", { p_stream: sid });
+        stageSig = "";
+        stageSay("", true);
+        refreshStage();
     });
 
     el("reportBtn").addEventListener("click", async function () {

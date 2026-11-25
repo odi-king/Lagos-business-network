@@ -56,7 +56,23 @@
         }
     });
 
+    const maxBox = document.getElementById("streamMaxGuests");
+
+    async function loadMax() {
+        if (!maxBox) return;
+        const { data } = await db.rpc("admin_stream_settings");
+        if (data) maxBox.value = data.max_guests;
+    }
+
+    const maxSave = document.getElementById("streamMaxSave");
+    if (maxSave) {
+        maxSave.addEventListener("click", function () {
+            run("admin_set_stream_max_guests", { p_max: parseInt(maxBox.value, 10) }, "Saved. This is the most guests a streamer can have on stage.");
+        });
+    }
+
     filter.addEventListener("change", load);
+    loadMax();
     load();
     setInterval(function () { if (!document.hidden && filter.value === "live") load(); }, 20000);
 })();
