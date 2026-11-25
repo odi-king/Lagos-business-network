@@ -613,7 +613,7 @@ function startPayment() {
     const handler = PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: me.email,
-        amount: trade.agreed_amount * 100, // Paystack counts in kobo
+        amount: (trade.agreed_amount + Number(window.lbnDeliveryFee || 0)) * 100, // item price plus the delivery fee, in kobo
         currency: "NGN",
         ref: "TRD-" + trade.id.slice(0, 8) + "-" + Date.now(),
         metadata: { kind: "trade", trade_id: trade.id },
@@ -629,6 +629,12 @@ function startPayment() {
 
 // The buyer sees exactly what is charged and what the seller receives, then confirms
 document.getElementById("payBtn").addEventListener("click", async function () {
+    // Delivery chosen but not finished: do not charge until it is complete or removed
+    if (window.lbnDeliveryBlock) {
+        showNote(window.lbnDeliveryBlock);
+        return;
+    }
+
     await updateFeeUI();
 
     // If the fee file has not been run yet, payment still works as before
@@ -648,12 +654,13 @@ document.getElementById("payBtn").addEventListener("click", async function () {
     sheet.innerHTML =
         '<div class="sheet-card"><div class="sheet-head"><strong>Confirm your payment</strong>' +
         '<button type="button" class="plain-btn" data-pay="cancel">Cancel</button></div>' +
-        '<div class="fee-box">' + feeRows(feeQuote) + "</div>" +
+        '<div class="fee-box">' + feeRows(feeQuote) +
+        (window.lbnDeliveryFee ? '<div class="fee-row"><span>Delivery by LBN rider</span><strong>' + money(window.lbnDeliveryFee) + "</strong></div>" : "") + "</div>" +
         (typeof PAYSTACK_PUBLIC_KEY !== "undefined" && String(PAYSTACK_PUBLIC_KEY).indexOf("pk_test_") === 0
             ? '<p class="notice">Test mode: no real money is charged.</p>' : "") +
-        '<p class="meta">You pay <strong>' + money(feeQuote.amount) + "</strong> in total. The LBN fee comes out of the seller's payment, so nothing extra is added for you.</p>" +
+        '<p class="meta">You pay <strong>' + money(feeQuote.amount + Number(window.lbnDeliveryFee || 0)) + "</strong> in total. " + (window.lbnDeliveryFee ? "That is the item plus the delivery fee. " : "") + "The LBN fee comes out of the seller's payment, so nothing extra is added for you.</p>" +
         '<p class="meta">LBN holds the money until you and the seller both confirm, or the LBN team settles a dispute.</p>' +
-        '<button type="button" class="contact-btn" style="width:100%;" data-pay="go">Pay ' + money(feeQuote.amount) + "</button></div>";
+        '<button type="button" class="contact-btn" style="width:100%;" data-pay="go">Pay ' + money(feeQuote.amount + Number(window.lbnDeliveryFee || 0)) + "</button></div>";
 
     document.body.appendChild(sheet);
 

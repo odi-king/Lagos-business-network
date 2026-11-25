@@ -223,6 +223,43 @@
         <p id="giftMsg" class="msg"></p>
     </section>
 
+    <section class="panel" data-perm="finance">
+        <h2>Delivery inside Lagos</h2>
+        <p class="meta">List the areas, then set the price between each pair of areas. A buyer can choose delivery by an LBN rider only between areas that have a price. Prices work in both directions.</p>
+        <h3>Areas</h3>
+        <div id="delZones"></div>
+        <div class="filters">
+            <input type="text" id="delNewZone" maxlength="60" placeholder="New area name (for example Magodo)">
+            <button type="button" class="btn btn-outline" id="delAddZone">Add area</button>
+        </div>
+        <h3>Prices between areas</h3>
+        <div class="filters">
+            <select id="delFeeA"></select>
+            <select id="delFeeB"></select>
+            <input type="number" id="delFeeAmount" min="0" max="200000" placeholder="Price in naira">
+            <button type="button" class="contact-btn" id="delSaveFee">Save price</button>
+        </div>
+        <div id="delFees"></div>
+        <h3>LBN share of each delivery fee</h3>
+        <div class="filters">
+            <input type="number" id="delPercent" min="0" max="90" placeholder="Percent kept by LBN (for example 15)">
+            <button type="button" class="btn btn-outline" id="delSavePercent">Save</button>
+        </div>
+        <h3>Deliveries</h3>
+        <div class="filters">
+            <select id="delFilter">
+                <option value="refund_due">Refund due to the buyer</option>
+                <option value="finding_rider">Waiting for a rider</option>
+                <option value="assigned">With a rider</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="all">All deliveries</option>
+            </select>
+        </div>
+        <div id="delList"></div>
+        <p id="delMsg" class="msg"></p>
+    </section>
+
     <section class="panel" data-perm="support">
         <h2>Customer care messages</h2>
         <div class="filters">
@@ -249,6 +286,7 @@
 <script src="admin.js"></script>
 <script src="seller-id-admin.js"></script>
 <script src="gift-admin.js"></script>
+<script src="delivery-admin.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>
 <script src="i18n-strings.js"></script>
