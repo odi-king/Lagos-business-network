@@ -695,6 +695,7 @@ async function loadGradRules() {
     document.getElementById("ruleLectures").value = data.min_lectures;
     document.getElementById("ruleDayLecturers").value = data.min_day_lecturers;
     document.getElementById("ruleAssessments").value = data.min_assessments;
+    document.getElementById("ruleParticipation").value = data.min_participation || 0;
 
     loadMaterials();
     loadCertificates();
@@ -711,8 +712,17 @@ document.getElementById("gradRulesForm").addEventListener("submit", async functi
         p_assessments: parseInt(document.getElementById("ruleAssessments").value, 10)
     });
 
-    message.className = error ? "msg error" : "msg ok";
-    message.textContent = error ? error.message : "Requirements saved.";
+    let failed = error;
+
+    if (!failed) {
+        const part = await db.rpc("admin_set_min_participation", {
+            p_classes: parseInt(document.getElementById("ruleParticipation").value || "0", 10)
+        });
+        failed = part.error;
+    }
+
+    message.className = failed ? "msg error" : "msg ok";
+    message.textContent = failed ? failed.message : "Requirements saved.";
 });
 
 // ---------- Graduation certificates ----------

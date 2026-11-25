@@ -189,6 +189,8 @@
             <input type="number" id="ruleDayLecturers" min="1" max="10" placeholder="Lecturers per day" required>
             <label class="meta" for="ruleAssessments">Assessments a student must pass</label>
             <input type="number" id="ruleAssessments" min="0" max="100" placeholder="Assessments" required>
+            <label class="meta" for="ruleParticipation">Live classes where the student sent a question or message (0 = not required)</label>
+            <input type="number" id="ruleParticipation" min="0" max="500" placeholder="Classes with participation" value="0">
             <button type="submit" class="contact-btn">Save requirements</button>
         </form>
         <p id="gradRulesMsg" class="msg"></p>

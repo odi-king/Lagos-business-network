@@ -176,6 +176,7 @@
             .on(E.Reconnecting, function () { say("Your connection is weak. Trying to reconnect...", false); })
             .on(E.Reconnected, function () { say("Back in the class.", true); })
             .on(E.Disconnected, function () {
+                if (window.LiveChat) window.LiveChat.stop();
                 liveBox.style.display = "none";
                 say("You left the class. You can join again from the Live classes page.", true);
             });
@@ -198,6 +199,8 @@
         msg.textContent = "";
         msg.className = "msg";
         updateStatus();
+
+        if (window.LiveChat) window.LiveChat.start((new URLSearchParams(location.search).get("s") || "").trim(), pass.role);
     }
 
     async function toggle(kind) {

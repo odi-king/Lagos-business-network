@@ -20,6 +20,17 @@
 #stage video.screen{object-fit:contain;}
 .room-bar{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;}
 .room-bar .btn,.room-bar .contact-btn{margin:0;}
+#chatList{max-height:260px;overflow-y:auto;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:8px;margin:8px 0;}
+.chat-row{padding:6px 4px;border-bottom:1px solid rgba(255,255,255,.06);word-break:break-word;}
+.chat-row:last-child{border-bottom:0;}
+.chat-row.q{border-left:3px solid #20c997;padding-left:8px;}
+.chat-row .who{font-weight:600;margin-right:6px;}
+.chat-row .tag{font-size:.75rem;opacity:.8;margin-right:6px;}
+.chat-tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.chat-tools button{padding:2px 8px;font-size:.8rem;}
+#chatForm{display:flex;gap:6px;flex-wrap:wrap;}
+#chatForm input[type=text]{flex:1 1 180px;min-width:0;margin:0;}
+#chatForm select,#chatForm button{margin:0;}
 </style>
 </head>
 <body>
@@ -61,6 +72,25 @@
             <button type="button" class="btn btn-outline" id="soundBtn" style="display:none;">Tap to hear the lecturer</button>
         </div>
 
+        <section class="panel" id="chatPanel">
+            <h2>Class chat</h2>
+            <div id="handBox" style="display:none;">
+                <p class="meta"><strong>Raised hands</strong></p>
+                <div id="handList"></div>
+            </div>
+            <div id="chatList" aria-live="polite"></div>
+            <p id="chatMsg" class="msg"></p>
+            <form id="chatForm" autocomplete="off">
+                <input type="text" id="chatInput" maxlength="300" placeholder="Write a message...">
+                <select id="chatKind" aria-label="Message type">
+                    <option value="chat">Chat</option>
+                    <option value="question">Question for the lecturer</option>
+                </select>
+                <button type="submit" class="contact-btn" id="chatSend">Send</button>
+                <button type="button" class="btn btn-outline" id="handBtn">Raise hand</button>
+            </form>
+        </section>
+
         <div class="room-bar">
             <button type="button" class="delete-btn" id="leaveBtn">Leave the class</button>
         </div>
@@ -76,6 +106,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.18.3/dist/livekit-client.umd.js"></script>
+<script src="live-chat.js"></script>
 <script src="live-room.js"></script>
 <script src="pwa.js"></script>
 </body>
