@@ -74,7 +74,7 @@
             return;
         }
 
-        const result = await db.functions.invoke("livekit-token", { body: { session_id: id } });
+        const result = await db.functions.invoke("livekit-token-ts", { body: { session_id: id } });
 
         if (result.error || !result.data || !result.data.token) {
             say(await errorText(result.error || { message: (result.data && result.data.error) || "" }), false);
