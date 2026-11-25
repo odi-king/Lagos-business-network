@@ -1,0 +1,402 @@
+// LBN Phase 10A: a social live stream (watch or host). Works with supabase-streams.sql and the livekit-token-ts function.
+// The member who started the stream is the host (camera, microphone, screen). Everybody else watches, chats and reacts.
+
+(function () {
+    function el(id) { return document.getElementById(id); }
+
+    const msg = el("roomMsg");
+    const stage = el("stage");
+
+    let sid = "";
+    let room = null;
+    let pass = null;
+    let saveData = false;
+    let micOn = false;
+    let camOn = false;
+    let sharing = false;
+    let beatTimer = null;
+    let chatTimer = null;
+    let chatBusy = false;
+    let lastSig = "";
+    let viewers = 0;
+    let ended = false;
+
+    function say(text, ok) {
+        msg.className = "msg " + (ok ? "ok" : "error");
+        msg.textContent = text;
+    }
+
+    function updateStatus() {
+        if (!room) return;
+        let text = viewers + (viewers === 1 ? " person is watching." : " people are watching.");
+        if (pass.role === "viewer" && !stage.querySelector("video") && !document.querySelector("audio[data-lbn]")) text += " Waiting for the streamer...";
+        el("roomStatus").textContent = text;
+    }
+
+    async function errorText(error) {
+        try {
+            const res = error && error.context;
+
+            if (res && typeof res.text === "function") {
+                const raw = await res.text();
+                let reason = raw;
+
+                try {
+                    const body = JSON.parse(raw);
+                    reason = body.error || body.message || body.msg || raw;
+                } catch (e) { /* not JSON: keep the text */ }
+
+                return String(reason || "No details").slice(0, 200);
+            }
+        } catch (e) { /* fall through */ }
+
+        return (error && error.message) || "Something went wrong. Please try again.";
+    }
+
+    async function init() {
+        if (!db || typeof LivekitClient === "undefined") {
+            say("The live stream could not load. Please check your internet and refresh.", false);
+            return;
+        }
+
+        sid = (new URLSearchParams(location.search).get("s") || "").trim();
+
+        if (!sid) { location.href = "streams.html"; return; }
+
+        const { data } = await db.auth.getSession();
+
+        if (!data.session) {
+            location.href = "auth.html?next=" + encodeURIComponent("stream.html?s=" + sid);
+            return;
+        }
+
+        const result = await db.functions.invoke("livekit-token-ts", { body: { stream_id: sid } });
+
+        if (result.error || !result.data || !result.data.token) {
+            say(await errorText(result.error || { message: (result.data && result.data.error) || "" }), false);
+            return;
+        }
+
+        pass = result.data;
+
+        el("roomTitle").textContent = pass.title || "Live stream";
+        el("roomJoinText").textContent = pass.role === "host"
+            ? "You are the streamer. When you join, your camera and microphone start. Tap Join to go live."
+            : "You will watch and listen. If your data is limited, turn the video off after you join: you keep the sound.";
+        el("roomJoinBox").style.display = "";
+    }
+
+    function attach(track, publication) {
+        if (track.kind === "video") {
+            const v = track.attach();
+            v.playsInline = true;
+            v.setAttribute("playsinline", "");
+            if (publication && publication.source === LivekitClient.Track.Source.ScreenShare) v.className = "screen";
+            v.dataset.sid = track.sid;
+            stage.appendChild(v);
+        } else if (track.kind === "audio") {
+            const a = track.attach();
+            a.dataset.lbn = "1";
+            a.dataset.sid = track.sid;
+            document.body.appendChild(a);
+        }
+
+        updateStatus();
+    }
+
+    function detach(track) {
+        track.detach().forEach(function (e) { e.remove(); });
+        updateStatus();
+    }
+
+    function setButtons() {
+        el("micBtn").textContent = "Microphone: " + (micOn ? "on" : "off");
+        el("camBtn").textContent = "Camera: " + (camOn ? "on" : "off");
+        el("screenBtn").textContent = sharing ? "Stop sharing" : "Share screen";
+    }
+
+    function applySaveData() {
+        if (!room) return;
+
+        room.remoteParticipants.forEach(function (p) {
+            p.trackPublications.forEach(function (pub) {
+                if (pub.kind === "video") pub.setSubscribed(!saveData);
+            });
+        });
+    }
+
+    // ---------- Heartbeat: viewer count and "has the stream ended?" ----------
+
+    async function beat() {
+        if (!sid || ended) return;
+
+        const { data } = await db.rpc("stream_beat", { p_stream: sid });
+        if (!data) return;
+
+        if (data.live === false) {
+            finish(data.by_admin ? "The LBN team ended this stream." : "This stream has ended.");
+            return;
+        }
+
+        viewers = data.viewers || 0;
+        updateStatus();
+    }
+
+    function finish(text) {
+        ended = true;
+        clearInterval(beatTimer);
+        clearInterval(chatTimer);
+        if (room) { try { room.disconnect(); } catch (e) { /* already closed */ } }
+        el("roomLive").style.display = "none";
+        say(text + " See more on the Live streams page.", true);
+    }
+
+    // ---------- Chat and reactions ----------
+
+    function button(label, fn) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "btn btn-outline";
+        b.textContent = label;
+        b.addEventListener("click", fn);
+        return b;
+    }
+
+    async function moderate(id, action) {
+        await db.rpc("stream_chat_moderate", { p_id: id, p_action: action });
+        lastSig = "";
+        refreshChat();
+    }
+
+    function renderChat(data) {
+        const rows = data.messages || [];
+        const host = pass.role === "host";
+
+        const reacts = data.reactions || {};
+        el("reactions").textContent = Object.keys(reacts).map(function (k) { return k + " " + reacts[k]; }).join("   ");
+
+        const sig = JSON.stringify(rows.map(function (r) { return [r.id, r.muted]; }));
+        if (sig === lastSig) return;
+        lastSig = sig;
+
+        const list = el("chatList");
+        const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
+        list.textContent = "";
+
+        if (!rows.length) {
+            const p = document.createElement("p");
+            p.className = "meta";
+            p.textContent = "No messages yet. Say hello.";
+            list.appendChild(p);
+        }
+
+        rows.forEach(function (r) {
+            const row = document.createElement("div");
+            row.className = "chat-row";
+
+            const who = document.createElement("span");
+            who.className = "who";
+            who.textContent = r.name + (r.is_host ? " (streamer)" : "");
+            row.appendChild(who);
+
+            const text = document.createElement("span");
+            text.textContent = r.body;
+            row.appendChild(text);
+
+            if (host && !r.is_host) {
+                const tools = document.createElement("div");
+                tools.className = "chat-tools";
+                tools.appendChild(button("Delete", function () { moderate(r.id, "delete"); }));
+                tools.appendChild(button(r.muted ? "Unmute " + r.name : "Mute " + r.name, function () { moderate(r.id, r.muted ? "unmute" : "mute"); }));
+                row.appendChild(tools);
+            }
+
+            list.appendChild(row);
+        });
+
+        if (nearBottom) list.scrollTop = list.scrollHeight;
+    }
+
+    async function refreshChat() {
+        if (!sid || chatBusy || ended) return;
+        chatBusy = true;
+
+        try {
+            const { data, error } = await db.rpc("stream_chat_list", { p_stream: sid });
+            if (!error && data) renderChat(data);
+        } finally {
+            chatBusy = false;
+        }
+    }
+
+    async function send(kind, body) {
+        const { data, error } = await db.rpc("stream_chat_send", { p_stream: sid, p_kind: kind, p_body: body });
+
+        if (error) { el("chatMsg").className = "msg error"; el("chatMsg").textContent = error.message; return false; }
+
+        if (data && data.ok === false) {
+            if (kind === "chat") { el("chatMsg").className = "msg error"; el("chatMsg").textContent = data.message || "Could not send"; }
+            return false;
+        }
+
+        el("chatMsg").textContent = "";
+        refreshChat();
+        return true;
+    }
+
+    // ---------- Joining ----------
+
+    async function join() {
+        const button = el("roomJoinBtn");
+        button.disabled = true;
+        say("Joining...", true);
+
+        const E = LivekitClient.RoomEvent;
+
+        room = new LivekitClient.Room({
+            adaptiveStream: true,
+            dynacast: true,
+            videoCaptureDefaults: { resolution: LivekitClient.VideoPresets.h540 },
+            audioCaptureDefaults: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+        });
+
+        room
+            .on(E.TrackSubscribed, function (track, publication) { attach(track, publication); })
+            .on(E.TrackUnsubscribed, function (track) { detach(track); })
+            .on(E.TrackPublished, function (publication) {
+                if (saveData && publication.kind === "video") publication.setSubscribed(false);
+            })
+            .on(E.LocalTrackPublished, function (publication) {
+                if (publication.kind === "video" && publication.track) {
+                    const v = publication.track.attach();
+                    v.muted = true;
+                    v.playsInline = true;
+                    v.setAttribute("playsinline", "");
+                    if (publication.source === LivekitClient.Track.Source.ScreenShare) v.className = "screen";
+                    stage.appendChild(v);
+                }
+                updateStatus();
+            })
+            .on(E.LocalTrackUnpublished, function (publication) {
+                if (publication.track) publication.track.detach().forEach(function (e) { e.remove(); });
+                updateStatus();
+            })
+            .on(E.AudioPlaybackStatusChanged, function () { el("soundBtn").style.display = room.canPlaybackAudio ? "none" : ""; })
+            .on(E.Reconnecting, function () { say("Your connection is weak. Trying to reconnect...", false); })
+            .on(E.Reconnected, function () { say("", true); msg.className = "msg"; })
+            .on(E.Disconnected, function () {
+                if (!ended) { clearInterval(beatTimer); clearInterval(chatTimer); el("roomLive").style.display = "none"; say("You left the stream.", true); }
+            });
+
+        try {
+            await room.connect(pass.url, pass.token);
+        } catch (error) {
+            button.disabled = false;
+            say("Could not join: " + ((error && error.message) || "please try again"), false);
+            return;
+        }
+
+        try { await room.startAudio(); } catch (e) { el("soundBtn").style.display = ""; }
+
+        el("roomJoinBox").style.display = "none";
+        el("roomLive").style.display = "";
+        el("hostBar").style.display = pass.role === "host" ? "" : "none";
+        el("viewerBar").style.display = pass.role === "host" ? "none" : "";
+        el("reactBar").style.display = pass.role === "host" ? "none" : "";
+        msg.textContent = "";
+        msg.className = "msg";
+
+        if (pass.role === "host") {
+            try {
+                await room.localParticipant.setMicrophoneEnabled(true);
+                micOn = true;
+                await room.localParticipant.setCameraEnabled(true);
+                camOn = true;
+            } catch (e) {
+                say("You are live, but the camera or microphone could not start. Tap the buttons and allow them for this site.", false);
+            }
+            setButtons();
+        }
+
+        beat();
+        refreshChat();
+        beatTimer = setInterval(beat, 15000);
+        chatTimer = setInterval(function () { if (!document.hidden) refreshChat(); }, 3000);
+    }
+
+    async function toggle(kind) {
+        if (!room) return;
+
+        try {
+            if (kind === "mic") { micOn = !micOn; await room.localParticipant.setMicrophoneEnabled(micOn); }
+            else if (kind === "cam") { camOn = !camOn; await room.localParticipant.setCameraEnabled(camOn); }
+            else { sharing = !sharing; await room.localParticipant.setScreenShareEnabled(sharing); }
+        } catch (error) {
+            if (kind === "mic") micOn = !micOn;
+            else if (kind === "cam") camOn = !camOn;
+            else sharing = !sharing;
+
+            say(kind === "screen"
+                ? "Screen sharing is not available on this device. Use a computer to share your screen."
+                : "Could not start it. Allow the camera and microphone for this site in your browser settings.", false);
+        }
+
+        setButtons();
+    }
+
+    el("roomJoinBtn").addEventListener("click", join);
+    el("micBtn").addEventListener("click", function () { toggle("mic"); });
+    el("camBtn").addEventListener("click", function () { toggle("cam"); });
+    el("screenBtn").addEventListener("click", function () { toggle("screen"); });
+
+    el("dataBtn").addEventListener("click", function () {
+        saveData = !saveData;
+        this.textContent = saveData ? "Save data: turn video on" : "Save data: turn video off";
+        applySaveData();
+    });
+
+    el("soundBtn").addEventListener("click", async function () {
+        if (room) await room.startAudio();
+        this.style.display = "none";
+    });
+
+    el("endBtn").addEventListener("click", async function () {
+        if (!confirm("End your live stream for everyone?")) return;
+        await db.rpc("stream_end", { p_stream: sid });
+        finish("You ended your stream.");
+    });
+
+    el("leaveBtn").addEventListener("click", function () {
+        if (pass && pass.role === "host" && !confirm("Leave? Your stream stays live for a few minutes, then ends. Use End the stream to stop it now.")) return;
+        if (room) room.disconnect();
+        location.href = "streams.html";
+    });
+
+    el("reportBtn").addEventListener("click", async function () {
+        const reason = prompt("What is wrong with this stream? (5 to 300 characters)");
+        if (!reason) return;
+        const { data, error } = await db.rpc("stream_report", { p_stream: sid, p_reason: reason });
+        say(error ? error.message : (data && data.ok ? "Thank you. The LBN team will look at it." : (data && data.message) || "Could not send"), !error && data && data.ok);
+    });
+
+    el("reactBar").addEventListener("click", function (event) {
+        const b = event.target.closest("button[data-react]");
+        if (b) send("reaction", b.dataset.react);
+    });
+
+    el("chatForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const input = el("chatInput");
+        const text = input.value.trim();
+        if (!text) return;
+
+        el("chatSend").disabled = true;
+        if (await send("chat", text)) input.value = "";
+        el("chatSend").disabled = false;
+        input.focus();
+    });
+
+    window.addEventListener("pagehide", function () { if (room) room.disconnect(); });
+
+    init();
+})();

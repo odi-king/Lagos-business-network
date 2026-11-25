@@ -223,6 +223,21 @@
         <p id="giftMsg" class="msg"></p>
     </section>
 
+    <section class="panel" data-perm="support">
+        <h2>Live streams</h2>
+        <p class="meta">Members stream for free to other members. End a stream that breaks the rules, read viewer reports, and ban a member from streaming. The member is told why.</p>
+        <div class="filters">
+            <select id="streamAdminFilter">
+                <option value="live">Live now</option>
+                <option value="reported">With open reports</option>
+                <option value="ended">Ended</option>
+                <option value="all">All</option>
+            </select>
+        </div>
+        <div id="streamAdminList"></div>
+        <p id="streamAdminMsg" class="msg"></p>
+    </section>
+
     <section class="panel" data-perm="finance">
         <h2>Delivery overview</h2>
         <p class="meta">What needs your attention in deliveries and shipping, and the money. It refreshes by itself.</p>
@@ -373,6 +388,7 @@
 <script src="rider-stats-admin.js"></script>
 <script src="issues-admin.js"></script>
 <script src="logistics-admin.js"></script>
+<script src="stream-admin.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>
 <script src="i18n-strings.js"></script>

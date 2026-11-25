@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Live stream - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+<style>
+#stage{display:grid;gap:8px;grid-template-columns:1fr;margin:12px 0;}
+#stage video{width:100%;max-height:60vh;background:#000;border-radius:10px;object-fit:cover;}
+#stage video.screen{object-fit:contain;}
+.room-bar{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center;}
+.room-bar .btn,.room-bar .contact-btn{margin:0;}
+#chatList{max-height:260px;overflow-y:auto;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:8px;margin:8px 0;}
+.chat-row{padding:6px 4px;border-bottom:1px solid rgba(255,255,255,.06);word-break:break-word;}
+.chat-row:last-child{border-bottom:0;}
+.chat-row .who{font-weight:600;margin-right:6px;}
+.chat-tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.chat-tools button{padding:2px 8px;font-size:.8rem;}
+#chatForm{display:flex;gap:6px;flex-wrap:wrap;}
+#chatForm input[type=text]{flex:1 1 180px;min-width:0;margin:0;}
+#chatForm button{margin:0;}
+.react-btn{font-size:1.4rem;padding:2px 10px;}
+#reactions{min-height:1.6rem;font-size:1.2rem;}
+.live-dot{display:inline-block;background:#e03131;color:#fff;border-radius:6px;padding:1px 7px;font-size:.75rem;font-weight:700;margin-right:6px;}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="streams.html">Live streams</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1 id="roomTitle">Live stream</h1>
+        <p id="roomInfo" class="meta"></p>
+    </div>
+
+    <p id="roomMsg" class="msg"></p>
+
+    <section class="panel" id="roomJoinBox" style="display:none;">
+        <p id="roomJoinText" class="meta"></p>
+        <button type="button" class="contact-btn" id="roomJoinBtn">Join the stream</button>
+    </section>
+
+    <section id="roomLive" style="display:none;">
+        <p class="meta"><span class="live-dot">LIVE</span><span id="roomStatus"></span></p>
+        <div id="stage"></div>
+
+        <div class="room-bar" id="hostBar" style="display:none;">
+            <button type="button" class="btn btn-outline" id="micBtn">Microphone: off</button>
+            <button type="button" class="btn btn-outline" id="camBtn">Camera: off</button>
+            <button type="button" class="btn btn-outline" id="screenBtn">Share screen</button>
+            <button type="button" class="delete-btn" id="endBtn">End the stream</button>
+        </div>
+
+        <div class="room-bar" id="viewerBar" style="display:none;">
+            <button type="button" class="btn btn-outline" id="dataBtn">Save data: turn video off</button>
+            <button type="button" class="btn btn-outline" id="soundBtn" style="display:none;">Tap to hear</button>
+            <button type="button" class="btn btn-outline" id="reportBtn">Report this stream</button>
+        </div>
+
+        <section class="panel" id="chatPanel">
+            <h2>Chat</h2>
+            <div id="reactions" aria-live="polite"></div>
+            <div class="room-bar" id="reactBar">
+                <button type="button" class="btn btn-outline react-btn" data-react="❤️">❤️</button>
+                <button type="button" class="btn btn-outline react-btn" data-react="👏">👏</button>
+                <button type="button" class="btn btn-outline react-btn" data-react="🔥">🔥</button>
+                <button type="button" class="btn btn-outline react-btn" data-react="😂">😂</button>
+                <button type="button" class="btn btn-outline react-btn" data-react="😮">😮</button>
+            </div>
+            <div id="chatList" aria-live="polite"></div>
+            <p id="chatMsg" class="msg"></p>
+            <form id="chatForm" autocomplete="off">
+                <input type="text" id="chatInput" maxlength="300" placeholder="Write a message...">
+                <button type="submit" class="contact-btn" id="chatSend">Send</button>
+            </form>
+        </section>
+
+        <div class="room-bar">
+            <button type="button" class="btn btn-outline" id="leaveBtn">Leave</button>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a>
+        <div class="legal-links"><a href="terms.html">Terms of Use</a> &bull; <a href="privacy.html">Privacy Policy</a> &bull; <a href="refunds.html">Refunds and Disputes</a></div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/livekit-client@2.18.3/dist/livekit-client.umd.js"></script>
+<script src="stream.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>
