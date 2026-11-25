@@ -162,8 +162,41 @@
             }
         }
 
+        if (status === "delivered" && info.role === "buyer") html += '<div class="rate-slot"></div>';
+
         box.innerHTML = html;
         box.style.display = "block";
+
+        const slot = box.querySelector(".rate-slot");
+        if (slot) fillRating(slot);
+    }
+
+    // Buyer rates the rider once after delivery (works with supabase-rider-quality.sql; stays hidden if that file has not been run)
+    async function fillRating(slot) {
+        const { data, error } = await db.rpc("my_delivery_rating", { p_trade: tradeId });
+        if (error || !data) return;
+
+        if (!data.can_rate) {
+            slot.innerHTML = "<p class='meta'>You rated the rider " + Number(data.stars) + " out of 5. Thank you.</p>";
+            return;
+        }
+
+        slot.innerHTML = '<form class="rate-form"><p class="meta"><strong>How was the rider?</strong></p>' +
+            '<select name="stars"><option value="5">5 stars: excellent</option><option value="4">4 stars: good</option><option value="3">3 stars: fair</option>' +
+            '<option value="2">2 stars: poor</option><option value="1">1 star: bad</option></select>' +
+            '<input type="text" name="comment" maxlength="300" placeholder="Comment (optional, only the LBN team reads it)">' +
+            '<button type="submit" class="btn btn-outline">Send rating</button><p class="msg rate-msg"></p></form>';
+
+        slot.querySelector("form").addEventListener("submit", async function (event) {
+            event.preventDefault();
+            const f = event.target;
+            const res = await db.rpc("rate_rider", { p_trade: tradeId, p_stars: parseInt(f.stars.value, 10), p_comment: f.comment.value });
+            const ok = !res.error && res.data && res.data.ok;
+            if (ok) { slot.innerHTML = "<p class='meta'>Thank you for rating the rider.</p>"; return; }
+            const m = f.querySelector(".rate-msg");
+            m.className = "msg rate-msg error";
+            m.textContent = res.error ? res.error.message : (res.data && res.data.message) || "Could not send";
+        });
     }
 
     async function refresh(force) {

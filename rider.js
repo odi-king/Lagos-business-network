@@ -143,6 +143,7 @@
             const card = document.createElement("div");
             card.className = "panel";
             card.style.margin = "8px 0";
+            card.dataset.job = j.id;
 
             line(card, j.item + " • you earn " + naira(j.earn), "").style.fontWeight = "700";
             line(card, j.pickup_zone + " → " + j.drop_zone);
@@ -223,6 +224,13 @@
             el("earnText").textContent = "Waiting to be paid: " + naira(earn.owed) + " • Already paid: " + naira(earn.paid) + " • Deliveries done: " + (earn.jobs_done || 0) +
                 (earn.can_be_paid ? "" : " • Your payout account needs checking before LBN can pay you.");
 
+            const st = await db.rpc("my_rider_stats");
+            if (st.data) {
+                el("statText").textContent = st.data.average !== null && st.data.average !== undefined
+                    ? "Your rating: " + st.data.average + " out of 5 from " + st.data.ratings + " buyers"
+                    : "Your rating shows after 3 buyers rate you (" + (st.data.ratings || 0) + " so far)";
+            }
+
             drawActive(jobs);
 
             el("openPanel").style.display = "";
@@ -232,6 +240,14 @@
             jobBusy = false;
         }
     }
+
+    el("sosBtn").addEventListener("click", async function () {
+        if (!confirm("Alert the LBN team about an emergency?")) return;
+
+        const live = el("activeList").querySelector("[data-job]");
+        const { data, error } = await db.rpc("rider_emergency", { p_note: "", p_delivery: live ? live.dataset.job : null });
+        say(el("sosMsg"), error ? error.message : (data && data.message) || "Alert sent", !error && data && data.ok);
+    });
 
     function startJobs() {
         clearInterval(jobTimer);
