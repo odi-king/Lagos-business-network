@@ -72,6 +72,33 @@
             <button type="button" class="btn btn-outline" id="soundBtn" style="display:none;">Tap to hear the lecturer</button>
         </div>
 
+        <section class="panel" id="attPanel" style="display:none;">
+            <h2>Attendance</h2>
+            <div id="attStudent" style="display:none;">
+                <p class="meta" id="attStatus"></p>
+                <div id="attCodeForm" class="room-bar">
+                    <input type="text" id="attCode" maxlength="8" placeholder="Code from your lecturer" autocomplete="off" autocapitalize="characters" spellcheck="false">
+                    <button type="button" class="contact-btn" id="attSend">Confirm my attendance</button>
+                </div>
+            </div>
+            <div id="attHost" style="display:none;">
+                <p class="meta">Open a code during your class. Students type it here to prove they were present.</p>
+                <div class="room-bar">
+                    <select id="attMinutes" aria-label="How long the code works">
+                        <option value="15">Works for 15 minutes</option>
+                        <option value="30" selected>Works for 30 minutes</option>
+                        <option value="60">Works for 60 minutes</option>
+                        <option value="120">Works for 2 hours</option>
+                    </select>
+                    <button type="button" class="btn btn-outline" id="attOpen">Open a new code</button>
+                </div>
+                <div id="attCurrent"></div>
+                <p class="meta"><strong>Who is in the room</strong></p>
+                <div id="attPeople"></div>
+            </div>
+            <p id="attMsg" class="msg"></p>
+        </section>
+
         <section class="panel" id="stagePanel" style="display:none;">
             <h2>On stage</h2>
             <div id="stageInvite" style="display:none;">
@@ -121,6 +148,7 @@
 <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.18.3/dist/livekit-client.umd.js"></script>
 <script src="live-chat.js"></script>
 <script src="live-stage.js"></script>
+<script src="live-attendance.js"></script>
 <script src="live-room.js"></script>
 <script src="pwa.js"></script>
 </body>

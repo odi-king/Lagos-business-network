@@ -696,6 +696,7 @@ async function loadGradRules() {
     document.getElementById("ruleDayLecturers").value = data.min_day_lecturers;
     document.getElementById("ruleAssessments").value = data.min_assessments;
     document.getElementById("ruleParticipation").value = data.min_participation || 0;
+    document.getElementById("rulePresence").value = data.min_presence_minutes === undefined ? 20 : data.min_presence_minutes;
 
     loadMaterials();
     loadCertificates();
@@ -719,6 +720,13 @@ document.getElementById("gradRulesForm").addEventListener("submit", async functi
             p_classes: parseInt(document.getElementById("ruleParticipation").value || "0", 10)
         });
         failed = part.error;
+    }
+
+    if (!failed) {
+        const time = await db.rpc("admin_set_min_presence", {
+            p_minutes: parseInt(document.getElementById("rulePresence").value || "20", 10)
+        });
+        failed = time.error;
     }
 
     message.className = failed ? "msg error" : "msg ok";

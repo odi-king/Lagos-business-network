@@ -345,7 +345,7 @@ async function loadGraduation() {
         progressRow("Assessments passed", Number(g.assessments_passed), g.min_assessments) +
         (g.min_participation > 0 ? progressRow("Live classes where you asked or wrote in the chat", Number(g.participation), g.min_participation) : "") +
         (g.materials_total > 0 ? progressRow("Required books and handouts", Number(g.materials_have), g.materials_total) + materials : "") +
-        '<p class="meta">A lecture counts when you type the live class code, or watch an uploaded video to the end. ' +
+        '<p class="meta">A lecture counts when you type the live class code, or watch an uploaded video to the end. For a class inside LBN you also stay in the room for the minimum time. ' +
         "A day counts only if you had lectures from at least " + g.min_day_lecturers + " different lecturers that day.</p>" +
         (days ? '<details class="faq"><summary>Your recent days</summary>' + days + "</details>" : "") +
         action +

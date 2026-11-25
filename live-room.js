@@ -178,6 +178,7 @@
             .on(E.Disconnected, function () {
                 if (window.LiveChat) window.LiveChat.stop();
                 if (window.LiveStage) window.LiveStage.stop();
+                if (window.LiveAttendance) window.LiveAttendance.stop();
                 liveBox.style.display = "none";
                 say("You left the class. You can join again from the Live classes page.", true);
             });
@@ -208,6 +209,7 @@
         if (pass.stage && pass.role !== "host") becomeGuest(false);
 
         if (window.LiveStage) window.LiveStage.start(sessionId, pass.role, pass.stage === true);
+        if (window.LiveAttendance) window.LiveAttendance.start(sessionId, pass.role);
     }
 
     // A guest on stage: microphone and camera buttons, no screen sharing
