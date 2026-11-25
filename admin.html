@@ -239,6 +239,26 @@
     </section>
 
     <section class="panel" data-perm="finance">
+        <h2>Shipping to other cities and states</h2>
+        <p class="meta">A buyer asked for a courier. Ask any courier for the price, type it here with the delivery time, and the buyer decides. After the buyer pays, book the courier and type the courier name and tracking number. You hold the shipping fee and pay the courier yourself.</p>
+        <div class="filters">
+            <select id="shipFilter">
+                <option value="todo">Needs my action</option>
+                <option value="requested">Waiting for a price</option>
+                <option value="quoted">Price sent to buyer</option>
+                <option value="paid">Paid, book the courier</option>
+                <option value="booked">Courier booked</option>
+                <option value="shipped">On the way</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="all">All</option>
+            </select>
+        </div>
+        <div id="shipList"></div>
+        <p id="shipMsg" class="msg"></p>
+    </section>
+
+    <section class="panel" data-perm="finance">
         <h2>Delivery inside Lagos</h2>
         <p class="meta">List the areas, then set the price between each pair of areas. A buyer can choose delivery by an LBN rider only between areas that have a price. Prices work in both directions.</p>
         <h3>Areas</h3>
@@ -306,6 +326,7 @@
 <script src="gift-admin.js"></script>
 <script src="delivery-admin.js"></script>
 <script src="rider-admin.js"></script>
+<script src="courier-admin.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>
 <script src="i18n-strings.js"></script>
