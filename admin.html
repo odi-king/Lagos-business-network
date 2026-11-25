@@ -224,6 +224,26 @@
     </section>
 
     <section class="panel" data-perm="finance">
+        <h2>Delivery overview</h2>
+        <p class="meta">What needs your attention in deliveries and shipping, and the money. It refreshes by itself.</p>
+        <div class="filters">
+            <select id="logiDays">
+                <option value="7">Last 7 days</option>
+                <option value="30" selected>Last 30 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="365">Last 365 days</option>
+            </select>
+        </div>
+        <div id="logiBox"></div>
+        <h3>Download a report</h3>
+        <div class="filters">
+            <input type="date" id="logiFrom"> <input type="date" id="logiTo">
+            <button type="button" class="btn btn-outline" id="logiExport">Download CSV</button>
+        </div>
+        <p id="logiMsg" class="msg"></p>
+    </section>
+
+    <section class="panel" data-perm="finance">
         <h2>Riders</h2>
         <p class="meta">Check each application: the name on the ID must match the bank account name, the selfie must match the ID, and the plate in the vehicle photo must match what they typed. Only approved riders can go online.</p>
         <div class="filters">
@@ -352,6 +372,7 @@
 <script src="courier-admin.js"></script>
 <script src="rider-stats-admin.js"></script>
 <script src="issues-admin.js"></script>
+<script src="logistics-admin.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>
 <script src="i18n-strings.js"></script>
