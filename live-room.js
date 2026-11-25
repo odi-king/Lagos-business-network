@@ -182,13 +182,14 @@
 
         try {
             await room.connect(pass.url, pass.token);
-            // Opening the sound needs a tap on phones; this tap is it
-            await room.startAudio();
         } catch (error) {
             button.disabled = false;
             say("Could not join the class: " + ((error && error.message) || "please try again") + (pass && pass.diag ? " [" + pass.diag + "]" : ""), false);
             return;
         }
+
+        // Opening the sound needs a tap on phones. If the phone refuses, the "Tap to hear" button stays visible
+        try { await room.startAudio(); } catch (e) { document.getElementById("soundBtn").style.display = ""; }
 
         joinBox.style.display = "none";
         liveBox.style.display = "";
