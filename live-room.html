@@ -72,6 +72,19 @@
             <button type="button" class="btn btn-outline" id="soundBtn" style="display:none;">Tap to hear the lecturer</button>
         </div>
 
+        <section class="panel" id="stagePanel" style="display:none;">
+            <h2>On stage</h2>
+            <div id="stageInvite" style="display:none;">
+                <p>The lecturer invited you to speak to the class.</p>
+                <div class="room-bar">
+                    <button type="button" class="contact-btn" id="stageAccept">Accept and speak</button>
+                    <button type="button" class="btn btn-outline" id="stageDecline">Not now</button>
+                </div>
+            </div>
+            <div id="stageList"></div>
+            <p id="stageMsg" class="msg"></p>
+        </section>
+
         <section class="panel" id="chatPanel">
             <h2>Class chat</h2>
             <div id="handBox" style="display:none;">
@@ -107,6 +120,7 @@
 <script src="supabase-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.18.3/dist/livekit-client.umd.js"></script>
 <script src="live-chat.js"></script>
+<script src="live-stage.js"></script>
 <script src="live-room.js"></script>
 <script src="pwa.js"></script>
 </body>

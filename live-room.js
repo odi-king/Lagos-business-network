@@ -177,6 +177,7 @@
             .on(E.Reconnected, function () { say("Back in the class.", true); })
             .on(E.Disconnected, function () {
                 if (window.LiveChat) window.LiveChat.stop();
+                if (window.LiveStage) window.LiveStage.stop();
                 liveBox.style.display = "none";
                 say("You left the class. You can join again from the Live classes page.", true);
             });
@@ -200,8 +201,53 @@
         msg.className = "msg";
         updateStatus();
 
-        if (window.LiveChat) window.LiveChat.start((new URLSearchParams(location.search).get("s") || "").trim(), pass.role);
+        const sessionId = (new URLSearchParams(location.search).get("s") || "").trim();
+        if (window.LiveChat) window.LiveChat.start(sessionId, pass.role);
+
+        // A student the lecturer invited on stage earlier gets the buttons back after a refresh
+        if (pass.stage && pass.role !== "host") becomeGuest(false);
+
+        if (window.LiveStage) window.LiveStage.start(sessionId, pass.role, pass.stage === true);
     }
+
+    // A guest on stage: microphone and camera buttons, no screen sharing
+    async function becomeGuest(startMic) {
+        document.getElementById("hostBar").style.display = "";
+        document.getElementById("screenBtn").style.display = "none";
+        setButtons();
+
+        if (!startMic || micOn) return true;
+
+        // LiveKit needs a moment to apply the new permission
+        for (let i = 0; i < 6; i++) {
+            try {
+                await room.localParticipant.setMicrophoneEnabled(true);
+                micOn = true;
+                setButtons();
+                return true;
+            } catch (e) {
+                await new Promise(function (resolve) { setTimeout(resolve, 700); });
+            }
+        }
+
+        say("You are on stage, but the microphone could not start. Tap Microphone and allow it.", false);
+        return false;
+    }
+
+    async function becomeViewer() {
+        if (room) {
+            try { await room.localParticipant.setMicrophoneEnabled(false); } catch (e) { /* already off */ }
+            try { await room.localParticipant.setCameraEnabled(false); } catch (e) { /* already off */ }
+        }
+
+        micOn = false;
+        camOn = false;
+        sharing = false;
+        setButtons();
+        document.getElementById("hostBar").style.display = "none";
+    }
+
+    window.LiveRoom = { becomeGuest: becomeGuest, becomeViewer: becomeViewer };
 
     async function toggle(kind) {
         if (!room) return;

@@ -112,6 +112,9 @@ window.LiveChat = (function () {
                 who.className = "who";
                 who.textContent = "✋ " + h.name;
                 row.appendChild(who);
+                if (window.LiveStage) {
+                    row.appendChild(button("Invite up", function () { window.LiveStage.invite(h.user_id, h.name); }));
+                }
                 row.appendChild(button("Lower hand", function () { moderate(h.id, "delete"); }));
                 handList.appendChild(row);
             });
@@ -209,5 +212,5 @@ window.LiveChat = (function () {
         });
     });
 
-    return { start: start, stop: stop };
+    return { start: start, stop: stop, refresh: refresh };
 })();
