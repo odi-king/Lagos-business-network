@@ -136,6 +136,7 @@
             '<label>Value of 1 coin (naira) <input type="number" id="cPrice" min="1" max="1000" value="' + Number(d.coin_price_naira) + '"></label>' +
             '<label>LBN keeps (%) <input type="number" id="cPct" min="0" max="90" value="' + Number(d.lbn_percent) + '"></label>' +
             '<label>Hold earnings (days) <input type="number" id="cHold" min="0" max="60" value="' + Number(d.hold_days) + '"></label>' +
+            '<label>Smallest withdrawal (naira) <input type="number" id="cMin" min="100" value="' + Number(d.min_payout_naira || 2000) + '"></label>' +
             '<button type="button" class="contact-btn" id="cSave">Save</button></div>' +
             '<p class="meta">Coins sold so far: N' + Number(d.sold_naira).toLocaleString("en-NG") + '. Streamers earned (recorded, not paid out): N' + Number(d.earned_naira).toLocaleString("en-NG") + '.</p></div>' +
             '<h4>Coin packs</h4>' +
@@ -159,7 +160,7 @@
             if (on && !confirm("Turn coin sales ON? Real money will be taken from members. Only do this after your lawyer agrees.")) return;
             const r = await db.rpc("admin_set_coin_settings", {
                 p_sales_on: on, p_price: parseInt(document.getElementById("cPrice").value, 10),
-                p_percent: parseInt(document.getElementById("cPct").value, 10), p_hold: parseInt(document.getElementById("cHold").value, 10) });
+                p_percent: parseInt(document.getElementById("cPct").value, 10), p_hold: parseInt(document.getElementById("cHold").value, 10), p_min: parseInt(document.getElementById("cMin").value, 10) });
             if (r.error) say(r.error.message, false); else { say("Saved.", true); }
         });
 
@@ -180,7 +181,45 @@
         });
     }
 
+    // ----- Streamer withdrawals -----
+    const cpay = document.getElementById("cpayList");
+
+    async function loadCpay() {
+        if (!cpay) return;
+        const { data, error } = await db.rpc("admin_creator_payouts", { p_status: "requested" });
+        if (error) { cpay.innerHTML = "<p class='meta'>Not set up yet. Run supabase-creator-payouts.sql in Supabase.</p>"; return; }
+        cpay.innerHTML = (data || []).length ? data.map(function (y) {
+            return '<div class="business-card" data-cp="' + escapeHTML(y.id) + '" data-creator="' + escapeHTML(y.creator_id) + '">' +
+                '<strong>N' + Math.floor(Number(y.amount_kobo) / 100).toLocaleString("en-NG") + '</strong> - ' + escapeHTML(y.creator_name) + (y.frozen ? ' (FROZEN)' : '') +
+                '<p class="meta">' + escapeHTML(y.bank_name) + ' - ' + escapeHTML(y.account_number) + ' - ' + escapeHTML(y.account_name) + '</p>' +
+                '<div class="filters"><input type="text" class="cpn" maxlength="200" placeholder="Note (reason or transfer reference)">' +
+                '<button type="button" class="contact-btn" data-cp-do="paid">Mark paid</button>' +
+                '<button type="button" class="btn btn-outline" data-cp-do="rejected">Reject</button>' +
+                '<button type="button" class="btn btn-outline" data-cp-do="freeze">Freeze streamer</button>' +
+                '<button type="button" class="btn btn-outline" data-cp-do="unfreeze">Unfreeze</button></div></div>';
+        }).join("") : "<p class='meta'>No withdrawals waiting.</p>";
+    }
+
+    if (cpay) {
+        cpay.addEventListener("click", async function (e) {
+            const b = e.target.closest("button[data-cp-do]");
+            if (!b) return;
+            const card = b.closest("[data-cp]");
+            const note = card.querySelector(".cpn").value;
+            const act = b.dataset.cpDo;
+            let r;
+            if (act === "freeze" || act === "unfreeze") {
+                r = await db.rpc("admin_creator_freeze", { p_creator: card.dataset.creator, p_freeze: act === "freeze", p_reason: note });
+            } else {
+                if (act === "paid" && !confirm("Have you sent the money by bank transfer?")) return;
+                r = await db.rpc("admin_creator_payout_set", { p_id: card.dataset.cp, p_status: act, p_note: note });
+            }
+            if (r.error) alert(r.error.message); else loadCpay();
+        });
+    }
+
     filter.addEventListener("change", load);
+    loadCpay();
     loadCoins();
     loadGifts();
     loadMax();
