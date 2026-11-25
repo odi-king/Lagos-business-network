@@ -224,6 +224,21 @@
     </section>
 
     <section class="panel" data-perm="finance">
+        <h2>Riders</h2>
+        <p class="meta">Check each application: the name on the ID must match the bank account name, the selfie must match the ID, and the plate in the vehicle photo must match what they typed. Only approved riders can go online.</p>
+        <div class="filters">
+            <select id="riderFilter">
+                <option value="pending">Waiting for a check</option>
+                <option value="approved">Approved</option>
+                <option value="suspended">Suspended</option>
+                <option value="rejected">Rejected</option>
+                <option value="all">All riders</option>
+            </select>
+        </div>
+        <div id="riderList"></div>
+    </section>
+
+    <section class="panel" data-perm="finance">
         <h2>Delivery inside Lagos</h2>
         <p class="meta">List the areas, then set the price between each pair of areas. A buyer can choose delivery by an LBN rider only between areas that have a price. Prices work in both directions.</p>
         <h3>Areas</h3>
@@ -287,6 +302,7 @@
 <script src="seller-id-admin.js"></script>
 <script src="gift-admin.js"></script>
 <script src="delivery-admin.js"></script>
+<script src="rider-admin.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>
 <script src="i18n-strings.js"></script>
