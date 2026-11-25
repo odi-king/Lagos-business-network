@@ -36,9 +36,18 @@
 
     async function errorText(error) {
         try {
-            if (error && error.context && typeof error.context.json === "function") {
-                const body = await error.context.json();
-                if (body && body.error) return body.error;
+            const res = error && error.context;
+
+            if (res && typeof res.text === "function") {
+                const raw = await res.text();
+                let reason = raw;
+
+                try {
+                    const body = JSON.parse(raw);
+                    reason = body.error || body.message || body.msg || raw;
+                } catch (e) { /* not JSON: keep the text */ }
+
+                return String(reason || "No details").slice(0, 200) + " (code " + res.status + ")";
             }
         } catch (e) { /* fall through */ }
 
