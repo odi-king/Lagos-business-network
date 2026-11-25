@@ -432,7 +432,8 @@
         room = new LivekitClient.Room({
             adaptiveStream: true,
             dynacast: true,
-            videoCaptureDefaults: { resolution: LivekitClient.VideoPresets.h540 },
+            videoCaptureDefaults: { resolution: LivekitClient.VideoPresets.h720, facingMode: "user" },
+            publishDefaults: { simulcast: true, videoEncoding: { maxBitrate: 1700000, maxFramerate: 30 } },
             audioCaptureDefaults: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
         });
 
@@ -448,7 +449,7 @@
                     v.muted = true;
                     v.playsInline = true;
                     v.setAttribute("playsinline", "");
-                    if (publication.source === LivekitClient.Track.Source.ScreenShare) v.className = "screen";
+                    v.className = publication.source === LivekitClient.Track.Source.ScreenShare ? "screen" : "mine";
                     stage.appendChild(v);
                 }
                 updateStatus();
