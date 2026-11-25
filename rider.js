@@ -139,6 +139,17 @@
 
         if (!live.length) line(box, "No active jobs. Accept one below.");
 
+        const pick = el("rpJob");
+        const keep = pick.value;
+        pick.textContent = "";
+        live.forEach(function (j) {
+            const o = document.createElement("option");
+            o.value = j.id;
+            o.textContent = j.item + " (" + j.pickup_zone + " → " + j.drop_zone + ")";
+            pick.appendChild(o);
+        });
+        if (keep) pick.value = keep;
+
         live.forEach(function (j) {
             const card = document.createElement("div");
             card.className = "panel";
@@ -247,6 +258,17 @@
         const live = el("activeList").querySelector("[data-job]");
         const { data, error } = await db.rpc("rider_emergency", { p_note: "", p_delivery: live ? live.dataset.job : null });
         say(el("sosMsg"), error ? error.message : (data && data.message) || "Alert sent", !error && data && data.ok);
+    });
+
+    el("rpForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        if (!el("rpJob").value) { say(el("rpMsg"), "You have no active job to report on.", false); return; }
+
+        const { data, error } = await db.rpc("rider_report_issue", { p_delivery: el("rpJob").value, p_kind: el("rpKind").value, p_body: el("rpBody").value });
+        const good = !error && data && data.ok;
+        say(el("rpMsg"), good ? "Sent. The LBN team will look into it." : (error ? error.message : (data && data.message) || "Could not send"), good);
+        if (good) el("rpBody").value = "";
     });
 
     function startJobs() {

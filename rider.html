@@ -64,6 +64,19 @@
         <h2>Your jobs</h2>
         <div id="activeList"></div>
         <p id="activeMsg" class="msg"></p>
+        <h3>Report a problem with a job</h3>
+        <form id="rpForm">
+            <select id="rpJob"></select>
+            <select id="rpKind">
+                <option value="cant_reach_seller">I cannot reach the seller</option>
+                <option value="cant_reach_buyer">I cannot reach the buyer</option>
+                <option value="item_mismatch">The item does not match the order</option>
+                <option value="other">Something else</option>
+            </select>
+            <input type="text" id="rpBody" maxlength="500" placeholder="Tell us what happened" required>
+            <button type="submit" class="btn btn-outline">Send report</button>
+        </form>
+        <p id="rpMsg" class="msg"></p>
         <h3>Emergency</h3>
         <p class="meta">In danger or an accident? Press the button. The LBN team is alerted at once. Also call the police on 112 or 199.</p>
         <button type="button" class="delete-btn" id="sosBtn">Emergency: alert LBN</button>

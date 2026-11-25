@@ -239,6 +239,20 @@
     </section>
 
     <section class="panel" data-perm="finance">
+        <h2>Delivery problems</h2>
+        <p class="meta">Reports from buyers, sellers and riders: item not arrived, damaged, wrong item, returns, and rider or courier problems. Write what you decided and close the report. Money decisions use the normal dispute tools on the trade.</p>
+        <div class="filters">
+            <select id="issueFilter">
+                <option value="open">Open</option>
+                <option value="resolved">Closed</option>
+                <option value="all">All</option>
+            </select>
+        </div>
+        <div id="issueList"></div>
+        <p id="issueMsg" class="msg"></p>
+    </section>
+
+    <section class="panel" data-perm="finance">
         <h2>Rider emergencies and performance</h2>
         <h3>Emergency alerts</h3>
         <div id="riderAlerts"></div>
@@ -337,6 +351,7 @@
 <script src="rider-admin.js"></script>
 <script src="courier-admin.js"></script>
 <script src="rider-stats-admin.js"></script>
+<script src="issues-admin.js"></script>
 <script src="appnav.js"></script>
 <script src="pwa.js"></script>
 <script src="i18n-strings.js"></script>
