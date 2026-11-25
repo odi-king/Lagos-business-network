@@ -186,7 +186,7 @@
             await room.startAudio();
         } catch (error) {
             button.disabled = false;
-            say("Could not join the class: " + ((error && error.message) || "please try again"), false);
+            say("Could not join the class: " + ((error && error.message) || "please try again") + (pass && pass.diag ? " [" + pass.diag + "]" : ""), false);
             return;
         }
 
