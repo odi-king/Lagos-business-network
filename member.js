@@ -254,7 +254,8 @@ function renderMenu() {
         '<a class="menu-row" href="library.html">Handouts and books</a>',
         '<a class="menu-row" href="dashboard.html">Dashboard</a>',
         '<a class="menu-row" href="trades.html">My trades</a>',
-        '<a class="menu-row" href="live.html">Live classes</a>'
+        '<a class="menu-row" href="live.html">Live classes</a>',
+        '<a class="menu-row" href="streams.html">Live streams (go live)</a>'
     ];
 
     if (postsContext.isAdmin) items.push('<a class="menu-row" href="admin.html">Admin</a>');

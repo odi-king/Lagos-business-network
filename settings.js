@@ -83,6 +83,7 @@ async function init() {
     const learning = [
         row("Classes", "classes.html"),
         row("Live classes", "live.html"),
+        row("Live streams (go live)", "streams.html"),
         row("Handouts and books", "library.html")
     ];
     if (isStudent) learning.push(row("My path to graduation", "dashboard.html#graduationPanel"));
