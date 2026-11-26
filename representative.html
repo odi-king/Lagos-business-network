@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>International Representative - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+<style>
+.stream-card{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.live-dot{display:inline-block;background:#e03131;color:#fff;border-radius:6px;padding:1px 7px;font-size:.75rem;font-weight:700;margin-right:6px;}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="streams.html">Live streams</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>International Representative</h1>
+        <p class="meta">Represent Lagos Business Network in your country: meet businesses, grow the community and report to the LBN team. This is a separate programme from School Ambassadors.</p>
+    </div>
+
+    <section class="panel" id="statusPanel"><p class="meta">Loading...</p></section>
+
+    <section class="panel" id="applyPanel" style="display:none;">
+        <h2>Apply</h2>
+        <form id="repForm" autocomplete="off">
+            <input type="text" id="country" list="countryList" placeholder="Country you want to represent (type to search)" required>
+            <datalist id="countryList"></datalist>
+            <input type="text" id="stateBox" list="stateList" style="display:none;">
+            <datalist id="stateList"></datalist>
+            <input type="text" id="city" placeholder="Your city" maxlength="80">
+            <input type="text" id="languages" placeholder="Languages you speak" maxlength="150">
+            <textarea id="experience" rows="3" maxlength="1500" placeholder="Your experience (business, community, sales, events)"></textarea>
+            <textarea id="motivation" rows="4" maxlength="1500" placeholder="Why do you want to represent LBN? (at least 30 characters)" required></textarea>
+            <button type="submit" class="contact-btn">Send my application</button>
+        </form>
+        <p id="applyMsg" class="msg"></p>
+    </section>
+
+    <section class="panel" id="reportPanel" style="display:none;">
+        <h2>Monthly report</h2>
+        <form id="reportForm" autocomplete="off">
+            <select id="rCountry"></select>
+            <input type="month" id="rPeriod" required>
+            <input type="number" id="rBiz" min="0" placeholder="Businesses you contacted">
+            <input type="number" id="rMem" min="0" placeholder="Members you recruited">
+            <input type="number" id="rEvents" min="0" placeholder="Events held">
+            <textarea id="rSummary" rows="4" maxlength="2000" placeholder="What did you do this month? (at least 20 characters)" required></textarea>
+            <button type="submit" class="contact-btn">Send report</button>
+        </form>
+        <p id="reportMsg" class="msg"></p>
+        <div id="reportList"></div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a>
+        <div class="legal-links"><a href="terms.html">Terms of Use</a> &bull; <a href="privacy.html">Privacy Policy</a> &bull; <a href="refunds.html">Refunds and Disputes</a></div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="countries.js"></script>
+<script src="representative.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>

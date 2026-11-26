@@ -102,7 +102,8 @@ async function init() {
             row("Manage or cancel subscription", "subscription.html")
         ]),
         section("Invite and earn", [
-            row("Invite friends and earn", "referrals.html")
+            row("Invite friends and earn", "referrals.html"),
+            row("Become an International Representative", "representative.html")
         ]),
         section("Your activity", [
             row("My profile and posts", "member.html"),

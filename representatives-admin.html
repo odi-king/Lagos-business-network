@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>International Representatives - Admin - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="classes.html">Classes</a>
+            <a href="feed.html">Marketplace</a>
+            <a href="reels.html">Reels</a>
+            <a href="trades.html">My trades</a>
+            <a href="member.html">Profile</a>
+            <a href="#" id="logoutBtn">Log out</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>International Representatives</h1>
+        <p class="meta">Applications, verification, country assignments, monthly reports, performance and records. Separate from School Ambassadors.</p>
+    </div>
+    <p id="repMsg" class="msg"></p>
+    <div class="filters" id="repTabs">
+        <button type="button" class="btn btn-outline rep-tab" data-tab="apps">Applications</button>
+        <button type="button" class="btn btn-outline rep-tab" data-tab="reps">Representatives</button>
+        <button type="button" class="btn btn-outline rep-tab" data-tab="reports">Reports</button>
+    </div>
+    <section class="panel" id="tab-apps">
+        <h2>Applications</h2>
+        <select id="appStatus">
+            <option value="submitted">New</option>
+            <option value="reviewing">Being reviewed</option>
+            <option value="interview">Interview</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="all">Everything</option>
+        </select>
+        <div id="appList"><p class="meta">Loading...</p></div>
+    </section>
+    <section class="panel" id="tab-reps" style="display:none;">
+        <h2>Representatives</h2>
+        <div id="repList"><p class="meta">Loading...</p></div>
+    </section>
+    <section class="panel" id="tab-reports" style="display:none;">
+        <h2>Monthly reports</h2>
+        <label><input type="checkbox" id="onlyNew" checked> Only reports waiting for a rating</label>
+        <div id="reportList"><p class="meta">Loading...</p></div>
+    </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="countries.js"></script>
+<script src="representatives-admin.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>
