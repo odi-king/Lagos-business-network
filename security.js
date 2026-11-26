@@ -10,7 +10,7 @@
     const ICON = { ok: "OK", attention: "NEEDS ATTENTION", critical: "CRITICAL" };
 
     function showTab(n) {
-        ["overview", "tables", "log", "payments", "logins", "ips", "files", "secrets", "accounts", "report"].forEach(function (t) { el("tab-" + t).style.display = t === n ? "" : "none"; });
+        ["overview", "tables", "log", "payments", "logins", "ips", "lock", "files", "secrets", "accounts", "report"].forEach(function (t) { el("tab-" + t).style.display = t === n ? "" : "none"; });
         document.querySelectorAll(".sec-tab").forEach(function (b) { b.classList.toggle("active", b.dataset.tab === n); });
         if (n === "overview") loadOverview();
         if (n === "tables") loadTables();
@@ -18,6 +18,7 @@
         if (n === "payments") loadPayments();
         if (n === "logins") loadLogins();
         if (n === "ips") loadIps();
+        if (n === "lock") loadLock();
         if (n === "files") loadFiles();
         if (n === "accounts") loadSuspended();
         if (n === "report") loadReport();
@@ -119,6 +120,24 @@
         const r = await db.rpc("admin_sec_ip_decide", { p_id: c.dataset.id, p_action: b.dataset.ip, p_reason: c.querySelector(".why").value });
         if (r.error) fail(r.error); else { say("Done.", true); loadIps(); }
     });
+
+    // ----- 13D: admin route lock -----
+    async function loadLock() {
+        const m = await db.rpc("admin_sec_mfa");
+        if (m.error) { fail(m.error); return; }
+        const r = await db.rpc("admin_sec_routes");
+        const rows = r.data || [];
+        const bad = rows.filter(function (x) { return !x.guarded || x.logged_out_can_run; });
+        const without = m.data.admins.filter(function (a) { return !a.two_step; });
+
+        el("secLock").innerHTML =
+            '<p>Two-step login is <strong>' + (m.data.required ? "REQUIRED for every admin" : "NOT required yet") + '</strong>. Admins without it: <strong>' + without.length + '</strong> of ' + m.data.admins.length + '.</p>' +
+            m.data.admins.map(function (a) { return '<p class="meta">' + esc(a.name) + (a.super ? " (Super Admin)" : "") + ' - two-step ' + (a.two_step ? "on" : "OFF") + '</p>'; }).join("") +
+            (m.data.required ? "" : "<p class='meta'>When every admin has set up two-step login, the Super Admin should switch on \"Require two-step login for all admins\" on the Admin team page.</p>") +
+            '<p>Last 7 days: visits by non-admins <strong>' + m.data.denied_7d + '</strong> - admins without the two-step code <strong>' + m.data.no_mfa_7d + '</strong></p>' +
+            '<h3>Admin database functions (' + rows.length + ')</h3><p class="meta">Each one must check permission and must not be runnable by logged-out visitors. Anything listed below needs a look.</p>' +
+            (bad.length ? bad.map(function (x) { return '<div class="business-card"><strong>' + esc(x.fn) + '</strong><p class="meta">' + (!x.guarded ? "No permission check found in its code. " : "") + (x.logged_out_can_run ? "Logged-out visitors can call it." : "") + '</p></div>'; }).join("") : "<p class='meta'>All " + rows.length + " have a permission check and none can be run logged out.</p>");
+    }
 
     // ----- 13.8: files -----
     async function loadFiles() {
