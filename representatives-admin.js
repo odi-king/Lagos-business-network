@@ -14,11 +14,12 @@ function escapeHTML(t) { return String(t === null || t === undefined ? "" : t).r
     }
 
     function showTab(n) {
-        ["apps", "reps", "reports"].forEach(function (t) { el("tab-" + t).style.display = t === n ? "" : "none"; });
+        ["apps", "reps", "reports", "meetings"].forEach(function (t) { el("tab-" + t).style.display = t === n ? "" : "none"; });
         document.querySelectorAll(".rep-tab").forEach(function (b) { b.classList.toggle("active", b.dataset.tab === n); });
         if (n === "apps") loadApps();
         if (n === "reps") loadReps();
         if (n === "reports") loadReports();
+        if (n === "meetings") loadMeetings();
     }
 
     el("repTabs").addEventListener("click", function (e) { const b = e.target.closest(".rep-tab"); if (b) showTab(b.dataset.tab); });
@@ -114,6 +115,50 @@ function escapeHTML(t) { return String(t === null || t === undefined ? "" : t).r
         const c = b.closest("[data-report]");
         const { error } = await db.rpc("admin_rep_review_report", { p_id: c.dataset.report, p_rating: parseInt(c.querySelector(".rr").value, 10), p_note: c.querySelector(".rv").value });
         if (error) fail(error); else loadReports();
+    });
+
+    // ----- Conference room -----
+    let repsCache = [];
+
+    async function loadMeetings() {
+        const l = await db.rpc("admin_conf_list");
+        if (l.error) { fail(l.error); return; }
+        repsCache = (await db.rpc("admin_conf_reps")).data || [];
+        const SC = { all_reps: "All Representatives", selected: "Chosen Representatives", management: "Management only" };
+
+        el("meetList").innerHTML = (l.data || []).length ? l.data.map(function (c) {
+            const open = c.status === "scheduled" || c.status === "live";
+            return '<div class="business-card" data-conf="' + escapeHTML(c.id) + '"><strong>' + escapeHTML(c.title) + '</strong> - ' + escapeHTML(c.status.toUpperCase()) + (c.locked ? " - LOCKED" : "") +
+                '<p class="meta">' + escapeHTML(new Date(c.starts_at).toLocaleString()) + ' - ' + escapeHTML(SC[c.scope]) + ' - ' + (c.everyone_speaks ? "everyone may speak" : "speaking by permission") + '</p>' +
+                (c.scope === "selected" && open ? '<p class="meta">Invited: ' + (c.invited.length ? c.invited.map(function (i) { return escapeHTML(i.name) + ' <a href="#" data-uninvite="' + escapeHTML(i.user_id) + '">x</a>'; }).join(", ") : "nobody yet") + '</p>' +
+                    '<div class="filters"><select class="mi">' + repsCache.map(function (r) { return '<option value="' + escapeHTML(r.user_id) + '">' + escapeHTML(r.name) + '</option>'; }).join("") + '</select><button type="button" class="btn btn-outline" data-invite>Invite</button></div>' : '') +
+                (open ? '<div class="filters">' +
+                    (c.status === "scheduled" ? '<button type="button" class="contact-btn" data-set="start">Start the meeting</button><button type="button" class="btn btn-outline" data-set="cancel">Cancel</button>' : '<a class="contact-btn" href="conference.html?c=' + escapeHTML(c.id) + '">Open the room</a><button type="button" class="btn btn-outline" data-set="end">End the meeting</button>') +
+                    '<button type="button" class="btn btn-outline" data-set="' + (c.locked ? "unlock" : "lock") + '">' + (c.locked ? "Unlock the room" : "Lock the room") + '</button>' +
+                    '<button type="button" class="btn btn-outline" data-set="' + (c.everyone_speaks ? "controlled" : "everyone_speaks") + '">' + (c.everyone_speaks ? "Speaking by permission" : "Let everyone speak") + '</button></div>' : '') + '</div>';
+        }).join("") : "<p class='meta'>No meetings yet.</p>";
+    }
+
+    el("meetForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const r = await db.rpc("admin_conf_create", { p_title: el("mTitle").value, p_starts: new Date(el("mWhen").value).toISOString(), p_scope: el("mScope").value, p_everyone_speaks: el("mSpeak").checked });
+        if (r.error) fail(r.error); else { el("mTitle").value = ""; say("Meeting created.", true); loadMeetings(); }
+    });
+
+    el("meetList").addEventListener("click", async function (e) {
+        const card = e.target.closest("[data-conf]");
+        if (!card) return;
+        const id = card.dataset.conf;
+        let r;
+        const un = e.target.closest("[data-uninvite]");
+        if (un) { e.preventDefault(); r = await db.rpc("admin_conf_invite", { p_conf: id, p_user: un.dataset.uninvite, p_add: false }); }
+        else if (e.target.closest("[data-invite]")) { r = await db.rpc("admin_conf_invite", { p_conf: id, p_user: card.querySelector(".mi").value, p_add: true }); }
+        else if (e.target.closest("[data-set]")) {
+            const a = e.target.closest("[data-set]").dataset.set;
+            if ((a === "end" || a === "cancel") && !confirm("Are you sure?")) return;
+            r = await db.rpc("admin_conf_set", { p_conf: id, p_action: a });
+        } else { return; }
+        if (r.error) fail(r.error); else loadMeetings();
     });
 
     showTab("apps");

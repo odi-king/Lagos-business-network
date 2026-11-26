@@ -42,6 +42,7 @@
         <button type="button" class="btn btn-outline rep-tab" data-tab="apps">Applications</button>
         <button type="button" class="btn btn-outline rep-tab" data-tab="reps">Representatives</button>
         <button type="button" class="btn btn-outline rep-tab" data-tab="reports">Reports</button>
+        <button type="button" class="btn btn-outline rep-tab" data-tab="meetings">Conference room</button>
     </div>
     <section class="panel" id="tab-apps">
         <h2>Applications</h2>
@@ -58,6 +59,22 @@
     <section class="panel" id="tab-reps" style="display:none;">
         <h2>Representatives</h2>
         <div id="repList"><p class="meta">Loading...</p></div>
+    </section>
+    <section class="panel" id="tab-meetings" style="display:none;">
+        <h2>Conference room</h2>
+        <p class="meta">Private video meetings. Choose who may enter, start the meeting, and control it: lock the room, let everyone speak or only allowed people, or remove someone.</p>
+        <form id="meetForm" autocomplete="off">
+            <input type="text" id="mTitle" maxlength="120" placeholder="Meeting title" required>
+            <input type="datetime-local" id="mWhen" required>
+            <select id="mScope">
+                <option value="all_reps">All active Representatives</option>
+                <option value="selected">Only Representatives I choose</option>
+                <option value="management">Management only</option>
+            </select>
+            <label><input type="checkbox" id="mSpeak" checked> Everyone may speak (untick to allow people one by one)</label>
+            <button type="submit" class="contact-btn">Create meeting</button>
+        </form>
+        <div id="meetList"><p class="meta">Loading...</p></div>
     </section>
     <section class="panel" id="tab-reports" style="display:none;">
         <h2>Monthly reports</h2>

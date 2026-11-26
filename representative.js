@@ -22,7 +22,7 @@
         let html = "";
 
         if (rep && rep.status === "active") {
-            html = "<h2>You are an LBN International Representative</h2><p>Your countries: <strong>" + (data.assignments.length ? data.assignments.map(function (a) { return esc(a.country); }).join(", ") : "none yet - the LBN team will assign one") + "</strong></p>";
+            html = "<h2>You are an LBN International Representative</h2><p><a class='contact-btn' href='conferences.html'>Representatives meetings</a></p><p>Your countries: <strong>" + (data.assignments.length ? data.assignments.map(function (a) { return esc(a.country); }).join(", ") : "none yet - the LBN team will assign one") + "</strong></p>";
         } else if (rep) {
             html = "<h2>Your Representative status: " + esc(rep.status) + "</h2><p class='meta'>Please contact LBN support.</p>";
         } else if (app && app.status !== "withdrawn") {
