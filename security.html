@@ -41,6 +41,11 @@
         <button type="button" class="btn btn-outline sec-tab" data-tab="tables">Database</button>
         <button type="button" class="btn btn-outline sec-tab" data-tab="log">Log</button>
         <button type="button" class="btn btn-outline sec-tab" data-tab="payments">Payments</button>
+        <button type="button" class="btn btn-outline sec-tab" data-tab="logins">Logins and threats</button>
+        <button type="button" class="btn btn-outline sec-tab" data-tab="files">Files</button>
+        <button type="button" class="btn btn-outline sec-tab" data-tab="secrets">Secrets</button>
+        <button type="button" class="btn btn-outline sec-tab" data-tab="accounts">Accounts</button>
+        <button type="button" class="btn btn-outline sec-tab" data-tab="report">Report</button>
     </div>
     <section class="panel" id="tab-overview">
         <div id="secStatus"><p class="meta">Loading...</p></div>
@@ -68,6 +73,39 @@
     <section class="panel" id="tab-payments" style="display:none;">
         <h2>Payment security</h2>
         <div id="secPay"></div>
+    </section>
+    <section class="panel" id="tab-logins" style="display:none;">
+        <h2>Logins and threats</h2>
+        <div id="secLogins"><p class="meta">Loading...</p></div>
+        <button type="button" class="btn btn-outline" id="scanBtn">Run the threat rules now</button>
+        <div id="secScan"></div>
+    </section>
+    <section class="panel" id="tab-files" style="display:none;">
+        <h2>File and upload security</h2>
+        <p class="meta">Buckets that look private (ID photos, documents) must NOT be public. Every bucket should have a size limit and allowed file types.</p>
+        <div id="secBuckets"></div>
+    </section>
+    <section class="panel" id="tab-secrets" style="display:none;">
+        <h2>Secret scan of the live website files</h2>
+        <p class="meta">Reads every file of your public website and looks for leaked secret keys (Paystack secret key, Supabase service key, private keys, LiveKit secret). Nothing is shown in full. Your Edge Function secrets can only be checked in the Supabase dashboard, and old versions of files in GitHub history must be checked separately.</p>
+        <button type="button" class="contact-btn" id="secScanBtn">Scan the website files</button>
+        <div id="secSecrets"></div>
+    </section>
+    <section class="panel" id="tab-accounts" style="display:none;">
+        <h2>Protect an account</h2>
+        <form id="accForm" class="filters" autocomplete="off">
+            <input type="email" id="accEmail" placeholder="Email of the account" required>
+            <button type="submit" class="btn btn-outline">Look up</button>
+        </form>
+        <div id="accBox"></div>
+        <h3>Suspended accounts</h3>
+        <div id="accList"></div>
+    </section>
+    <section class="panel" id="tab-report" style="display:none;">
+        <h2>Security audit report</h2>
+        <div class="filters"><select id="repDays"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last year</option></select>
+        <button type="button" class="btn btn-outline" id="repCsv">Download as CSV</button></div>
+        <div id="secReport"></div>
     </section>
 </main>
 

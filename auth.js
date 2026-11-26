@@ -235,6 +235,10 @@ authForm.addEventListener("submit", async function (event) {
             window.location.href = nextPage();
         }
     } catch (error) {
+        // Count wrong passwords on our login page so the Security team can spot password guessing
+        if (mode === "login" && /invalid login/i.test(String(error && error.message))) {
+            try { db.rpc("sec_failed_login", { p_email: email }).then(function () {}, function () {}); } catch (e) { /* never block the login page */ }
+        }
         showMessage(error.message, "error");
     } finally {
         submitBtn.disabled = false;

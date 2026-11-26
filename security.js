@@ -10,12 +10,16 @@
     const ICON = { ok: "OK", attention: "NEEDS ATTENTION", critical: "CRITICAL" };
 
     function showTab(n) {
-        ["overview", "tables", "log", "payments"].forEach(function (t) { el("tab-" + t).style.display = t === n ? "" : "none"; });
+        ["overview", "tables", "log", "payments", "logins", "files", "secrets", "accounts", "report"].forEach(function (t) { el("tab-" + t).style.display = t === n ? "" : "none"; });
         document.querySelectorAll(".sec-tab").forEach(function (b) { b.classList.toggle("active", b.dataset.tab === n); });
         if (n === "overview") loadOverview();
         if (n === "tables") loadTables();
         if (n === "log") loadLog();
         if (n === "payments") loadPayments();
+        if (n === "logins") loadLogins();
+        if (n === "files") loadFiles();
+        if (n === "accounts") loadSuspended();
+        if (n === "report") loadReport();
     }
 
     el("secTabs").addEventListener("click", function (e) { const b = e.target.closest(".sec-tab"); if (b) showTab(b.dataset.tab); });
@@ -76,6 +80,154 @@
                 return '<div class="business-card"><strong>' + esc(u.reference) + '</strong> - N' + Math.floor(Number(u.amount_kobo || 0) / 100).toLocaleString("en-NG") + '<p class="meta">' + esc(when(u.created_at)) + (u.note ? ' - ' + esc(u.note) : '') + '</p></div>';
             }).join("") : "<p class='meta'>None waiting.</p>");
     }
+
+    // ----- 13.3 and 13.5: logins and threats -----
+    async function loadLogins() {
+        const { data, error } = await db.rpc("admin_sec_logins");
+        if (error) { fail(error); return; }
+        el("secLogins").innerHTML = '<p>Successful logins (24 hours): <strong>' + (data.successful_24h === null ? "not available" : data.successful_24h) + '</strong> - failed on the LBN login page: <strong>' + data.failed_24h + '</strong> (24 hours), ' + data.failed_7d + ' (7 days)</p>' +
+            '<h3>Accounts targeted by wrong passwords (24 hours)</h3>' + (data.targets.length ? data.targets.map(function (t) { return '<p class="meta">' + esc(t.who) + ' - ' + t.failed + ' failed - last ' + esc(when(t.last)) + '</p>'; }).join("") : "<p class='meta'>None.</p>") +
+            '<h3>Accounts signed in from 3 or more places (24 hours)</h3>' + (data.many_places.length ? data.many_places.map(function (t) { return '<p class="meta">' + esc(t.user) + ' - ' + t.places + ' places, ' + t.sessions + ' sessions</p>'; }).join("") : "<p class='meta'>None.</p>") +
+            '<p class="meta">Supabase does not report wrong passwords that do not come through our own login page.</p>';
+    }
+
+    el("scanBtn").addEventListener("click", async function () {
+        const { data, error } = await db.rpc("admin_sec_scan");
+        if (error) { fail(error); return; }
+        el("secScan").innerHTML = data.findings.length ? data.findings.map(function (f) { return '<div class="business-card"><strong>' + esc(f.severity.toUpperCase()) + '</strong> - ' + esc(f.rule) + '<p class="meta">' + esc(f.detail) + '</p></div>'; }).join("") : "<p class='meta'>No threats found by the rules.</p>";
+    });
+
+    // ----- 13.8: files -----
+    async function loadFiles() {
+        const { data, error } = await db.rpc("admin_sec_buckets");
+        if (error) { fail(error); return; }
+        el("secBuckets").innerHTML = data.map(function (b) {
+            const bad = b.is_public && b.looks_private;
+            return '<div class="business-card"><strong>' + esc(b.bucket) + '</strong> - ' + (bad ? "PUBLIC BUT LOOKS PRIVATE: CHECK NOW" : b.is_public ? "public" : "private") +
+                '<p class="meta">Size limit ' + (b.size_limit_mb === null ? "NONE" : b.size_limit_mb + " MB") + ' - allowed types: ' + esc(b.file_types) + ' - files: ' + b.objects + '</p></div>';
+        }).join("");
+    }
+
+    // ----- 13.9: secret scan of the live website files -----
+    function maskOf(s) { return s.slice(0, 6) + "..." + s.slice(-2) + " (" + s.length + " characters)"; }
+
+    function jwtRole(token) {
+        try {
+            const p = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+            return (JSON.parse(atob(p + "===".slice((p.length + 3) % 4))) || {}).role || "";
+        } catch (e) { return ""; }
+    }
+
+    const RULES = [
+        { name: "Paystack SECRET key", sev: "critical", re: /sk_(live|test)_[A-Za-z0-9]{16,}/g },
+        { name: "Private key", sev: "critical", re: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g },
+        { name: "LiveKit secret in a file", sev: "critical", re: /LIVEKIT_API_SECRET\s*[=:]\s*["'][^"'\s]{16,}["']/g },
+        { name: "Possible secret or password", sev: "warning", re: /(?:secret|password|passwd|api_?key|token)["']?\s*[:=]\s*["'][A-Za-z0-9\/+_\-]{28,}["']/gi }
+    ];
+
+    el("secScanBtn").addEventListener("click", async function () {
+        const out = el("secSecrets");
+        const btn = this;
+        btn.disabled = true;
+        out.innerHTML = "<p class='meta'>Reading the file list...</p>";
+
+        try {
+            const tree = await (await fetch("https://api.github.com/repos/odi-king/lagos-business-network/git/trees/master?recursive=1")).json();
+            const files = (tree.tree || []).filter(function (f) { return f.type === "blob" && /\.(js|html|json|md|ts|sql|txt|webmanifest|css)$/i.test(f.path) && f.size < 1500000; });
+            const findings = [];
+            let done = 0;
+
+            for (const f of files) {
+                done++;
+                if (done % 25 === 0) out.innerHTML = "<p class='meta'>Scanned " + done + " of " + files.length + " files...</p>";
+                let text = "";
+                try { text = await (await fetch(f.path, { cache: "no-store" })).text(); } catch (e) { continue; }
+                if (text.length < 5 || /^\s*<!DOCTYPE html>/i.test(text) && !/\.html$/i.test(f.path)) continue;
+
+                RULES.forEach(function (r) {
+                    (text.match(r.re) || []).forEach(function (m) {
+                        // Our own scanner and examples in comments are not secrets
+                        if (/sk_\.\.\.|sk_test_\.\.\.|sk_live_\.\.\./.test(m)) return;
+                        findings.push({ sev: r.sev, rule: r.name, file: f.path, sample: maskOf(m) });
+                    });
+                });
+
+                (text.match(/eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g) || []).forEach(function (t) {
+                    if (jwtRole(t) === "service_role") findings.push({ sev: "critical", rule: "Supabase SERVICE ROLE key", file: f.path, sample: maskOf(t) });
+                });
+            }
+
+            const crit = findings.filter(function (x) { return x.sev === "critical"; }).length;
+
+            out.innerHTML = "<p><strong>" + files.length + " files scanned. " + (findings.length ? findings.length + " possible problem(s)." : "No leaked secrets found.") + "</strong></p>" +
+                findings.map(function (x) { return '<div class="business-card"><strong>' + esc(x.sev.toUpperCase()) + '</strong> - ' + esc(x.rule) + '<p class="meta">' + esc(x.file) + ' - ' + esc(x.sample) + '</p></div>'; }).join("") +
+                (crit ? "<p class='msg error'>A secret key on a public website is stolen the moment it is pushed. Replace that key in the provider's dashboard right now, then remove it from the file.</p>" : "");
+
+            if (findings.length) {
+                await db.rpc("admin_sec_note", { p_severity: crit ? "critical" : "warning", p_message: "Secret scan found " + findings.length + " possible problem(s) in the website files (" + crit + " critical)" });
+            } else {
+                await db.rpc("admin_sec_note", { p_severity: "info", p_message: "Secret scan of " + files.length + " website files: nothing found" });
+            }
+        } catch (e) {
+            out.innerHTML = "<p class='msg error'>The scan could not run: " + esc(e.message || "network problem") + ". Try again in a minute.</p>";
+        }
+
+        btn.disabled = false;
+    });
+
+    // ----- 13.10: accounts -----
+    async function loadSuspended() {
+        const { data } = await db.rpc("admin_sec_suspended");
+        el("accList").innerHTML = (data || []).length ? data.map(function (u) { return '<p class="meta">' + esc(u.name) + ' - ' + esc(u.email) + '</p>'; }).join("") : "<p class='meta'>None.</p>";
+    }
+
+    el("accForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const { data, error } = await db.rpc("admin_sec_account", { p_query: el("accEmail").value });
+        if (error) { fail(error); return; }
+        if (!data) { el("accBox").innerHTML = "<p class='meta'>No account with that email.</p>"; return; }
+        el("accBox").innerHTML = '<div class="business-card" data-user="' + esc(data.id) + '"><strong>' + esc(data.name) + '</strong> - ' + esc(data.email) + (data.suspended ? " - SUSPENDED" : "") +
+            '<p class="meta">Last sign in ' + (data.last_sign_in_at ? esc(when(data.last_sign_in_at)) : "never") + ' - open sessions ' + (data.sessions === null ? "unknown" : data.sessions) + ' - two-step login ' + (data.two_step ? "on" : "off") + (data.is_admin ? " - ADMIN" : "") + '</p>' +
+            '<div class="filters"><input type="text" class="why" maxlength="300" placeholder="Reason (required)">' +
+            '<button type="button" class="btn btn-outline" data-acc="end_sessions">Sign out everywhere</button>' +
+            (data.suspended ? '<button type="button" class="contact-btn" data-acc="restore">Restore the account</button>' : '<button type="button" class="btn btn-outline" data-acc="suspend">Suspend the account</button>') + '</div></div>';
+    });
+
+    el("accBox").addEventListener("click", async function (e) {
+        const b = e.target.closest("[data-acc]");
+        if (!b) return;
+        const c = b.closest("[data-user]");
+        if (b.dataset.acc === "suspend" && !confirm("Suspend this account? They are signed out and cannot log in until you restore it.")) return;
+        const r = await db.rpc("admin_sec_account_action", { p_user: c.dataset.user, p_action: b.dataset.acc, p_reason: c.querySelector(".why").value });
+        if (r.error) fail(r.error); else { say("Done.", true); el("accForm").requestSubmit(); loadSuspended(); }
+    });
+
+    // ----- 13.11: report -----
+    let lastReport = null;
+
+    async function loadReport() {
+        const { data, error } = await db.rpc("admin_sec_report", { p_days: parseInt(el("repDays").value, 10) });
+        if (error) { fail(error); return; }
+        lastReport = data;
+        el("secReport").innerHTML = '<p>Last ' + data.days + ' days: critical <strong>' + data.detected.critical + '</strong> - warnings <strong>' + data.detected.warning + '</strong> - info ' + data.detected.info + ' - resolved <strong>' + data.resolved + '</strong> - failed logins ' + data.failed_logins + ' - suspended accounts now ' + data.suspended_accounts + '</p>' +
+            '<h3>Outstanding</h3>' + (data.outstanding.length ? data.outstanding.map(function (o) { return '<p class="meta">' + esc(o.severity.toUpperCase()) + ' - ' + esc(o.message) + ' (' + esc(when(o.created_at)) + ')</p>'; }).join("") : "<p class='meta'>Nothing outstanding.</p>") +
+            '<h3>Resolved</h3>' + (data.resolved_list.length ? data.resolved_list.map(function (o) { return '<p class="meta">' + esc(o.severity.toUpperCase()) + ' - ' + esc(o.message) + ' - ' + esc(o.note) + '</p>'; }).join("") : "<p class='meta'>None yet.</p>");
+    }
+
+    el("repDays").addEventListener("change", loadReport);
+
+    el("repCsv").addEventListener("click", function () {
+        if (!lastReport) return;
+        const q = function (v) { return '"' + String(v === null || v === undefined ? "" : v).replace(/"/g, '""') + '"'; };
+        const rows = [["status", "severity", "message", "note or details", "date"]];
+        lastReport.outstanding.forEach(function (o) { rows.push(["outstanding", o.severity, o.message, o.details, o.created_at]); });
+        lastReport.resolved_list.forEach(function (o) { rows.push(["resolved", o.severity, o.message, o.note, o.created_at]); });
+        const blob = new Blob([rows.map(function (r) { return r.map(q).join(","); }).join("\n")], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "lbn-security-report.csv";
+        a.click();
+    });
 
     showTab("overview");
 })();
