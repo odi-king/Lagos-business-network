@@ -101,6 +101,7 @@ document.getElementById("infoForm").addEventListener("submit", async function (e
 // ---------- Password and sessions ----------
 
 const pwCap = window.lbnCaptcha("captchaBoxPw");
+const delCap = window.lbnCaptcha("captchaBoxDel");
 
 document.getElementById("passwordForm").addEventListener("submit", async function (event) {
     event.preventDefault();
@@ -383,11 +384,15 @@ document.getElementById("deleteBtn").addEventListener("click", async function ()
 
     if (!confirm("This permanently deletes your account. It cannot be undone. Continue?")) return;
 
+    let delToken;
+    try { delToken = delCap.token(); } catch (e) { say("deleteMsg", e.message, false); return; }
+
     const button = this;
     button.disabled = true;
     say("deleteMsg", "Deleting your account...", true);
 
-    const { data, error } = await db.functions.invoke("delete-account", { body: { password: password, confirm: confirmText } });
+    const { data, error } = await db.functions.invoke("delete-account", { body: { password: password, confirm: confirmText, captchaToken: delToken } });
+    delCap.reset();
 
     if (error || (data && data.error)) {
         let message = data && data.error ? data.error : "Could not delete the account.";

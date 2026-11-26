@@ -1,6 +1,6 @@
 // Service worker: lets the app open fast and show its pages when the signal is weak.
 // Bump CACHE_NAME whenever you push changes, so phones pick up the new files.
-const CACHE_NAME = "lbn-v62";
+const CACHE_NAME = "lbn-v63";
 
 // Only a few core files are saved up front. Every other page is saved the first time it is opened.
 // (Saving about 100 files at once made GitHub Pages block heavy testing.)
@@ -67,4 +67,4 @@ self.addEventListener("fetch", function (event) {
                 return caches.match(request);
             })
     );
-});
+}); 
