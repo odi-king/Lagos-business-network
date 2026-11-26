@@ -161,5 +161,5 @@ function escapeHTML(t) { return String(t === null || t === undefined ? "" : t).r
         if (r.error) fail(r.error); else loadMeetings();
     });
 
-    showTab("apps");
+    showTab(location.hash === "#meetings" ? "meetings" : "apps");
 })();
