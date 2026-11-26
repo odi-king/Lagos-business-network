@@ -34,6 +34,8 @@
 
         if (error || !data || data.ok === false) { say(error ? error.message : (data && data.message) || "Could not save", false); return; }
         say("Saved. Thank you.", true);
+        const next = new URLSearchParams(location.search).get("next");
+        if (next && /^[a-z0-9_-]+\.html$/i.test(next)) setTimeout(function () { location.href = next; }, 800);
     });
 
     load();
