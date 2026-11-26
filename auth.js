@@ -156,6 +156,14 @@ authForm.addEventListener("submit", async function (event) {
     const password = passwordInput.value;
 
     try {
+        // A place the Security team has banned cannot log in or sign up here
+        try {
+            const ok = await db.rpc("sec_ip_allowed");
+            if (ok && ok.data === false) throw new Error("Access from your network is blocked. Contact us if you think this is a mistake.");
+        } catch (blocked) {
+            if (/blocked/.test(String(blocked && blocked.message))) throw blocked;
+        }
+
         if (mode === "forgot") {
             const { error } = await db.auth.resetPasswordForEmail(email, {
                 redirectTo: SITE_URL + "reset.html"

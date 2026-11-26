@@ -42,6 +42,7 @@
         <button type="button" class="btn btn-outline sec-tab" data-tab="log">Log</button>
         <button type="button" class="btn btn-outline sec-tab" data-tab="payments">Payments</button>
         <button type="button" class="btn btn-outline sec-tab" data-tab="logins">Logins and threats</button>
+        <button type="button" class="btn btn-outline sec-tab" data-tab="ips">IP bans</button>
         <button type="button" class="btn btn-outline sec-tab" data-tab="files">Files</button>
         <button type="button" class="btn btn-outline sec-tab" data-tab="secrets">Secrets</button>
         <button type="button" class="btn btn-outline sec-tab" data-tab="accounts">Accounts</button>
@@ -79,6 +80,11 @@
         <div id="secLogins"><p class="meta">Loading...</p></div>
         <button type="button" class="btn btn-outline" id="scanBtn">Run the threat rules now</button>
         <div id="secScan"></div>
+    </section>
+    <section class="panel" id="tab-ips" style="display:none;">
+        <h2>IP bans</h2>
+        <p class="meta">When one place keeps attacking the login page, it appears here for your review. You never see the real IP, only how many failures it caused. A ban stops that place from logging in or signing up on LBN pages. Accounts that get 10 wrong passwords are locked for 30 minutes automatically.</p>
+        <div id="secIps"><p class="meta">Loading...</p></div>
     </section>
     <section class="panel" id="tab-files" style="display:none;">
         <h2>File and upload security</h2>

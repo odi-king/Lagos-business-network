@@ -10,13 +10,14 @@
     const ICON = { ok: "OK", attention: "NEEDS ATTENTION", critical: "CRITICAL" };
 
     function showTab(n) {
-        ["overview", "tables", "log", "payments", "logins", "files", "secrets", "accounts", "report"].forEach(function (t) { el("tab-" + t).style.display = t === n ? "" : "none"; });
+        ["overview", "tables", "log", "payments", "logins", "ips", "files", "secrets", "accounts", "report"].forEach(function (t) { el("tab-" + t).style.display = t === n ? "" : "none"; });
         document.querySelectorAll(".sec-tab").forEach(function (b) { b.classList.toggle("active", b.dataset.tab === n); });
         if (n === "overview") loadOverview();
         if (n === "tables") loadTables();
         if (n === "log") loadLog();
         if (n === "payments") loadPayments();
         if (n === "logins") loadLogins();
+        if (n === "ips") loadIps();
         if (n === "files") loadFiles();
         if (n === "accounts") loadSuspended();
         if (n === "report") loadReport();
@@ -95,6 +96,28 @@
         const { data, error } = await db.rpc("admin_sec_scan");
         if (error) { fail(error); return; }
         el("secScan").innerHTML = data.findings.length ? data.findings.map(function (f) { return '<div class="business-card"><strong>' + esc(f.severity.toUpperCase()) + '</strong> - ' + esc(f.rule) + '<p class="meta">' + esc(f.detail) + '</p></div>'; }).join("") : "<p class='meta'>No threats found by the rules.</p>";
+    });
+
+    // ----- 13C: IP bans -----
+    async function loadIps() {
+        const { data, error } = await db.rpc("admin_sec_ips");
+        if (error) { fail(error); return; }
+        el("secIps").innerHTML = (data || []).length ? data.map(function (b) {
+            const label = b.status === "suggested" ? "NEEDS YOUR REVIEW" : b.status === "banned" ? "BANNED " + (b.expires_at ? "until " + when(b.expires_at) : "permanently") : b.status;
+            let buttons = "";
+            if (b.status === "suggested") buttons = '<button type="button" class="btn btn-outline" data-ip="ban_24h">Ban 24 hours</button><button type="button" class="btn btn-outline" data-ip="ban_7d">Ban 7 days</button><button type="button" class="btn btn-outline" data-ip="ban_permanent">Ban permanently</button><button type="button" class="btn btn-outline" data-ip="dismiss">Not an attack</button>';
+            if (b.status === "banned") buttons = '<button type="button" class="btn btn-outline" data-ip="lift">Lift the ban</button>';
+            return '<div class="business-card" data-id="' + esc(b.id) + '"><strong>' + esc(label) + '</strong><p class="meta">' + esc(b.reason || "") + ' - last 24 hours: ' + b.fails_24h + ' failed logins on ' + b.accounts_24h + ' account(s) - first seen ' + esc(when(b.created_at)) + '</p>' +
+                (buttons ? '<div class="filters"><input type="text" class="why" maxlength="300" placeholder="Reason (required)">' + buttons + '</div>' : "") + '</div>';
+        }).join("") : "<p class='meta'>Nothing to review.</p>";
+    }
+
+    el("secIps").addEventListener("click", async function (e) {
+        const b = e.target.closest("[data-ip]");
+        if (!b) return;
+        const c = b.closest("[data-id]");
+        const r = await db.rpc("admin_sec_ip_decide", { p_id: c.dataset.id, p_action: b.dataset.ip, p_reason: c.querySelector(".why").value });
+        if (r.error) fail(r.error); else { say("Done.", true); loadIps(); }
     });
 
     // ----- 13.8: files -----
