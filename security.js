@@ -142,10 +142,11 @@
     el("adminIpBtn").addEventListener("click", async function () {
         const { data, error } = await db.rpc("admin_sec_admin_ips");
         if (error) { fail(error); return; }
-        el("secAdminIps").innerHTML = (data || []).length ? data.map(function (r) {
+        const list = (data && data.places) || [];
+        el("secAdminIps").innerHTML = '<p class="meta">Source: ' + esc(data.source) + (data.source === "open sessions" ? " (Supabase has no login history for these admins, so only the places of the sessions that are open now are shown)" : "") + (data.note ? " - " + esc(data.note) : "") + '</p>' + (list.length ? list.map(function (r) {
             return '<div class="business-card"><strong>' + esc(r.name) + '</strong> - ' + esc(r.ip) + (r.new_ip ? " - NEW PLACE (last 7 days)" : "") +
-                '<p class="meta">' + r.logins + ' login(s) - first ' + esc(when(r.first_seen)) + ' - last ' + esc(when(r.last_seen)) + '</p></div>';
-        }).join("") : "<p class='meta'>No admin logins found in the last 30 days.</p>";
+                '<p class="meta">' + r.logins + ' time(s) - first ' + esc(when(r.first_seen)) + ' - last ' + esc(when(r.last_seen)) + '</p></div>';
+        }).join("") : "<p class='meta'>Nothing found.</p>");
     });
 
     // ----- 13.8: files -----
