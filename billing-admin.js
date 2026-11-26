@@ -55,4 +55,22 @@
     }
 
     load();
+    // ----- 12D: subscribers and revenue (NGN and USD always shown separately) -----
+    async function loadSubs() {
+        const sb = document.getElementById("subsBox");
+        if (!sb) return;
+        const r = await db.rpc("admin_subscribers");
+        if (r.error || !r.data) { sb.innerHTML = "<p class='meta'>Not set up yet. Run supabase-subscribers.sql in Supabase.</p>"; return; }
+        const d = r.data;
+        const e = escapeHTML;
+        sb.innerHTML =
+            '<h4>Members with access now, by plan</h4>' + (d.active_by_plan.length ? d.active_by_plan.map(function (x) { return '<p class="meta">' + e(x.plan || "older payment") + (x.currency ? " (" + e(x.currency) + ")" : "") + ': <strong>' + x.members + '</strong></p>'; }).join("") : "<p class='meta'>None.</p>") +
+            '<h4>Money received by month</h4>' + (d.revenue_by_month.length ? d.revenue_by_month.map(function (x) { return '<p class="meta">' + e(x.month) + ' - ' + e(x.currency) + ' via ' + e(x.provider) + ': <strong>' + money(x.currency, x.total_minor) + '</strong> (' + x.payments + ' payments)</p>'; }).join("") : "<p class='meta'>No payments yet.</p>") +
+            (d.refunded.length ? '<h4>Refunded</h4>' + d.refunded.map(function (x) { return '<p class="meta">' + e(x.currency) + ': ' + money(x.currency, x.total_minor) + ' (' + x.payments + ')</p>'; }).join("") : "") +
+            '<h4>Access ends in the next 7 days (' + d.expiring_soon.length + ')</h4>' + (d.expiring_soon.length ? d.expiring_soon.map(function (x) { return '<p class="meta">' + e(x.name) + ' - ' + day(x.paid_until) + '</p>'; }).join("") : "<p class='meta'>None.</p>") +
+            '<p class="meta">Access ended in the last 30 days: <strong>' + d.expired_30d + '</strong></p>' +
+            '<h4>Payments by country (last 90 days)</h4>' + (d.by_country.length ? '<p class="meta">' + d.by_country.map(function (x) { return e(x.country) + ": " + x.payments; }).join(" - ") + '</p>' : "<p class='meta'>None.</p>");
+    }
+
+    loadSubs();
 })();
