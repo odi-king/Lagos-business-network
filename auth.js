@@ -183,6 +183,12 @@ authForm.addEventListener("submit", async function (event) {
                 throw new Error("That username is taken or not allowed. Please choose another.");
             }
 
+            // Where the member is: country must come from the list, city is needed, state is optional (some countries have none)
+            const countryName = document.getElementById("country").value.trim();
+            const countryHit = (window.LBN_COUNTRIES || []).filter(function (c) { return c[1].toLowerCase() === countryName.toLowerCase(); })[0];
+            if (!countryHit) throw new Error("Choose your country from the list.");
+            if (!document.getElementById("city").value.trim()) throw new Error("Enter your city or town.");
+
             const { data, error } = await db.auth.signUp({
                 email: email,
                 password: password,
@@ -195,6 +201,11 @@ authForm.addEventListener("submit", async function (event) {
                         language: window.LBN_I18N ? LBN_I18N.current() : "en",
                         terms_accepted_at: new Date().toISOString(),
                         referral_code: savedReferral(),
+                        country_code: countryHit[0],
+                        country: countryHit[1],
+                        state: document.getElementById("stateBox").value.trim(),
+                        city: document.getElementById("city").value.trim(),
+                        organisation: document.getElementById("orgName").value.trim(),
                         institution: (roleSelect.value === "lecturer" || roleSelect.value === "business") ? institutionInput.value.trim() : ""
                     }
                 }
@@ -367,3 +378,8 @@ fullName.addEventListener("input", function () {
         }
     } catch (e) {}
 })();
+
+// Searchable country list and Nigerian states on the sign up form
+if (typeof window.lbnSetupLocation === "function" && document.getElementById("country")) {
+    window.lbnSetupLocation({ country: "country", state: "stateBox", countryList: "countryList", stateList: "stateList" });
+}

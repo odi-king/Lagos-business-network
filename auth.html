@@ -58,6 +58,12 @@
                     <option value="business">Business owner or company</option>
                 </select>
                 <input type="text" id="institution" placeholder="Your school or university" autocomplete="organization" style="display:none;">
+                <input type="text" id="country" list="countryList" placeholder="Country (type to search)" autocomplete="off">
+                <datalist id="countryList"></datalist>
+                <input type="text" id="stateBox" list="stateList" placeholder="State or region" autocomplete="off" maxlength="80">
+                <datalist id="stateList"></datalist>
+                <input type="text" id="city" placeholder="City or town" autocomplete="address-level2" maxlength="80">
+                <input type="text" id="orgName" placeholder="School or business name (optional)" maxlength="120">
                 <p id="lecturerNote" class="meta" style="display:none; margin:0;">We check every lecturer with their school before approving the account.</p>
             </div>
 
@@ -91,6 +97,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
+<script src="countries.js"></script>
 <script src="auth.js"></script>
 <script src="pwa.js"></script>
 <script src="feedback.js"></script>

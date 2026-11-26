@@ -91,6 +91,7 @@ async function init() {
     const parts = [
         section("Your account", [
             row("Edit profile", "member.html?edit=1"),
+            row("My location (country, state, city)", "my-location.html"),
             row("Account and privacy", "account.html"),
             row("Business analytics", "analytics.html"),
             row("Messages", "messages.html"),
