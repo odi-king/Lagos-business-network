@@ -61,10 +61,22 @@ async function init() {
         return access.is_super || access.permissions.indexOf(permission) !== -1;
     }
 
+    // Which area was chosen on the Admin home? (admin-home.html). No choice and no link target: go to the Admin home.
+    const area = new URLSearchParams(location.search).get("area");
+    if (!area && !location.hash) { location.replace("admin-home.html"); return; }
+
     document.querySelectorAll("[data-perm]").forEach(function (box) {
-        const allowed = box.dataset.perm.split(",").some(can);
+        const perms = box.dataset.perm.split(",");
+        let allowed = perms.some(can);
+        if (allowed && area && area !== "all" && perms.indexOf(area) === -1) allowed = false;   // a focused area shows only its own panels
         if (!allowed) box.style.display = "none";
     });
+
+    if (area && area !== "all") {
+        const h1 = document.querySelector(".page-head h1");
+        if (h1) h1.textContent = "Admin: " + area.charAt(0).toUpperCase() + area.slice(1);
+    }
+    document.getElementById("adminNote").insertAdjacentHTML("afterend", '<a href="admin-home.html" class="btn btn-outline" style="margin:10px 8px 0 0;">Admin home</a>');
 
     document.getElementById("adminNote").textContent =
         "Signed in as " + (access.title || "Admin") + ". " +
