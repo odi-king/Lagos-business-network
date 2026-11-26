@@ -1,7 +1,7 @@
 // LBN Phase 13G: Cloudflare Turnstile CAPTCHA on the login, sign-up, forgot-password and change-password forms.
 // It stays OFF until you paste your Turnstile SITE key below (the site key is public and safe on GitHub).
 // The SECRET key never goes in a file: it is pasted in Supabase (Authentication > Attack Protection).
-window.LBN_TURNSTILE_SITEKEY = "";
+window.LBN_TURNSTILE_SITEKEY = "0x4AAAAAAGUBTMd9FZgYpyuF";
 
 window.lbnCaptcha = function (containerId) {
     const key = window.LBN_TURNSTILE_SITEKEY;
