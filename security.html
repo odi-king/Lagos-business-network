@@ -91,6 +91,10 @@
         <h2>Admin Route Lock</h2>
         <p class="meta">Admin pages ask the server before they show anything, and every admin database function checks your permission again. Visits by people who are not administrators are recorded in the Log.</p>
         <div id="secLock"><p class="meta">Loading...</p></div>
+        <h3>Where admins log in from</h3>
+        <p class="meta">Restricted records. Opening them is recorded in the security log. Only the last 30 days are kept by Supabase.</p>
+        <button type="button" class="btn btn-outline" id="adminIpBtn">Show admin login places</button>
+        <div id="secAdminIps"></div>
     </section>
     <section class="panel" id="tab-files" style="display:none;">
         <h2>File and upload security</h2>

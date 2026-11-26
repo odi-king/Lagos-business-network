@@ -139,6 +139,15 @@
             (bad.length ? bad.map(function (x) { return '<div class="business-card"><strong>' + esc(x.fn) + '</strong><p class="meta">' + (!x.guarded ? "No permission check found in its code. " : "") + (x.logged_out_can_run ? "Logged-out visitors can call it." : "") + '</p></div>'; }).join("") : "<p class='meta'>All " + rows.length + " have a permission check and none can be run logged out.</p>");
     }
 
+    el("adminIpBtn").addEventListener("click", async function () {
+        const { data, error } = await db.rpc("admin_sec_admin_ips");
+        if (error) { fail(error); return; }
+        el("secAdminIps").innerHTML = (data || []).length ? data.map(function (r) {
+            return '<div class="business-card"><strong>' + esc(r.name) + '</strong> - ' + esc(r.ip) + (r.new_ip ? " - NEW PLACE (last 7 days)" : "") +
+                '<p class="meta">' + r.logins + ' login(s) - first ' + esc(when(r.first_seen)) + ' - last ' + esc(when(r.last_seen)) + '</p></div>';
+        }).join("") : "<p class='meta'>No admin logins found in the last 30 days.</p>";
+    });
+
     // ----- 13.8: files -----
     async function loadFiles() {
         const { data, error } = await db.rpc("admin_sec_buckets");
