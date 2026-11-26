@@ -35,6 +35,9 @@
         el("statusPanel").innerHTML = html;
         el("applyPanel").style.display = (!rep && !open) ? "" : "none";
         el("reportPanel").style.display = rep && rep.status === "active" && data.assignments.length ? "" : "none";
+        el("leadPanel").style.display = rep && rep.status === "active" && data.assignments.length ? "" : "none";
+        el("lCountry").innerHTML = data.assignments.map(function (a) { return "<option value='" + esc(a.code) + "'>" + esc(a.country) + "</option>"; }).join("");
+        loadLeads();
 
         const w = el("withdrawBtn");
         if (w) w.addEventListener("click", async function () { await db.rpc("rep_withdraw_application"); load(); });
@@ -63,6 +66,39 @@
         if (error || !data || data.ok === false) { say("reportMsg", error ? error.message : (data && data.message) || "Could not send", false); return; }
         say("reportMsg", "Report sent. Thank you.", true);
         load();
+    });
+
+    const STAGES = { lead: "Lead", contacted: "Contacted", meeting: "Meeting held", agreed: "Agreed to join", onboarded: "Onboarded", lost: "Lost" };
+    let leadsCache = [];
+
+    async function loadLeads() {
+        const { data } = await db.rpc("biz_my_leads");
+        leadsCache = data || [];
+        el("leadList").innerHTML = leadsCache.length ? leadsCache.map(function (l) {
+            return "<div class='business-card'><strong>" + esc(l.business_name) + "</strong> - " + esc(l.country_code) + " - " + esc(STAGES[l.stage]) +
+                "<p class='meta'>" + esc(l.sector || "") + (l.contact ? " - " + esc(l.contact) : "") + (l.next_step_on ? " - next step " + esc(l.next_step_on) : "") + "</p>" +
+                (l.notes ? "<p class='meta'>" + esc(l.notes) + "</p>" : "") + "<button type='button' class='btn btn-outline' data-edit-lead='" + esc(l.id) + "'>Edit</button></div>";
+        }).join("") : "<p class='meta'>No leads yet.</p>";
+    }
+
+    el("leadList").addEventListener("click", function (e) {
+        const b = e.target.closest("[data-edit-lead]");
+        if (!b) return;
+        const l = leadsCache.filter(function (x) { return x.id === b.dataset.editLead; })[0];
+        if (!l) return;
+        el("lId").value = l.id; el("lCountry").value = l.country_code; el("lName").value = l.business_name; el("lContact").value = l.contact || "";
+        el("lSector").value = l.sector || ""; el("lStage").value = l.stage; el("lNext").value = l.next_step_on || ""; el("lNotes").value = l.notes || "";
+        el("leadForm").scrollIntoView();
+    });
+
+    el("leadForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const { data, error } = await db.rpc("biz_lead_save", { p_id: el("lId").value || null, p_code: el("lCountry").value, p_business: el("lName").value, p_contact: el("lContact").value, p_sector: el("lSector").value, p_stage: el("lStage").value, p_next: el("lNext").value || null, p_notes: el("lNotes").value });
+        if (error || !data || data.ok === false) { say("leadMsg", error ? error.message : (data && data.message) || "Could not save", false); return; }
+        say("leadMsg", "Saved.", true);
+        el("leadForm").reset();
+        el("lId").value = "";
+        loadLeads();
     });
 
     load();

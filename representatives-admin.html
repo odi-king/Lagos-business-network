@@ -43,6 +43,8 @@
         <button type="button" class="btn btn-outline rep-tab" data-tab="reps">Representatives</button>
         <button type="button" class="btn btn-outline rep-tab" data-tab="reports">Reports</button>
         <button type="button" class="btn btn-outline rep-tab" data-tab="meetings">Conference room</button>
+        <button type="button" class="btn btn-outline rep-tab" data-tab="countries">Countries</button>
+        <button type="button" class="btn btn-outline rep-tab" data-tab="leads">Business leads</button>
     </div>
     <section class="panel" id="tab-apps">
         <h2>Applications</h2>
@@ -75,6 +77,42 @@
             <button type="submit" class="contact-btn">Create meeting</button>
         </form>
         <div id="meetList"><p class="meta">Loading...</p></div>
+    </section>
+    <section class="panel" id="tab-countries" style="display:none;">
+        <h2>Countries: expansion and performance</h2>
+        <p class="meta">Real numbers for every country with members, a plan, a Representative or a business lead. Set the stage, write the plan and review each country.</p>
+        <form id="ctryForm" autocomplete="off">
+            <input type="text" id="cName" list="cList" placeholder="Add or change a country (type to search)" required>
+            <datalist id="cList"></datalist>
+            <select id="cStage">
+                <option value="research">Research</option>
+                <option value="planned">Planned</option>
+                <option value="pilot">Pilot</option>
+                <option value="live">Live</option>
+                <option value="paused">Paused</option>
+            </select>
+            <input type="number" id="cTarget" min="0" placeholder="Target number of members">
+            <textarea id="cPlan" rows="2" maxlength="2000" placeholder="Plan for this country"></textarea>
+            <button type="submit" class="contact-btn">Save country</button>
+        </form>
+        <div id="ctryList"><p class="meta">Loading...</p></div>
+    </section>
+    <section class="panel" id="tab-leads" style="display:none;">
+        <h2>Business leads in all countries</h2>
+        <div class="filters">
+            <input type="text" id="lCountry" list="cList" placeholder="Country (optional)">
+            <select id="lStage">
+                <option value="">Every stage</option>
+                <option value="lead">Lead</option>
+                <option value="contacted">Contacted</option>
+                <option value="meeting">Meeting</option>
+                <option value="agreed">Agreed</option>
+                <option value="onboarded">Onboarded</option>
+                <option value="lost">Lost</option>
+            </select>
+            <button type="button" class="btn btn-outline" id="lGo">Show</button>
+        </div>
+        <div id="leadList"><p class="meta">Loading...</p></div>
     </section>
     <section class="panel" id="tab-reports" style="display:none;">
         <h2>Monthly reports</h2>

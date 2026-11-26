@@ -54,6 +54,31 @@
         <p id="applyMsg" class="msg"></p>
     </section>
 
+    <section class="panel" id="leadPanel" style="display:none;">
+        <h2>My business leads</h2>
+        <p class="meta">Businesses you are talking to in your country. Keep the stage up to date so the LBN team can see your progress.</p>
+        <form id="leadForm" autocomplete="off">
+            <input type="hidden" id="lId">
+            <select id="lCountry"></select>
+            <input type="text" id="lName" maxlength="120" placeholder="Business name" required>
+            <input type="text" id="lContact" maxlength="150" placeholder="Contact person, phone or email">
+            <input type="text" id="lSector" maxlength="80" placeholder="Sector (for example food, fashion, tech)">
+            <select id="lStage">
+                <option value="lead">Lead</option>
+                <option value="contacted">Contacted</option>
+                <option value="meeting">Meeting held</option>
+                <option value="agreed">Agreed to join</option>
+                <option value="onboarded">Onboarded on LBN</option>
+                <option value="lost">Lost</option>
+            </select>
+            <label>Next step on <input type="date" id="lNext"></label>
+            <textarea id="lNotes" rows="2" maxlength="1000" placeholder="Notes"></textarea>
+            <button type="submit" class="contact-btn" id="lSave">Save lead</button>
+        </form>
+        <p id="leadMsg" class="msg"></p>
+        <div id="leadList"></div>
+    </section>
+
     <section class="panel" id="reportPanel" style="display:none;">
         <h2>Monthly report</h2>
         <form id="reportForm" autocomplete="off">

@@ -14,12 +14,14 @@ function escapeHTML(t) { return String(t === null || t === undefined ? "" : t).r
     }
 
     function showTab(n) {
-        ["apps", "reps", "reports", "meetings"].forEach(function (t) { el("tab-" + t).style.display = t === n ? "" : "none"; });
+        ["apps", "reps", "reports", "meetings", "countries", "leads"].forEach(function (t) { el("tab-" + t).style.display = t === n ? "" : "none"; });
         document.querySelectorAll(".rep-tab").forEach(function (b) { b.classList.toggle("active", b.dataset.tab === n); });
         if (n === "apps") loadApps();
         if (n === "reps") loadReps();
         if (n === "reports") loadReports();
         if (n === "meetings") loadMeetings();
+        if (n === "countries") loadCountries();
+        if (n === "leads") loadLeads();
     }
 
     el("repTabs").addEventListener("click", function (e) { const b = e.target.closest(".rep-tab"); if (b) showTab(b.dataset.tab); });
@@ -160,6 +162,66 @@ function escapeHTML(t) { return String(t === null || t === undefined ? "" : t).r
         } else { return; }
         if (r.error) fail(r.error); else loadMeetings();
     });
+
+    // ----- Countries (expansion monitoring, performance, management review) -----
+    const STAGE = { research: "Research", planned: "Planned", pilot: "Pilot", live: "Live", paused: "Paused" };
+    const REVIEW = { on_track: "On track", needs_attention: "Needs attention", at_risk: "At risk" };
+
+    function fillCountryList() {
+        el("cList").innerHTML = (window.LBN_COUNTRIES || []).map(function (c) { return '<option value="' + escapeHTML(c[1]) + '">'; }).join("");
+    }
+
+    async function loadCountries() {
+        fillCountryList();
+        const { data, error } = await db.rpc("admin_countries");
+        if (error) { fail(error); return; }
+        el("ctryList").innerHTML = (data || []).length ? data.map(function (c) {
+            return '<div class="business-card" data-cc="' + escapeHTML(c.country_code) + '" data-cn="' + escapeHTML(c.country) + '"><strong>' + escapeHTML(c.country) + '</strong> - ' + escapeHTML(STAGE[c.stage]) +
+                (c.review_status ? ' - <strong>' + escapeHTML(REVIEW[c.review_status]) + '</strong>' : '') +
+                '<p class="meta">LBN members ' + c.members + (c.target_members ? ' of target ' + c.target_members : '') + ' (paying ' + c.paid_members + ') - Representatives ' + c.reps + ' - Leads ' + c.leads + ' (in progress ' + c.in_progress + ', onboarded ' + c.onboarded + ')</p>' +
+                '<p class="meta">Reports ' + c.reports + ' - average rating ' + (c.avg_rating === null ? "none" : c.avg_rating) + ' - members recruited in 90 days ' + c.recruited_90d + '</p>' +
+                (c.plan ? '<p>' + escapeHTML(c.plan) + '</p>' : '') + (c.review_note ? '<p class="meta">Review note: ' + escapeHTML(c.review_note) + '</p>' : '') +
+                '<div class="filters"><select class="rs"><option value="on_track">On track</option><option value="needs_attention">Needs attention</option><option value="at_risk">At risk</option></select>' +
+                '<input type="text" class="rnote" maxlength="500" placeholder="Review note (needed unless on track)"><button type="button" class="contact-btn" data-review>Save review</button>' +
+                '<button type="button" class="btn btn-outline" data-edit>Edit plan</button><button type="button" class="btn btn-outline" data-clog>Record</button></div><div class="meta clg"></div></div>';
+        }).join("") : "<p class='meta'>No countries yet.</p>";
+    }
+
+    el("ctryForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const code = codeFor(el("cName").value);
+        if (!code) { say("Choose the country from the list.", false); return; }
+        const r = await db.rpc("admin_country_set", { p_code: code, p_country: el("cName").value.trim(), p_stage: el("cStage").value, p_target: el("cTarget").value ? parseInt(el("cTarget").value, 10) : null, p_plan: el("cPlan").value });
+        if (r.error) fail(r.error); else { say("Saved.", true); loadCountries(); }
+    });
+
+    el("ctryList").addEventListener("click", async function (e) {
+        const card = e.target.closest("[data-cc]");
+        if (!card) return;
+        if (e.target.closest("[data-review]")) {
+            const r = await db.rpc("admin_country_review", { p_code: card.dataset.cc, p_status: card.querySelector(".rs").value, p_note: card.querySelector(".rnote").value });
+            if (r.error) fail(r.error); else loadCountries();
+        } else if (e.target.closest("[data-edit]")) {
+            el("cName").value = card.dataset.cn;
+            el("cName").scrollIntoView();
+        } else if (e.target.closest("[data-clog]")) {
+            const l = await db.rpc("admin_country_log", { p_code: card.dataset.cc });
+            card.querySelector(".clg").innerHTML = (l.data || []).map(function (x) { return escapeHTML(day(x.created_at) + " - " + x.action + " - " + (x.details || "") + " (" + (x.actor || "?") + ")"); }).join("<br>") || "No records yet.";
+        }
+    });
+
+    async function loadLeads() {
+        fillCountryList();
+        const { data, error } = await db.rpc("admin_biz_leads", { p_code: codeFor(el("lCountry").value) || null, p_stage: el("lStage").value || null });
+        if (error) { fail(error); return; }
+        el("leadList").innerHTML = (data || []).length ? data.map(function (l) {
+            return '<div class="business-card"><strong>' + escapeHTML(l.business_name) + '</strong> - ' + escapeHTML(l.country_code) + ' - ' + escapeHTML(l.stage) +
+                '<p class="meta">Owner: ' + escapeHTML(l.owner_name) + (l.sector ? ' - ' + escapeHTML(l.sector) : '') + (l.contact ? ' - ' + escapeHTML(l.contact) : '') + (l.next_step_on ? ' - next step ' + escapeHTML(l.next_step_on) : '') + '</p>' +
+                (l.notes ? '<p class="meta">' + escapeHTML(l.notes) + '</p>' : '') + '</div>';
+        }).join("") : "<p class='meta'>No leads.</p>";
+    }
+
+    el("lGo").addEventListener("click", loadLeads);
 
     showTab(location.hash === "#meetings" ? "meetings" : "apps");
 })();
