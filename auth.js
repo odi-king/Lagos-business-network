@@ -154,6 +154,7 @@ authForm.addEventListener("submit", async function (event) {
 
     const email = emailInput.value.trim();
     const password = passwordInput.value;
+    const cap = window.__lbnCap;
 
     try {
         // A place the Security team has banned cannot log in or sign up here
@@ -166,7 +167,8 @@ authForm.addEventListener("submit", async function (event) {
 
         if (mode === "forgot") {
             const { error } = await db.auth.resetPasswordForEmail(email, {
-                redirectTo: SITE_URL + "reset.html"
+                redirectTo: SITE_URL + "reset.html",
+                captchaToken: cap.token()
             });
 
             if (error) throw error;
@@ -201,6 +203,7 @@ authForm.addEventListener("submit", async function (event) {
                 email: email,
                 password: password,
                 options: {
+                    captchaToken: cap.token(),
                     emailRedirectTo: SITE_URL + "auth.html",
                     data: {
                         full_name: fullName.value.trim(),
@@ -230,7 +233,8 @@ authForm.addEventListener("submit", async function (event) {
         } else {
             const { error } = await db.auth.signInWithPassword({
                 email: email,
-                password: password
+                password: password,
+                options: { captchaToken: cap.token() }
             });
 
             if (error) throw error;
@@ -249,6 +253,7 @@ authForm.addEventListener("submit", async function (event) {
         }
         showMessage(error.message, "error");
     } finally {
+        cap.reset();
         submitBtn.disabled = false;
     }
 });
@@ -395,3 +400,6 @@ fullName.addEventListener("input", function () {
 if (typeof window.lbnSetupLocation === "function" && document.getElementById("country")) {
     window.lbnSetupLocation({ country: "country", state: "stateBox", countryList: "countryList", stateList: "stateList" });
 }
+
+// Security check box (CAPTCHA). Stays hidden and off until the Turnstile site key is set in captcha.js
+window.__lbnCap = window.lbnCaptcha("captchaBox");

@@ -100,6 +100,8 @@ document.getElementById("infoForm").addEventListener("submit", async function (e
 
 // ---------- Password and sessions ----------
 
+const pwCap = window.lbnCaptcha("captchaBoxPw");
+
 document.getElementById("passwordForm").addEventListener("submit", async function (event) {
     event.preventDefault();
 
@@ -123,7 +125,10 @@ document.getElementById("passwordForm").addEventListener("submit", async functio
     }
 
     // Prove it is really you before changing anything
-    const check = await db.auth.signInWithPassword({ email: myEmail, password: current });
+    let pwToken;
+    try { pwToken = pwCap.token(); } catch (e) { say("passwordMsg", e.message, false); return; }
+    const check = await db.auth.signInWithPassword({ email: myEmail, password: current, options: { captchaToken: pwToken } });
+    pwCap.reset();
 
     if (check.error) {
         say("passwordMsg", "Your current password is not correct.", false);
