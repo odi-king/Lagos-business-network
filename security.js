@@ -10,7 +10,7 @@
     const ICON = { ok: "OK", attention: "NEEDS ATTENTION", critical: "CRITICAL" };
 
     function showTab(n) {
-        ["overview", "tables", "log", "payments", "logins", "ips", "lock", "files", "secrets", "accounts", "report"].forEach(function (t) { el("tab-" + t).style.display = t === n ? "" : "none"; });
+        ["overview", "tables", "log", "payments", "logins", "ips", "lock", "legal", "files", "secrets", "accounts", "report"].forEach(function (t) { el("tab-" + t).style.display = t === n ? "" : "none"; });
         document.querySelectorAll(".sec-tab").forEach(function (b) { b.classList.toggle("active", b.dataset.tab === n); });
         if (n === "overview") loadOverview();
         if (n === "tables") loadTables();
@@ -19,6 +19,7 @@
         if (n === "logins") loadLogins();
         if (n === "ips") loadIps();
         if (n === "lock") loadLock();
+        if (n === "legal") loadLegal();
         if (n === "files") loadFiles();
         if (n === "accounts") loadSuspended();
         if (n === "report") loadReport();
@@ -147,6 +148,91 @@
             return '<div class="business-card"><strong>' + esc(r.name) + '</strong> - ' + esc(r.ip) + (r.new_ip ? " - NEW PLACE (last 7 days)" : "") +
                 '<p class="meta">' + r.logins + ' time(s) - first ' + esc(when(r.first_seen)) + ' - last ' + esc(when(r.last_seen)) + '</p></div>';
         }).join("") : "<p class='meta'>Nothing found.</p>");
+    });
+
+    // ----- 13I: legal holds and law enforcement requests -----
+    async function loadLegal() {
+        const { data, error } = await db.rpc("legal_overview");
+        if (error) { el("legalHolds").innerHTML = ""; el("legalReqs").innerHTML = ""; say(error.message === "Not allowed" || /Super Admin/.test(error.message) ? "Only the Super Admin can open the legal records." : error.message, false); return; }
+        say("", true);
+
+        el("legalHolds").innerHTML = data.holds.length ? data.holds.map(function (h) {
+            return '<div class="business-card" data-hold="' + esc(h.id) + '"><strong>' + esc(h.status === "active" ? "ACTIVE HOLD" : "Released") + '</strong> - ' + esc(h.case_ref) + ' - ' + esc(h.subject) +
+                '<p class="meta">' + esc(h.reason) + ' - placed ' + esc(when(h.created_at)) + (h.status === "released" ? ' - released ' + esc(when(h.released_at)) + ': ' + esc(h.release_note) : "") + '</p>' +
+                (h.status === "active" ? '<div class="filters"><input type="text" class="why" maxlength="500" placeholder="Why it is released (at least 10 characters)"><button type="button" class="btn btn-outline" data-release="1">Release hold</button></div>' : "") + '</div>';
+        }).join("") : "<p class='meta'>No holds.</p>";
+
+        el("legalReqs").innerHTML = data.requests.length ? data.requests.map(function (r) {
+            const steps = (r.notes || []).map(function (n) { return '<p class="meta">' + esc(n.step.toUpperCase()) + ' - ' + esc(n.note) + ' (' + esc(when(n.at)) + ')</p>'; }).join("");
+            const disc = (r.disclosures || []).map(function (d) { return '<p class="meta">DISCLOSED: ' + esc(d.what) + ' - to ' + esc(d.to_whom) + ' (' + esc(when(d.disclosed_at)) + ')</p>'; }).join("");
+            let actions = "";
+            if (r.status === "received") actions = '<button type="button" class="btn btn-outline" data-step="verify">Mark as verified</button>';
+            if (r.status === "verified") actions = '<button type="button" class="btn btn-outline" data-step="approve">Approve</button><button type="button" class="btn btn-outline" data-step="decline">Decline</button>';
+            if (r.status === "approved" || r.status === "disclosed") actions = '<button type="button" class="btn btn-outline" data-disclose="1">Record a disclosure</button>';
+            if (r.status !== "closed") actions += '<button type="button" class="btn btn-outline" data-step="close">Close</button>';
+            return '<div class="business-card" data-req="' + esc(r.id) + '"><strong>' + esc(r.status.toUpperCase()) + '</strong> - ' + esc(r.authority) + ' - ' + esc(r.reference) +
+                '<p class="meta">Basis: ' + esc(r.legal_basis) + ' - received ' + esc(r.received_on) + '<br>Asking for: ' + esc(r.scope) + '</p>' + steps + disc +
+                (r.status !== "closed" ? '<div class="filters"><input type="text" class="why" maxlength="500" placeholder="Note (at least 10 characters)"></div>' : "") +
+                '<div class="filters">' + actions + '<button type="button" class="btn btn-outline" data-export="1">Export record</button></div></div>';
+        }).join("") : "<p class='meta'>No requests.</p>";
+    }
+
+    el("holdForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        let uid = null;
+        const em = el("holdEmail").value.trim();
+        if (em) {
+            const a = await db.rpc("admin_sec_account", { p_query: em });
+            if (a.error) { fail(a.error); return; }
+            if (!a.data) { say("No account with that email. Leave the email empty to hold by name only.", false); return; }
+            uid = a.data.id;
+        }
+        const r = await db.rpc("legal_hold_add", { p_user: uid, p_subject: el("holdSubject").value, p_case: el("holdCase").value, p_reason: el("holdReason").value });
+        if (r.error) fail(r.error); else { say("Hold placed.", true); e.target.reset(); loadLegal(); }
+    });
+
+    el("reqForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const r = await db.rpc("law_request_add", { p_authority: el("reqAuthority").value, p_reference: el("reqRef").value, p_basis: el("reqBasis").value, p_received: el("reqDate").value, p_scope: el("reqScope").value });
+        if (r.error) fail(r.error); else { say("Request recorded.", true); e.target.reset(); loadLegal(); }
+    });
+
+    el("legalHolds").addEventListener("click", async function (e) {
+        const b = e.target.closest("[data-release]");
+        if (!b) return;
+        const c = b.closest("[data-hold]");
+        const r = await db.rpc("legal_hold_release", { p_id: c.dataset.hold, p_note: c.querySelector(".why").value });
+        if (r.error) fail(r.error); else { say("Hold released.", true); loadLegal(); }
+    });
+
+    el("legalReqs").addEventListener("click", async function (e) {
+        const c = e.target.closest("[data-req]");
+        if (!c) return;
+        const id = c.dataset.req;
+        const note = c.querySelector(".why") ? c.querySelector(".why").value : "";
+        let r = null;
+
+        if (e.target.closest("[data-step]")) {
+            const act = e.target.closest("[data-step]").dataset.step;
+            if (act === "approve" && !confirm("Approve this request? Only do this if your lawyer agrees it is valid.")) return;
+            r = await db.rpc("law_request_step", { p_id: id, p_action: act, p_note: note });
+        } else if (e.target.closest("[data-disclose]")) {
+            const what = prompt("Exactly what information was given? (for example: name and email only)");
+            if (!what) return;
+            const to = prompt("To whom? (officer name and office)");
+            if (!to) return;
+            r = await db.rpc("law_disclose", { p_id: id, p_what: what, p_to: to });
+        } else if (e.target.closest("[data-export]")) {
+            const x = await db.rpc("legal_export", { p_id: id });
+            if (x.error) { fail(x.error); return; }
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(new Blob([JSON.stringify(x.data, null, 2)], { type: "application/json" }));
+            a.download = "lbn-law-request-" + String(x.data.reference || id).replace(/[^A-Za-z0-9_-]/g, "") + ".json";
+            a.click();
+            say("Exported. This was recorded in the security log.", true);
+            return;
+        }
+        if (r) { if (r.error) fail(r.error); else { say("Done.", true); loadLegal(); } }
     });
 
     // ----- 13.8: files -----

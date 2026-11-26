@@ -44,6 +44,7 @@
         <button type="button" class="btn btn-outline sec-tab" data-tab="logins">Logins and threats</button>
         <button type="button" class="btn btn-outline sec-tab" data-tab="ips">IP bans</button>
         <button type="button" class="btn btn-outline sec-tab" data-tab="lock">Admin lock</button>
+        <button type="button" class="btn btn-outline sec-tab" data-tab="legal">Legal</button>
         <button type="button" class="btn btn-outline sec-tab" data-tab="files">Files</button>
         <button type="button" class="btn btn-outline sec-tab" data-tab="secrets">Secrets</button>
         <button type="button" class="btn btn-outline sec-tab" data-tab="accounts">Accounts</button>
@@ -95,6 +96,31 @@
         <p class="meta">Restricted records. Opening them is recorded in the security log. Only the last 30 days are kept by Supabase.</p>
         <button type="button" class="btn btn-outline" id="adminIpBtn">Show admin login places</button>
         <div id="secAdminIps"></div>
+    </section>
+    <section class="panel" id="tab-legal" style="display:none;">
+        <h2>Legal holds and law enforcement requests</h2>
+        <p class="meta">Super Admin only. Nothing here can be edited or deleted after it is saved. Opening and exporting are recorded in the security log. Never disclose anything before a request is verified and approved. Ask your lawyer first.</p>
+
+        <h3>Legal holds (keep evidence)</h3>
+        <form id="holdForm" class="filters" autocomplete="off">
+            <input type="text" id="holdSubject" placeholder="Who or what is held (name)" maxlength="200" required>
+            <input type="email" id="holdEmail" placeholder="Their account email (optional, links the hold)">
+            <input type="text" id="holdCase" placeholder="Case reference" maxlength="100" required>
+            <input type="text" id="holdReason" placeholder="Reason (at least 10 characters)" maxlength="500" required>
+            <button type="submit" class="btn btn-outline">Place hold</button>
+        </form>
+        <div id="legalHolds"></div>
+
+        <h3>Law enforcement requests</h3>
+        <form id="reqForm" class="filters" autocomplete="off">
+            <input type="text" id="reqAuthority" placeholder="Authority (for example, Nigeria Police Force)" maxlength="200" required>
+            <input type="text" id="reqRef" placeholder="Their reference number" maxlength="100" required>
+            <input type="text" id="reqBasis" placeholder="Legal basis they gave (law, section, court order)" maxlength="500" required>
+            <input type="date" id="reqDate" required>
+            <input type="text" id="reqScope" placeholder="What they are asking for" maxlength="1000" required>
+            <button type="submit" class="btn btn-outline">Record request</button>
+        </form>
+        <div id="legalReqs"></div>
     </section>
     <section class="panel" id="tab-files" style="display:none;">
         <h2>File and upload security</h2>
