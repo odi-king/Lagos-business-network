@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>University marketing - Lagos Business Network</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="LBN">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+<style>
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px;}
+.tabs .btn{padding:6px 14px;}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;}
+.stat{background:var(--card,#111a2e);border:1px solid var(--border,#243049);border-radius:12px;padding:12px;}
+.stat b{display:block;font-size:1.4rem;}
+.row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;}
+table.t{width:100%;border-collapse:collapse;font-size:.9rem;}
+table.t th,table.t td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--border,#243049);vertical-align:top;}
+.scroll{overflow-x:auto;}
+.badge{display:inline-block;border-radius:6px;padding:1px 8px;font-size:.75rem;font-weight:700;background:#243049;margin-left:4px;}
+.badge.on{background:#20d49b;color:#062;}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="index.html" class="logo"><span class="logo-mark">LBN</span><span class="logo-name">Lagos Business Network</span></a>
+        <div class="nav-links">
+            <a href="admin-home.html">Admin home</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-head"><h1>University marketing</h1><p class="meta">Campus teams, campaigns, attendance and pay. Separate from the Ambassador programme. Teams stay on standby; you only run a campaign (and pay) when you choose.</p></div>
+    <p id="pgMsg" class="msg"></p>
+
+    <div id="app" style="display:none;">
+        <div class="tabs" id="tabs">
+            <button type="button" class="btn btn-primary" data-tab="dash">Dashboard</button>
+            <button type="button" class="btn btn-outline" data-tab="inst">Institutions</button>
+            <button type="button" class="btn btn-outline" data-tab="team">Team</button>
+            <button type="button" class="btn btn-outline" data-tab="camp">Campaigns</button>
+            <button type="button" class="btn btn-outline" data-tab="set" id="tabSet">Settings</button>
+        </div>
+
+        <section class="panel" id="tab-dash"></section>
+
+        <section class="panel" id="tab-inst" style="display:none;">
+            <h3 style="margin-top:0;">Institutions</h3>
+            <div id="instList"><p class="meta">Loading...</p></div>
+            <div id="instForm" style="display:none;margin-top:14px;">
+                <h4 id="instFormTitle" style="margin:0 0 6px;">Add an institution</h4>
+                <div class="row2">
+                    <input type="text" id="inName" placeholder="Full name, e.g. University of Lagos" maxlength="120">
+                    <input type="text" id="inShort" placeholder="Short name, e.g. UNILAG" maxlength="20">
+                    <select id="inKind"><option value="university">University</option><option value="polytechnic">Polytechnic</option><option value="college_of_education">College of Education</option><option value="other">Other</option></select>
+                    <input type="text" id="inCity" placeholder="City" maxlength="60">
+                    <input type="text" id="inState" placeholder="State" maxlength="60">
+                    <select id="inStatus"><option value="active">Active</option><option value="paused">Paused</option><option value="closed">Closed</option></select>
+                </div>
+                <input type="text" id="inNotes" placeholder="Private notes (optional)" maxlength="500" style="margin-top:8px;">
+                <button type="button" class="contact-btn" id="inSave">Save institution</button>
+                <button type="button" class="btn btn-outline" id="inCancel">Cancel</button>
+            </div>
+            <button type="button" class="contact-btn" id="inNew" style="margin-top:10px;">Add institution (Super Admin)</button>
+            <p id="inMsg" class="msg"></p>
+        </section>
+
+        <section class="panel" id="tab-team" style="display:none;">
+            <div class="filters"><select id="teamInst"></select></div>
+            <div id="teamBox"><p class="meta">Choose an institution.</p></div>
+        </section>
+
+        <section class="panel" id="tab-camp" style="display:none;">
+            <div class="filters"><select id="campInst"><option value="">All institutions</option></select><button type="button" class="contact-btn" id="campNew">New campaign</button></div>
+            <div id="campForm" style="display:none;"></div>
+            <div id="campList"><p class="meta">Loading...</p></div>
+            <div id="campDetail"></div>
+        </section>
+
+        <section class="panel" id="tab-set" style="display:none;"><div id="setBox"></div></section>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container">&copy; 2026 Lagos Business Network &bull; <a href="help.html" style="color: var(--accent);">Help</a> &bull; <a href="contact.html" style="color: var(--accent);">Contact us</a>
+        <div class="legal-links"><a href="terms.html">Terms of Use</a> &bull; <a href="privacy.html">Privacy Policy</a> &bull; <a href="cookies.html">Cookie Policy</a> &bull; <a href="refunds.html">Refunds and Disputes</a></div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="routelock.js"></script>
+<script src="marketing-common.js"></script>
+<script src="marketing-admin.js"></script>
+<script src="cookie-consent.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>

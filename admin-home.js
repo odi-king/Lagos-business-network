@@ -12,6 +12,7 @@
         { key: "support", title: "Support and operations", text: "Customer care messages, feedback and daily operations.", href: "admin.html?area=support", perm: "support" },
         { key: "ambassadors", title: "Ambassadors", text: "School ambassadors, stipends and monitoring.", href: "ambassador-admin.html", perm: "members" },
         { key: "representatives", title: "Representatives", text: "Country representatives, meetings and business leads.", href: "representatives-admin.html", perm: "members" },
+        { key: "marketing", title: "University marketing", text: "Campus marketing teams, campaigns, attendance, pay and results for each institution.", href: "marketing-admin.html", perm: "marketing" },
         { title: "Security and technical", text: "Security checks, logins, threats, files, legal records.", href: "security.html", perm: "security" },
         { title: "Audit log", text: "One record of what administrators did.", href: "audit-log.html", perm: "security" },
         { title: "Admin team", text: "Appoint administrators and set their permissions. Super Admin only.", href: "admins.html", perm: "@super" },

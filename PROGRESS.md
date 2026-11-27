@@ -63,7 +63,7 @@ One file. It combines your master roadmap, the Security Dashboard, the ten Admin
 
 STANDING RULE: cancel subscription. A member can cancel their subscription at any time, keeps access until the paid period ends, and can resume before then. Built now in `supabase-cancel.sql` + `subscription.html` (waiting for your test). Phases 11 and 12 (recurring billing, plans, international payments) must always respect it and add cancellation to payment records.
 
-## PHASE 4. Ambassador ecosystem (all managed inside the ONE Ambassador Management Dashboard)   <- WE ARE HERE: 4A, 4B, 4C tested; all of Phase 4 tested (4A to 4E)
+## PHASE 4. Ambassador ecosystem (all managed inside the ONE Ambassador Management Dashboard): 4A, 4B, 4C tested; all of Phase 4 tested (4A to 4E)
 4A. School Ambassador Programme (existing rules preserved)
 - [x] 15 per participating school: 6 Business Owner, 5 Student, 4 Lecturer; Super Admin approval needed to exceed
 - [x] Application form (all fields from your checklist) with name and email pre-filled; banner on the logged-in homepage and profile pages; Apply Now
@@ -152,10 +152,10 @@ STANDING RULE: cancel subscription. A member can cancel their subscription at an
 - [x] 10E: Streamer earnings and withdrawals (built 25 Nov, waiting for your test): `earnings.html` page (ready, waiting, paid, bank account, Withdraw button, smallest withdrawal N2,000 admin-editable), admin pays by hand and taps Mark paid or Reject (streamer is told), admin can freeze a streamer or cancel earnings (audit logged). Needs `earnings.html`, `earnings.js`, `streams.html`, `stream-admin.js`, `admin.html`, then `supabase-creator-payouts.sql` (run AFTER `supabase-coins.sql`). Automatic Paystack Transfers wait for Paystack approval
 - [~] Protection against payment manipulation: already in place (amounts checked against the pack price, each Paystack reference counts once, gifts only through the server, 700 ms gift limit, freeze and cancel controls); final review in Phase 13
 
-## (Phase 10 done. WE ARE HERE: Phase 11)
+## (Phases 1 to 14 built; now: Phase 12 billing, then Phase 15 testing)
 ## PHASE 11. International expansion, payments and registration
 - [x] 11A: Location at sign up (built 25 Nov, waiting for your test): searchable country list, state or region (Nigerian states as a list, optional for countries with none), city, school or business name; existing members add details in Settings > My location (`my-location.html`); country stored as a 2-letter code for payment routing; admin can see counts per country and correct a member (functions ready, admin panel comes with Phase 14). Needs `countries.js`, `auth.html`, `auth.js`, `my-location.html`, `my-location.js`, `settings.js`, then `supabase-locations.sql` (independent; sign up never breaks if it is missing)
-- [ ] International provider chosen and confirmed (real USD charging and settlement, recurring monthly and yearly) <- WAITING for Paystack support reply (email sent); Flutterwave is the fallback
+- [~] International provider: PAYSTACK CHOSEN (their reply, 26 Nov 2026): USD cards allowed once international payments are activated on our account; monthly and yearly billing supported on international cards (no American Express for recurring); USD settles to a Zenith Bank USD domiciliary account (Settings > Accounts > Add USD account); fees 3.9% for USD. STILL TO DO: (1) request international payments activation in the Paystack dashboard, (2) open or link a Zenith USD account, (3) after activation switch the international provider ON in Admin > Billing and test one real USD payment. Flutterwave is no longer needed.
 - [x] 11B: Automatic routing (built 26 Nov, waiting for your test): the server picks the plans from the saved country (Nigeria to Paystack in naira, others to the international provider in dollars, OFF until the admin opens it); one shared membership record; country locked after the first payment (only LBN can change it); mismatched payments are flagged to admin. Needs `pay.html`, `pay.js`, `my-location.js`, `billing-admin.js`, `admin.html`, the UPDATED `paystack-verify.ts` and `paystack-webhook.ts`, then `supabase-plans.sql` (run AFTER `supabase-locations.sql` and `supabase-cancel.sql`)
 - [x] 11C: Payment records (built 26 Nov, with 11B): every plan payment is saved with country, plan, provider, currency, amount, reference, dates and status; cancellations already recorded; admin list and totals in Admin > Membership plans and payments
 - [x] 11D: International Representatives Programme (built 26 Nov, waiting for your test; separate from Ambassadors): members apply (`representative.html`, also in Settings), admin page `representatives-admin.html` (button in Admin) for applications, verification (cannot approve until verified), approve or reject with reasons, country assignments, suspend or end, monthly reports with ratings, performance (reports, average rating, LBN members in the country) and a full record of every decision. Needs `representative.html`, `representative.js`, `representatives-admin.html`, `representatives-admin.js`, `admin.html`, `settings.js`, then `supabase-representatives.sql` (run AFTER `supabase-locations.sql`)
@@ -167,10 +167,10 @@ STANDING RULE: cancel subscription. A member can cancel their subscription at an
 - [~] International (USD): monthly $2, yearly $20, no weekly plan (built with 11B; payments stay OFF until the provider is connected)
 - [~] Right plans shown by country; prices consistent everywhere (the server decides; pay page shows them)
 - [ ] Recurring billing, renewals, confirmations, failed payment notices, cancellation (access until paid period ends), expiry handling, renewal
-- [ ] Admin view of subscribers and revenue (NGN and USD kept separate, per provider)
+- [x] Admin view of subscribers and revenue (BUILT 26 Nov in 12D: Finance panel "Subscribers and revenue": by plan, by month, refunds, expiring in 7 days, expired in 30 days, by country; NGN and USD separate; `supabase-subscribers.sql`)
 
 ## PHASE 13. (13A done; 13A and 13B complete 26 Nov) Security Dashboard, website security and data protection (merged)
-- [ ] ID photos and selfies (private `seller-ids` bucket): decide how long to keep them, delete them on account deletion, and mention them in the privacy policy
+- [~] ID photos and selfies (private `seller-ids` bucket): DECIDED 26 Nov: deleted together with the account (files and records), kept while the account is open; built in 13J (`supabase-retention.sql` and the `delete-account` function). Still to do: mention in the privacy policy (lawyer review). NOT yet tested with a real ID photo: do the test when you next have a test seller (delete the account, then check the seller-ids folder in Supabase Storage is gone). Then mark [x].
 Security Dashboard (Super Admin and administrators with a new Security permission; real data only; protected audit logs; alerts for critical incidents)
 - [x] 13.1 Security permission and protected security log (built 26 Nov: `security.html`, `security.js`, `admins.js`, `admins.html`, `admin.html`, then `supabase-security.sql`; "Full admin" does not include Security; the log cannot be edited or deleted)
 - [x] 13.2 Overall security status from the real checks below (built with 13.1: OK / Needs attention / Critical from real database checks)
@@ -192,39 +192,49 @@ Website security (Part G)
 - [x] Admin IP monitoring (built 26 Nov in 13F: Admin lock tab, "Where admins log in from", new places flagged, every view logged; file `supabase-security-5.sql`)
 - [x] **Admin Route Lock** (built 26 Nov in 13D: every admin page asks the server first, unauthorised visits logged, route audit and two-step coverage on the Security Dashboard "Admin lock" tab; the Super Admin still needs to switch on the "require two-step" setting once all admins have it): deny by default; server-side checks and RLS on every admin operation (not just the page); MFA with AAL2; log unauthorised attempts; never rely on hidden URLs or noindex. (Today: admin database functions already check permissions on the server and 2FA can be required, so this is `[~]` until it is fully reviewed and tested)
 - [~] **API keys and secret protection.** First scan done on 23 Nov 2026: no secrets in the website files, no service-role key, no debug code. Remaining: scan your real GitHub repository and its history, keep SQL, server code and notes out of the public repository (`.gitignore` provided), rotate any key that was ever exposed
-- [ ] Deleted-account data retention: keep only what is legally needed (security logs, payment records, evidence), document periods and legal basis, restrict access (account deletion already anonymises; retention rules still to document)
-- [ ] Evidence preservation and legal holds: restricted, tamper-proof, access and exports logged
-- [ ] Law enforcement requests: verify authority and legal basis, disclose only what the law requires, record what, when, to whom and who authorised
-- [~] Password protection: passwords are only handled by Supabase Auth (hashed, never visible to anyone). Needs a final review that none appear in logs, URLs or code
-- [~] Cookie consent, cookie preferences and a Cookie Policy page (built 26 Nov in 13H: notice on first visit, `cookies.html`, footer link on every page, consent switch for future optional tools; today only essential storage is used; the policy text still needs lawyer review)
+- [~] Deleted-account data retention (13J: ID photos, rider documents, bank details, location and queued emails now removed at deletion; the written retention schedule is in the Retention Schedule document for your lawyer): keep only what is legally needed (security logs, payment records, evidence), document periods and legal basis, restrict access (account deletion already anonymises; retention rules still to document)
+- [x] Evidence preservation and legal holds (built 26 Nov in 13I: Security Dashboard, Legal tab, Super Admin only; holds cannot be deleted, every open and export is logged; file `supabase-legal.sql`)
+- [x] Law enforcement requests (built 26 Nov in 13I: record, verify, approve or decline, record each disclosure, export; disclosures can never be changed; lawyer must approve the real procedure)
+- [x] Password protection: reviewed 26 Nov. Passwords are only handled by Supabase Auth (hashed, never visible). Checked all website code: none logged, none in links, none saved in the browser, every password box has the right autocomplete. Only exception: Delete account sends the password over HTTPS to the delete-account function, which re-checks it and never stores or logs it. Found and fixed: CAPTCHA broke that re-check, so the delete form now has the security check too (needs the delete-account function updated). Mark [x] after the delete test.
+- [x] Cookie consent, cookie preferences and a Cookie Policy page (built 26 Nov in 13H: notice on first visit, `cookies.html`, footer link on every page, consent switch for future optional tools; today only essential storage is used; the policy text still needs lawyer review)
 - [ ] Regular security reviews (RLS, permissions, MFA, buckets, payments, functions, secrets, GitHub, logs; SQL injection, XSS, broken access control, insecure uploads, unauthorised API access, session weaknesses, insecure payment handling), repeated after every significant update
 - [~] **Database Backup and Disaster Recovery**: guide written (`BACKUP-AND-DOMAIN.md`). Remaining: upgrade to Supabase Pro, turn on backups, do a real restore test, write the recovery plan
 - [ ] Compliance with the Nigeria Data Protection Act 2023 and related laws; lawyer review of Terms, Privacy and Refunds (currently drafts)
 
 ## PHASE 14. Admin dashboards (ONE central dashboard, no duplicates)
 Roles today: Super Admin, Finance, Support, Content, Marketplace, Education, Members (plus Security from Phase 13). MFA and AAL2 required for admin access. Sensitive actions restricted; admin access can be suspended or revoked.
-- [~] 14.1 **Central Admin Dashboard (Super Admin)**: tile for every dashboard, full control of appointments, roles, permissions and access restrictions. (The admin team page and permissions exist; the tile home screen does not)
-- [ ] 14.2 **Admin Activity Audit Log Dashboard**: ONE central log. Administrator and role, action, time, affected user or record, before and after values, IP and device where available, success or failure, access to sensitive information, evidence disclosures, ambassador promotions and transfers, salary and rank changes, monitoring officer activity, security configuration changes. Super Admin filters by administrator, action and date, investigates, reviews sensitive access, restricts or revokes access. (A smaller audit log exists today)
-- [ ] 14.3 User Management Dashboard
-- [ ] 14.4 Financial Management Dashboard
-- [ ] 14.5 Marketplace Management Dashboard
-- [ ] 14.6 Education Management Dashboard
-- [ ] 14.7 Content Management Dashboard
-- [ ] 14.8 Technical Dashboard
-- [ ] 14.9 Operational Dashboard
-- [ ] 14.10 Ambassador Management Dashboard (the one from Phase 4, never a second copy)
+- [x] 14.1 **Central Admin Dashboard (Super Admin)**: BUILT 26 Nov (`admin-home.html/js`): one tile home, tiles shown by permission, every tile opens an existing screen (no copies); opening `admin.html` with no choice goes to the Admin home. Admin team page and permissions already existed.
+- [~] 14.2 **Admin Activity Audit Log Dashboard**: BUILT 26 Nov (`audit-log.html/js`, `supabase-audit.sql`): ONE central log of admin actions plus admin-related security events; administrator and role, action, time, affected person, details, IP and device (recorded from now on), search, CSV export, opening it is logged. NOT yet: before and after values, success or failure, evidence disclosures list (those are in the Legal tab).
+- [x] 14.3 User Management Dashboard (tile "User management" = the members panels of the admin page, focused view)
+- [x] 14.4 Financial Management Dashboard (tile "Finance" = the finance panels, focused view)
+- [x] 14.5 Marketplace Management Dashboard (tile "Marketplace", focused view)
+- [x] 14.6 Education Management Dashboard (tile "Education", focused view)
+- [x] 14.7 Content Management Dashboard (tile "Content", focused view)
+- [~] 14.8 Technical Dashboard (tile "Security and technical" = the Security Dashboard; server health numbers still to add)
+- [x] 14.9 Operational Dashboard (tile "Support and operations", focused view; BUILT 26 Nov in 14C: "needs attention" numbers on every Admin home tile, `supabase-admin-home.sql`; delivery and rider live numbers still to add)
+- [x] 14.10 Ambassador Management Dashboard (tile opens the existing Phase 4 one, never a second copy)
 Existing admin screens (people, payments, disputes, graduation requests, support, settings, free trial watch, reviews, readiness, recover a payment) are moved into the right dashboard, not rebuilt.
 
 ## PHASE 15. Testing and quality assurance (before anything is Completed)
-- [ ] Functionality, mobile, user permissions, admin permissions, database access, Supabase RLS, authentication and MFA, payments, storage permissions, security controls
+- [~] Functionality, mobile, user permissions, admin permissions, database access, Supabase RLS, authentication and MFA, payments, storage permissions, security controls (26 Nov: AUTOMATIC checks DONE and clean: JS syntax, links and scripts, offline list, RLS on every table, fixed search path on every function, every database call exists, no duplicate ids, image text, language and viewport, no leaked keys. MANUAL checklist written: "LBN Test Checklist (Phase 15)", to be run by you and every FAIL sent to me)
 - [ ] Fix vulnerabilities found; confirm existing features still work
 
 ## PHASE 16. Final deployment and launch
 - [ ] Production configuration, permanent domain, HTTPS, PWA install, accessibility
 - [ ] Put Cloudflare in front of the custom domain (GitHub Pages rate-limits heavy traffic from one network); keep the offline cache light (sw.js caches only about 9 core files)
-- [ ] Pre-publish check before every push: `git status` run inside the INNER folder, and a quick look that shared files (posts.js, appnav.js, style.css) are still the right ones (a wrong paste into posts.js broke Marketplace, Lifestyle and Reels on 24 Nov)
+- [~] Pre-publish check before every push (built: prepublish-check.js, waiting for your test): `git status` run inside the INNER folder, and a quick look that shared files (posts.js, appnav.js, style.css) are still the right ones (a wrong paste into posts.js broke Marketplace, Lifestyle and Reels on 24 Nov)
 - [ ] Payment integrations, email delivery (proper sender domain), database security, administrator access
 - [ ] Legal and privacy pages finished, final security review, final user acceptance testing, public launch
+
+## PHASE 17. University Marketing Department (ONE department inside the Admin dashboard; separate from the Ambassador programme)
+Built 27 Nov (files: `supabase-marketing.sql`, `marketing-admin.html/js`, `marketing.html/js`, `marketing-common.js`; tile on Admin home; new admin permission "marketing" in `admins.js/html`). Teams stay on standby; a campaign (and pay) only exists for the dates you choose.
+- [~] 17A Database: institutions, team places per role (default 15: 1 coordinator, 4 faculty reps, 5 student recruiters, 2 digital, 2 business outreach, 1 events), campaigns, assignments, attendance, daily reports, pay records, bank details; every table closed with RLS; all access through checked functions; tested locally (permissions, locked approved days, two-person pay approval, anon blocked)
+- [~] 17B Admin screens (`marketing-admin.html`): central dashboard (institutions, promoters, campaigns, spend, student and business registrations, active members, institution comparison), institutions, teams (add, role change, suspend, remove, Super Admin transfer, change places), campaigns (dates, targets, daily/weekly/monthly pay, bonus rule), assign people or the whole team, attendance, report review, pay prepare / approve / mark paid / withhold, call the team
+- [~] 17C Coordinator and promoter page (`marketing.html`): promoter sees only own campaigns, instructions, referral link, daily reports, own results, own pay and bank details; coordinator also manages own campus only (attendance for the last 7 days, report review)
+- [~] 17D Security: every function checks permission on the server; Super Admin only for institutions, team places and transfers; marketing admins cannot approve pay (needs Finance); preparer cannot approve own pay (Super Admin excepted); amounts only calculated in the database; all steps in the Admin audit log; pay approvals also in the security log
+- [ ] 17E Test with real accounts (Super Admin, a marketing admin, a finance admin, a coordinator, two promoters, an outsider)
+- [ ] Open decision for the lawyer's retention schedule: marketing pay records and attendance are deleted together with a promoter's account (the database removes them). Decide how long pay records must be kept for accounting, then we change this
+- [ ] Open decisions: do marketing promoters ALSO earn the N500 referral reward on yearly subscriptions (the referral engine still pays it today)? Lawyer: are promoters staff, contractors or commission agents (tax, contracts)? Automatic bank payouts later (Paystack Transfers)
 
 ---------------------------------------------------------------------
 

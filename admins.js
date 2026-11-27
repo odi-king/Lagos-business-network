@@ -5,7 +5,8 @@ const PERMS = [
     { key: "content", label: "Content", help: "Delete posts, comments and handouts that break the rules." },
     { key: "marketplace", label: "Marketplace", help: "Look over trades and resolve disputes between buyers and sellers." },
     { key: "education", label: "Education", help: "Graduation requests and the graduation requirements." },
-    { key: "security", label: "Security", help: "The Security Dashboard: security checks, the protected security log and alerts. Give this only to people you fully trust." }
+    { key: "security", label: "Security", help: "The Security Dashboard: security checks, the protected security log and alerts. Give this only to people you fully trust." },
+    { key: "marketing", label: "Marketing", help: "The University Marketing Department: teams, campaigns, attendance and preparing pay. Approving and paying needs Finance as well. Give this only to people you trust." }
 ];
 
 const ALL_KEYS = PERMS.map(function (p) { return p.key; });
@@ -17,7 +18,8 @@ const PRESETS = {
     marketplace: { title: "Marketplace", perms: ["marketplace"] },
     education: { title: "Education", perms: ["education", "members"] },
     security: { title: "Security", perms: ["security"] },
-    full: { title: "Full admin", perms: ALL_KEYS.filter(function (k) { return k !== "security"; }) },
+    marketing: { title: "Marketing", perms: ["marketing"] },
+    full: { title: "Full admin", perms: ALL_KEYS.filter(function (k) { return k !== "security" && k !== "marketing"; }) },
     custom: { title: "", perms: [] }
 };
 
